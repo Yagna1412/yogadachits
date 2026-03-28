@@ -1,0 +1,303 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Transaction Vouchers</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Utilities</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Transaction Vouchers</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-section">
+        <form [formGroup]="voucherForm" (ngSubmit)="onSave()">
+            <!-- Receipts Section -->
+            <div class="section">
+                <h3>Receipts</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Member Receipts Series *</label>
+                        <input type="text" class="form-control" formControlName="memberReceipts.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('memberReceipts.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Member Receipts Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="memberReceipts.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('memberReceipts.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('memberReceipts.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('memberReceipts.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Future Receipts Series *</label>
+                        <input type="text" class="form-control" formControlName="futureReceipts.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('futureReceipts.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Future Receipts Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="futureReceipts.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('futureReceipts.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('futureReceipts.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('futureReceipts.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Advance Receipts Series *</label>
+                        <input type="text" class="form-control" formControlName="advanceReceipts.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('advanceReceipts.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Advance Receipts Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="advanceReceipts.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('advanceReceipts.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('advanceReceipts.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('advanceReceipts.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Daily Receipts Series *</label>
+                        <input type="text" class="form-control" formControlName="dailyReceipts.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('dailyReceipts.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Daily Receipts Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="dailyReceipts.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('dailyReceipts.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('dailyReceipts.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('dailyReceipts.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Self Chits Receipts Series *</label>
+                        <input type="text" class="form-control" formControlName="selfChitsReceipts.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('selfChitsReceipts.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Self Chits Receipts Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="selfChitsReceipts.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('selfChitsReceipts.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('selfChitsReceipts.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('selfChitsReceipts.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments Section -->
+            <div class="section">
+                <h3>Payments</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Bid Payments Series *</label>
+                        <input type="text" class="form-control" formControlName="bidPayments.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('bidPayments.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bid Payments Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="bidPayments.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('bidPayments.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('bidPayments.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('bidPayments.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cancel Member Payments Series *</label>
+                        <input type="text" class="form-control" formControlName="cancelMemberPayments.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('cancelMemberPayments.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cancel Member Payments Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="cancelMemberPayments.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('cancelMemberPayments.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('cancelMemberPayments.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('cancelMemberPayments.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Credit Balance Return Series *</label>
+                        <input type="text" class="form-control" formControlName="creditBalanceReturn.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('creditBalanceReturn.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Credit Balance Return Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="creditBalanceReturn.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('creditBalanceReturn.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('creditBalanceReturn.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('creditBalanceReturn.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Agent Commission Payment Series *</label>
+                        <input type="text" class="form-control" formControlName="agentCommissionPayment.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('agentCommissionPayment.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Agent Commission Payment Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="agentCommissionPayment.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('agentCommissionPayment.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('agentCommissionPayment.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('agentCommissionPayment.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bid Advance Series *</label>
+                        <input type="text" class="form-control" formControlName="bidAdvance.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('bidAdvance.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bid Advance Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="bidAdvance.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('bidAdvance.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('bidAdvance.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('bidAdvance.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Agent Commission Bill Series *</label>
+                        <input type="text" class="form-control" formControlName="agentCommissionBill.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('agentCommissionBill.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Agent Commission Bill Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="agentCommissionBill.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('agentCommissionBill.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('agentCommissionBill.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('agentCommissionBill.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accounting Section -->
+            <div class="section">
+                <h3>Accounting</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Auction JVs Series *</label>
+                        <input type="text" class="form-control" formControlName="auctionJVs.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('auctionJVs.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Auction JVs Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="auctionJVs.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('auctionJVs.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('auctionJVs.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('auctionJVs.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cash Receipts Series *</label>
+                        <input type="text" class="form-control" formControlName="cashReceipts.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('cashReceipts.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cash Receipts Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="cashReceipts.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('cashReceipts.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('cashReceipts.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('cashReceipts.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bank Deposits Series *</label>
+                        <input type="text" class="form-control" formControlName="bankDeposits.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('bankDeposits.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bank Deposits Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="bankDeposits.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('bankDeposits.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('bankDeposits.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('bankDeposits.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bank Payments Series *</label>
+                        <input type="text" class="form-control" formControlName="bankPayments.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('bankPayments.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bank Payments Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="bankPayments.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('bankPayments.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('bankPayments.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('bankPayments.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Journal Vouchers Series *</label>
+                        <input type="text" class="form-control" formControlName="journalVouchers.series" placeholder="Enter series" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('journalVouchers.series')?.invalid">
+                            Series is required
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Journal Vouchers Starting Number *</label>
+                        <input type="text" class="form-control" formControlName="journalVouchers.startingNumber" placeholder="Enter starting number" />
+                        <div class="error-message" *ngIf="submitted && voucherForm.get('journalVouchers.startingNumber')?.invalid">
+                            <span *ngIf="voucherForm.get('journalVouchers.startingNumber')?.errors?.['required']">Starting number is required</span>
+                            <span *ngIf="voucherForm.get('journalVouchers.startingNumber')?.errors?.['pattern']">Must be numeric</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Options -->
+            <div class="section">
+                <h3>Account Options</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" formControlName="depositAccounts" />
+                            Deposit Accounts
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" formControlName="paymentAccounts" />
+                            Payment Accounts
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,169 @@
+<div class="user-layout">
+  <!-- Clean Modern Sidebar -->
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed" [class.mobile-open]="mobileMenuOpen">
+    <!-- Logo Section -->
+    <div class="logo-container">
+      <div class="logo-img">
+        <img src="assets/images/icons/logo-main.png" class="big-logo" alt="logo" />
+        <img src="assets/images/icons/logo-small.png" class="small-logo" alt="logo" />
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="nav-menu">
+      <div class="platform-label">Platform</div>
+
+      <!-- Dashboard -->
+      <div class="menu-item">
+        <button class="menu-link" [class.expanded]="dashboardMenuExpanded" (click)="toggleDashboardMenu()">
+          <img src="assets/images/icons/ouline-globe.png" alt="Dashboard Icon" class="menu-icon" />
+          <span>Dashboard</span>
+          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
+            [class.rotated]="dashboardMenuExpanded" />
+        </button>
+        <div class="submenu" *ngIf="dashboardMenuExpanded">
+          <a routerLink="/user/dashboard" routerLinkActive="active" class="submenu-link" (click)="closeMobileMenu()">
+            <span>User Dashboard</span>
+          </a>
+          <a routerLink="/user/chit-calculator" routerLinkActive="active" class="submenu-link"
+            (click)="closeMobileMenu()">
+            <span>Chit Calculator</span>
+          </a>
+        </div>
+      </div>
+
+
+      <!-- Chits -->
+      <div class="menu-item">
+        <a routerLink="/user/chits" routerLinkActive="active" class="menu-link" (click)="closeMobileMenu()">
+          <img src="assets/images/icons/ouline-globe.png" alt="Chits Icon" class="menu-icon" />
+          <span>Chits</span>
+        </a>
+      </div>
+
+      <!-- Bids -->
+      <div class="menu-item">
+        <button class="menu-link" [class.expanded]="bidsMenuExpanded" (click)="toggleBidsMenu()">
+          <img src="assets/images/icons/ouline-globe.png" alt="Bids Icon" class="menu-icon" />
+          <span>Bids</span>
+          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon" [class.rotated]="bidsMenuExpanded" />
+        </button>
+        <div class="submenu" *ngIf="bidsMenuExpanded">
+          <a routerLink="/user/bids-history" routerLinkActive="active" class="submenu-link" (click)="closeMobileMenu()">
+            <span>Bids History</span>
+          </a>
+          <a routerLink="/user/online-bids" routerLinkActive="active" class="submenu-link" (click)="closeMobileMenu()">
+            <span>Online Bids</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="menu-item">
+        <a routerLink="/user/profile" routerLinkActive="active" class="menu-link" (click)="closeMobileMenu()">
+          <img src="assets/images/icons/ouline-globe.png" alt="Profile Icon" class="menu-icon" />
+          <span>Profile</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <div class="footer-menu footer-settings">
+        <button class="menu-link" [class.expanded]="footerSettingsExpanded" (click)="toggleFooterSettings()">
+          <img src="assets/images/icons/ouline-globe.png" alt="Settings Icon" class="menu-icon" />
+          <span>Settings</span>
+          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
+            [class.rotated]="footerSettingsExpanded" />
+        </button>
+
+        <div class="footer-settings-submenu" *ngIf="footerSettingsExpanded">
+          <a routerLink="/user/profile" routerLinkActive="active" class="footer-submenu-link">Profile</a>
+          <a routerLink="/user/preferences" routerLinkActive="active" class="footer-submenu-link">Preferences</a>
+          <button class="footer-submenu-link" (click)="logout()">Logout</button>
+        </div>
+      </div>
+
+      <div class="footer-menu">
+        <a routerLink="/user/support" routerLinkActive="active" class="menu-link" (click)="closeMobileMenu()">
+          <img src="assets/images/icons/ouline-globe.png" alt="Help Icon" class="menu-icon" />
+          <span>Help & Support</span>
+        </a>
+      </div>
+
+      <!-- User Info Card -->
+      <div class="user-info-card">
+        <div class="user-avatar-large">
+          <img src="https://i.pravatar.cc/150?img=12" alt="User Avatar" />
+        </div>
+        <div class="user-details">
+          <div class="user-name">Rajesh Kumar</div>
+          <div class="user-title">Chit Subscriber</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="main-wrapper">
+    <!-- Clean Header -->
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-toggle" (click)="toggleSidebar()">
+          <img src="assets/images/icons/Frame.png" alt="Menu" />
+        </button>
+        <div class="greeting">
+          <img src="assets/images/icons/sun.png" alt="Greeting Icon" class="greeting-icon" />
+          <span class="greeting-text">Good morning, Rajesh Kumar!</span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="search-container">
+          <div class="search-box">
+            <img src="assets/images/icons/Search.png" alt="Search" class="search-icon" />
+            <input type="text" placeholder="Search anything..." [(ngModel)]="searchQuery" (input)="onSearch()"
+              (focus)="onSearch()" (blur)="hideSearch()" />
+            <div class="shortcut">Ctrl K</div>
+          </div>
+
+          <!-- Search Results Dropdown -->
+          <div class="search-results-dropdown" *ngIf="searchQuery.length > 2">
+            <div class="no-results" *ngIf="searchResults.length === 0">
+              No matches for "{{ searchQuery }}"
+            </div>
+            <a *ngFor="let result of searchResults" [routerLink]="result.link" class="search-item"
+              (click)="searchQuery = ''; searchResults = []">
+              <div class="result-title">{{ result.title }}</div>
+              <div class="result-type">{{ result.type }}</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Financial Year Badge -->
+        <div class="financial-year-badge">
+          <span class="fy-label">FY</span>
+          <span class="fy-value">2025-26</span>
+        </div>
+
+        <button class="btn-icon">
+          <img src="assets/images/icons/notification.png" alt="Notifications" />
+          <span class="badge">3</span>
+        </button>
+        <div class="brand-logo-container">
+          <img src="assets/images/icons/logo-main.png" alt="ChitCloud Logo" class="header-brand-logo" />
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" [class.active]="mobileMenuOpen" (click)="toggleMobileMenu()"></div>
+</div>

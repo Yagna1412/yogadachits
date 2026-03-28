@@ -1,0 +1,69 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Mail Setup</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Utilities</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Mail Setup</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-section">
+        <form [formGroup]="mailForm" (ngSubmit)="onSave()">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="fromMail">From Mail *</label>
+                    <input type="email" id="fromMail" class="form-control" formControlName="fromMail" placeholder="Enter from email" />
+                    <div class="error-message" *ngIf="submitted && mailForm.get('fromMail')?.invalid">
+                        <span *ngIf="mailForm.get('fromMail')?.errors?.['required']">From Mail is required</span>
+                        <span *ngIf="mailForm.get('fromMail')?.errors?.['email']">Please enter a valid email address</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="username">Username *</label>
+                    <input type="text" id="username" class="form-control" formControlName="username" placeholder="Enter username" />
+                    <div class="error-message" *ngIf="submitted && mailForm.get('username')?.invalid">
+                        Username is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <input type="password" id="password" class="form-control" formControlName="password" placeholder="Enter password" />
+                    <div class="error-message" *ngIf="submitted && mailForm.get('password')?.invalid">
+                        Password is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="smtpServer">SMTP Server *</label>
+                    <input type="text" id="smtpServer" class="form-control" formControlName="smtpServer" placeholder="Enter SMTP server" />
+                    <div class="error-message" *ngIf="submitted && mailForm.get('smtpServer')?.invalid">
+                        SMTP Server is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="smtpPort">SMTP Port *</label>
+                    <input type="text" id="smtpPort" class="form-control" formControlName="smtpPort" placeholder="Enter SMTP port" />
+                    <div class="error-message" *ngIf="submitted && mailForm.get('smtpPort')?.invalid">
+                        <span *ngIf="mailForm.get('smtpPort')?.errors?.['required']">SMTP Port is required</span>
+                        <span *ngIf="mailForm.get('smtpPort')?.errors?.['pattern']">SMTP Port must be numeric</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject *</label>
+                    <input type="text" id="subject" class="form-control" formControlName="subject" placeholder="Enter default subject" />
+                    <div class="error-message" *ngIf="submitted && mailForm.get('subject')?.invalid">
+                        Subject is required
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

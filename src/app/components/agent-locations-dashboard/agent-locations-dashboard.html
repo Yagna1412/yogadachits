@@ -1,0 +1,39 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Collection Agent‑Wise Locations</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">MIS</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Collection Agent‑Wise Locations</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-filter">
+        <div class="form-group">
+            <label>Collection Agent *</label>
+            <select class="form-control" [(ngModel)]="selectedAgent">
+                <option value="">Select Agent</option>
+                <option *ngFor="let a of agents" [value]="a">{{a}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Report Date</label>
+            <input type="date" class="form-control" [(ngModel)]="reportDate" />
+        </div>
+    </div>
+
+    <div class="form-footer">
+        <button class="btn btn-primary" (click)="view()">View</button>
+        <button class="btn btn-secondary" (click)="reset()">Reset</button>
+    </div>
+
+    <div *ngIf="showMap">
+        <p>Map showing locations for {{ selectedAgent }} (as of {{ reportDate || 'today' }}).</p>
+        <!-- placeholder for map -->
+        <div style="height:300px; background:#eef; display:flex; align-items:center; justify-content:center;">
+            <span>Map would appear here</span>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,62 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Auction Chart</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Admin</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Reports</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Auctions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Auction Chart</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-section">
+    <form [formGroup]="chartForm" (ngSubmit)="onGenerate()" class="report-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Group Type *</label>
+          <select formControlName="groupType" class="form-control">
+            <option *ngFor="let g of groupTypes" [value]="g.value">{{ g.label }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Auction Date *</label>
+          <input type="date" formControlName="auctionDate" class="form-control" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Generate</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-section" *ngIf="showResults()">
+    <div class="section-header">
+      <h3>Auction Chart</h3>
+    </div>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Group Type</th>
+            <th>Auction Date</th>
+            <th>Chit Group</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of auctions()">
+            <td>{{ a.groupType }}</td>
+            <td>{{ a.auctionDate }}</td>
+            <td>{{ a.chitGroup }}</td>
+            <td>{{ a.details }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

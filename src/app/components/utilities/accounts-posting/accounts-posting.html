@@ -1,0 +1,66 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Accounts Posting</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Utilities</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Accounts Posting</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-section">
+        <form [formGroup]="accountsForm" (ngSubmit)="onSubmit()">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="postingType">Posting Type *</label>
+                    <select id="postingType" class="form-control" formControlName="postingType">
+                        <option value="">Select Posting Type</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Yearly">Yearly</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && accountsForm.get('postingType')?.invalid">
+                        Posting Type is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="month">Month *</label>
+                    <select id="month" class="form-control" formControlName="month">
+                        <option value="">Select Month</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && accountsForm.get('month')?.invalid">
+                        Month is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="year">Year *</label>
+                    <input type="number" id="year" class="form-control" formControlName="year" placeholder="Enter year" />
+                    <div class="error-message" *ngIf="submitted && accountsForm.get('year')?.invalid">
+                        <span *ngIf="accountsForm.get('year')?.errors?.['required']">Year is required</span>
+                        <span *ngIf="accountsForm.get('year')?.errors?.['pattern']">Year must be a 4-digit number</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Post</button>
+                <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

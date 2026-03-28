@@ -1,0 +1,316 @@
+// ============================================
+// YOGADA CHIT FUNDS - PROFESSIONAL COLOR SYSTEM
+// ============================================
+// Industry standard color management with CSS custom properties
+
+// ========== INTER FONT FAMILY VARIANTS ==========
+@font-face {
+  font-family: 'Inter';
+  src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  // ========== FONT FAMILY ==========
+  --font-family-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  // ========== PRIMARY BRAND COLORS ==========
+  --color-primary: #0A2962;
+  --color-secondary: #F19101;
+  --color-tabbg: #f8fafc;
+
+  // ========== ACCENT COLORS ==========
+  --color-accent-yellow-light: #FDE68A;
+  --color-accent-yellow-dark: #F49B00;
+  --color-accent-green: #00BB54;
+  --color-accent-blue: #009DD9;
+  --color-accent-violet: #7E22CE;
+  --color-accent-red: #FF0000;
+  --color-accent-magenta: #CA0067;
+
+  // ========== BLUE TINT SCALE ==========
+  --color-blue-50: #f0f4ff;
+  --color-blue-100: #e1eaff;
+  --color-blue-200: #c3d5ff;
+  --color-blue-300: #0d2684;
+  --color-blue-400: #5690ff;
+  --color-blue-500: #0A2962;
+
+  // ========== NEUTRAL SCALE ==========
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-dark: #000000;
+
+  // ========== TEXT COLORS ==========
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-white: #ffffff;
+
+  // ========== SEMANTIC COLORS ==========
+  --color-success: #00b262;
+  --color-warning: #f39104;
+  --color-error: #ff3d3d;
+  --color-info: #00bfff;
+
+  // ========== BACKGROUND COLORS ==========
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8fafc;
+  --color-bg-tertiary: #f1f5f9;
+  --color-bg-dark: #0A2962;
+
+  // ========== BORDER COLORS ==========
+  --color-border-light: #e2e8f0;
+  --color-border-medium: #cbd5e1;
+  --color-border-dark: #94a3b8;
+
+  // ========== SHADOW COLORS ==========
+  --color-shadow-light: rgba(35, 51, 99, 0.08);
+  --color-shadow-medium: rgba(35, 51, 99, 0.16);
+  --color-shadow-dark: rgba(35, 51, 99, 0.24);
+}
+
+// ========== SCSS VARIABLES FOR BACKWARD COMPATIBILITY ==========
+// Primary Brand Colors
+$primary-color: var(--color-primary);
+$primary-light: var(--color-blue-300);
+$primary-dark: var(--color-blue-500);
+$primary-extra-light: var(--color-blue-50);
+$primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-blue-500) 100%);
+$secondary-color: var(--color-secondary);
+$tabbg-color: var(--color-tabbg);
+
+// Accent Colors
+$accent-yellow-light: var(--color-accent-yellow-light);
+$accent-yellow-dark: var(--color-accent-yellow-dark);
+$accent-green: var(--color-accent-green);
+$accent-blue: var(--color-accent-blue);
+$accent-violet: var(--color-accent-violet);
+$accent-red: var(--color-accent-red);
+$accent-magenta: var(--color-accent-magenta);
+
+// Blue Tint Scale
+$blue-50: var(--color-blue-50);
+$blue-100: var(--color-blue-100);
+$blue-200: var(--color-blue-200);
+$blue-300: var(--color-blue-300);
+$blue-400: var(--color-blue-400);
+$blue-500: var(--color-blue-500);
+
+// Neutrals
+$neutral-50: var(--color-neutral-50);
+$neutral-100: var(--color-neutral-100);
+$neutral-200: var(--color-neutral-200);
+$neutral-300: var(--color-neutral-300);
+$neutral-400: var(--color-neutral-400);
+$neutral-500: var(--color-neutral-500);
+$neutral-600: var(--color-neutral-600);
+$neutral-700: var(--color-neutral-700);
+$neutral-800: var(--color-neutral-800);
+$neutral-900: var(--color-neutral-900);
+$neutral-dark: var(--color-dark);
+
+// Text Colors
+$text-primary: var(--color-text-primary);
+$text-secondary: var(--color-text-secondary);
+$text-white: var(--color-text-white);
+
+// Semantic Colors
+$success-color: var(--color-success);
+$warning-color: var(--color-warning);
+$error-color: var(--color-error);
+$info-color: var(--color-info);
+
+// Background Colors
+$bg-primary: var(--color-bg-primary);
+$bg-secondary: var(--color-bg-secondary);
+$bg-tertiary: var(--color-bg-tertiary);
+$bg-dark: var(--color-bg-dark);
+
+// Legacy aliases for existing code compatibility
+$white: var(--color-bg-primary);
+$gray-50: var(--color-neutral-50);
+$gray-100: var(--color-neutral-100);
+$gray-200: var(--color-neutral-200);
+$gray-300: var(--color-neutral-300);
+$gray-400: var(--color-neutral-400);
+$gray-500: var(--color-neutral-500);
+$gray-600: var(--color-neutral-600);
+$gray-700: var(--color-neutral-700);
+$gray-800: var(--color-neutral-800);
+$gray-900: var(--color-neutral-900);
+
+// ========== UTILITY CLASSES ==========
+.text-primary {
+  color: var(--color-text-primary);
+}
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+.text-white {
+  color: var(--color-text-white);
+}
+
+.bg-primary {
+  background-color: var(--color-bg-primary);
+  font-family: var(--font-family-inter) !important;
+}
+.bg-secondary {
+  background-color: var(--color-bg-secondary);
+}
+.bg-tertiary {
+  background-color: var(--color-bg-tertiary);
+}
+.bg-brand {
+  background-color: var(--color-primary);
+}
+
+.border-light {
+  border-color: var(--color-border-light);
+}
+.border-medium {
+  border-color: var(--color-border-medium);
+}
+.border-dark {
+  border-color: var(--color-border-dark);
+}
+
+// ========== COMPONENT-SPECIFIC MIXINS ==========
+@mixin button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-white);
+  border: 1px solid var(--color-primary);
+
+  &:hover {
+    background-color: var(--color-blue-400);
+    border-color: var(--color-blue-400);
+  }
+
+  &:active {
+    background-color: var(--color-blue-500);
+    border-color: var(--color-blue-500);
+  }
+}
+
+@mixin button-secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-text-white);
+  border: 1px solid var(--color-secondary);
+
+  &:hover {
+    background-color: var(--color-accent-yellow-dark);
+    border-color: var(--color-accent-yellow-dark);
+  }
+}
+
+@mixin card-shadow {
+  box-shadow:
+    0 1px 3px var(--color-shadow-light),
+    0 1px 2px var(--color-shadow-medium);
+}
+
+@mixin card-shadow-hover {
+  box-shadow:
+    0 4px 6px var(--color-shadow-medium),
+    0 2px 4px var(--color-shadow-dark);
+}
+
+// Text Colors
+$text-primary: #111827;
+$text-secondary: #6b7280;
+$text-tertiary: #9ca3af;
+$text-white: #ffffff;
+$text-muted: #9ca3af;
+
+// Border Colors
+$border-light: #e5e7eb;
+$border-medium: #d1d5db;
+$border-dark: #9ca3af;
+
+// Shadow Colors
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md:
+  0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$shadow-lg:
+  0 10px 15px -3px rgba(0, 0, 0, 0.1),
+  0 4px 6px -2px rgba(0, 0, 0, 0.05);
+$shadow-xl:
+  0 20px 25px -5px rgba(0, 0, 0, 0.1),
+  0 10px 10px -5px rgba(0, 0, 0, 0.04);
+$shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+// Gradients
+$gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+$gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+$gradient-purple: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+$gradient-blue: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+$gradient-pink: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
+
+// Dashboard Specific Colors
+$sidebar-bg: #1f2937;
+$sidebar-hover: #374151;
+$sidebar-active: #4f46e5;
+$header-bg: #ffffff;
+$card-bg: #ffffff;
+
+// Chart Colors
+$chart-color-1: #6366f1;
+$chart-color-2: #10b981;
+$chart-color-3: #f59e0b;
+$chart-color-4: #8b5cf6;
+$chart-color-5: #ec4899;
+$chart-color-6: #3b82f6;
+
+// Status Colors for Chit Funds
+$status-active: #10b981;
+$status-pending: #f59e0b;
+$status-completed: #3b82f6;
+$status-cancelled: #ef4444;
+$status-draft: #6b7280;
+
+// Transitions
+$transition-fast: 0.15s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// Border Radius
+$radius-sm: 0.375rem;
+$radius-md: 0.5rem;
+$radius-lg: 0.75rem;
+$radius-xl: 1rem;
+$radius-2xl: 1.5rem;
+$radius-full: 9999px;
+
+// Spacing
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+$spacing-2xl: 3rem;

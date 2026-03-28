@@ -1,0 +1,491 @@
+<!-- Member Management Page -->
+
+<!-- Header Section -->
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Member Management</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Transactions</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Members</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Member Management</span>
+        </nav>
+    </div>
+    <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Member</button>
+</div>
+
+<div class="main-container">
+    <!-- Table Section - Hidden when showing form -->
+    <div class="table-section" *ngIf="!showForm">
+        <!-- Member List with Filters -->
+        <div class="member-list-section">
+            <div class="section-header">
+                <div class="tabs-container">
+                    <button class="tab-button" (click)="setOperationType('removal')"
+                        [class.active]="operationType === 'removal'">
+                        Member Removal ({{ getTotalRemovals() }})
+                    </button>
+                    <button class="tab-button" (click)="setOperationType('transfer')"
+                        [class.active]="operationType === 'transfer'">
+                        Member Transfer ({{ getTotalTransfers() }})
+                    </button>
+                    <button class="tab-button" (click)="setOperationType('reallotment')"
+                        [class.active]="operationType === 'reallotment'">
+                        Member Reallotment ({{ getTotalReallotments() }})
+                    </button>
+                </div>
+                <div class="search-box">
+                    <span class="search-icon">
+                        <img src="assets/images/icons/Search.png" alt="Search" />
+                    </span>
+                    <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm"
+                        (input)="filterMembers()" />
+                    <span class="search-shortcut">Ctrl Shift K</span>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-row">
+                <div class="search-filter">
+                    <select [(ngModel)]="searchGroup" (change)="filterMembers()">
+                        <option value="">All Groups</option>
+                        <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
+                    </select>
+                </div>
+                <div class="search-filter">
+                    <select [(ngModel)]="searchStatus" (change)="filterMembers()">
+                        <option value="">All Status</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Transferred">Transferred</option>
+                        <option value="Removed">Removed</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Members Table -->
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Ticket No</th>
+                            <th>Group</th>
+                            <th>Mobile</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let member of filteredMembers">
+                            <td class="member-name">{{ member.name }}</td>
+                            <td>{{ member.ticketNo }}</td>
+                            <td>{{ member.groupName }}</td>
+                            <td>{{ member.mobile }}</td>
+                            <td>
+                                <span class="status-badge" [ngClass]="'status-' + member.status.toLowerCase()">
+                                    {{ member.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="action-link" *ngIf="operationType === 'transfer'"
+                                    (click)="loadMemberForTransfer(member); showForm = true">
+                                    Transfer
+                                </button>
+                                <button class="action-link" *ngIf="operationType === 'reallotment'"
+                                    (click)="loadMemberForReallotment(member); showForm = true">
+                                    Reallocate
+                                </button>
+                                <button class="action-link" *ngIf="operationType === 'removal'"
+                                    (click)="showForm = true; newRemoval.subscriber = member.name; newRemoval.groupName = member.groupName; newRemoval.ticketNo = member.ticketNo">
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Removal Records -->
+            <div *ngIf="operationType === 'removal' && removals.length > 0" class="records-section">
+                <h4>Removal Records</h4>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Subscriber</th>
+                                <th>Group</th>
+                                <th>Removal Date</th>
+                                <th>Reason</th>
+                                <th>Authorized By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let removal of removals">
+                                <td>{{ removal.subscriber }}</td>
+                                <td>{{ removal.groupName }}</td>
+                                <td>{{ removal.removalDate }}</td>
+                                <td>{{ removal.reason }}</td>
+                                <td>{{ removal.authorizedBy }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Transfer Records -->
+            <div *ngIf="operationType === 'transfer' && transfers.length > 0" class="records-section">
+                <h4>Transfer Records</h4>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Subscriber</th>
+                                <th>From Group</th>
+                                <th>To Group</th>
+                                <th>Transfer Date</th>
+                                <th>Reason</th>
+                                <th>Authorized By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let transfer of transfers">
+                                <td>{{ transfer.subscriber }}</td>
+                                <td>{{ transfer.groupName }}</td>
+                                <td>{{ transfer.transferTo }}</td>
+                                <td>{{ transfer.transferDate }}</td>
+                                <td>{{ transfer.reason }}</td>
+                                <td>{{ transfer.authorizedBy }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reallotment Records -->
+            <div *ngIf="operationType === 'reallotment' && reallotments.length > 0" class="records-section">
+                <h4>Reallotment Records</h4>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Bidder</th>
+                                <th>Group</th>
+                                <th>Ticket Number</th>
+                                <th>Reallotment Date</th>
+                                <th>Reason</th>
+                                <th>Authorized By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let reallot of reallotments">
+                                <td>{{ reallot.bidder }}</td>
+                                <td>{{ reallot.groupName }}</td>
+                                <td>{{ reallot.ticketNumber }}</td>
+                                <td>{{ reallot.reallotmentDate }}</td>
+                                <td>{{ reallot.reason }}</td>
+                                <td>{{ reallot.authorizedBy }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="add-entry-form" *ngIf="showForm">
+        <div class="form-container">
+            <div class="form-content">
+                <!-- Form Header -->
+                <div class="form-header">
+                    <h2 *ngIf="operationType === 'removal'">Remove Member</h2>
+                    <h2 *ngIf="operationType === 'transfer'">Transfer Member</h2>
+                    <h2 *ngIf="operationType === 'reallotment'">Reallocate Member</h2>
+                    <button class="close-btn" (click)="toggleForm()">×</button>
+                </div>
+
+                <!-- Error/Success Messages -->
+                <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+                <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+
+                <!-- Form Body -->
+                <div class="form-body">
+                    <!-- MEMBER REMOVAL FORM -->
+                    <div *ngIf="operationType === 'removal'">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Group Name <span class="required">*</span></label>
+                                <input type="text" class="form-control" [(ngModel)]="newRemoval.groupName" />
+                            </div>
+                            <div class="form-group">
+                                <label>Ticket No <span class="required">*</span></label>
+                                <input type="text" class="form-control" [(ngModel)]="newRemoval.ticketNo" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Subscriber Name <span class="required">*</span></label>
+                                <input type="text" class="form-control" [(ngModel)]="newRemoval.subscriber" />
+                            </div>
+                            <div class="form-group">
+                                <label>Removal Date <span class="required">*</span></label>
+                                <input type="date" class="form-control" [(ngModel)]="newRemoval.removalDate" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Authorized By <span class="required">*</span></label>
+                                <select class="form-control" [(ngModel)]="newRemoval.authorizedBy">
+                                    <option value="">-- Select --</option>
+                                    <option *ngFor="let auth of authorizedBy" [value]="auth">{{ auth }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label>Reason for Removal <span class="required">*</span></label>
+                                <textarea class="form-control" [(ngModel)]="newRemoval.reason"
+                                    placeholder="Enter reason for member removal" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MEMBER TRANSFER FORM -->
+                    <div *ngIf="operationType === 'transfer'">
+                        <div class="form-section-title">Basic Information</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Transfer Date <span class="required">*</span></label>
+                                <input type="date" class="form-control" [(ngModel)]="newTransfer.transferDate" />
+                            </div>
+                            <div class="form-group">
+                                <label>Group <span class="required">*</span></label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.groupName" />
+                            </div>
+                            <div class="form-group">
+                                <label>Ticket No <span class="required">*</span></label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.ticketNo" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Subscriber Name <span class="required">*</span></label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.subscriber" />
+                            </div>
+                            <div class="form-group">
+                                <label>Transfer To (Group) <span class="required">*</span></label>
+                                <select class="form-control" [(ngModel)]="newTransfer.transferTo">
+                                    <option value="">-- Select Group --</option>
+                                    <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">Agent Details</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Business Agent</label>
+                                <select class="form-control" [(ngModel)]="newTransfer.busAgent">
+                                    <option value="">-- Select --</option>
+                                    <option *ngFor="let agent of agents" [value]="agent">{{ agent }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Collection Agent</label>
+                                <select class="form-control" [(ngModel)]="newTransfer.collAgent">
+                                    <option value="">-- Select --</option>
+                                    <option *ngFor="let agent of agents" [value]="agent">{{ agent }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">Member Financial Details</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Enrollment Date</label>
+                                <input type="date" class="form-control" [(ngModel)]="newTransfer.enrollDate" />
+                            </div>
+                            <div class="form-group">
+                                <label>Paid Up To</label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.paidUpTo" />
+                            </div>
+                            <div class="form-group">
+                                <label>Payable Amount</label>
+                                <input type="number" class="form-control" [(ngModel)]="newTransfer.payable" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Paid Amount</label>
+                                <input type="number" class="form-control" [(ngModel)]="newTransfer.paid" />
+                            </div>
+                            <div class="form-group">
+                                <label>Mobile</label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.mobile" />
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">Address & Nominee Information</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Address Type</label>
+                                <select class="form-control" [(ngModel)]="newTransfer.addressType">
+                                    <option value="">-- Select --</option>
+                                    <option *ngFor="let type of addressTypes" [value]="type">{{ type }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Member Address</label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.memberAddr" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nominee Name</label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.nominee" />
+                            </div>
+                            <div class="form-group">
+                                <label>Age</label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.age" />
+                            </div>
+                            <div class="form-group">
+                                <label>Relation</label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.relation" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Transferee Name</label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.transferee" />
+                            </div>
+                            <div class="form-group">
+                                <label>Transferee Address</label>
+                                <input type="text" class="form-control" [(ngModel)]="newTransfer.transfereeAddr" />
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">Authorization</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Authorized By <span class="required">*</span></label>
+                                <select class="form-control" [(ngModel)]="newTransfer.authorizedBy">
+                                    <option value="">-- Select --</option>
+                                    <option *ngFor="let auth of authorizedBy" [value]="auth">{{ auth }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label>Reason for Transfer <span class="required">*</span></label>
+                                <textarea class="form-control" [(ngModel)]="newTransfer.reason"
+                                    placeholder="Enter reason for member transfer" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MEMBER REALLOTMENT FORM -->
+                    <div *ngIf="operationType === 'reallotment'">
+                        <div class="form-section-title">Reallotment Information</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Group Name <span class="required">*</span></label>
+                                <input type="text" class="form-control" [(ngModel)]="newReallotment.groupName" />
+                            </div>
+                            <div class="form-group">
+                                <label>Ticket Number <span class="required">*</span></label>
+                                <input type="text" class="form-control" [(ngModel)]="newReallotment.ticketNumber" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Bidder Name <span class="required">*</span></label>
+                                <input type="text" class="form-control" [(ngModel)]="newReallotment.bidder" />
+                            </div>
+                            <div class="form-group">
+                                <label>Reallotment Date <span class="required">*</span></label>
+                                <input type="date" class="form-control" [(ngModel)]="newReallotment.reallotmentDate" />
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">Financial Details</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Running Installment No</label>
+                                <input type="number" class="form-control"
+                                    [(ngModel)]="newReallotment.runningInstallmentNo" />
+                            </div>
+                            <div class="form-group">
+                                <label>Subscription Payable</label>
+                                <input type="number" class="form-control"
+                                    [(ngModel)]="newReallotment.subscriptionPayable" />
+                            </div>
+                            <div class="form-group">
+                                <label>Paid Amount</label>
+                                <input type="number" class="form-control" [(ngModel)]="newReallotment.paidAmount" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Balance Amount</label>
+                                <input type="number" class="form-control" [(ngModel)]="newReallotment.balanceAmount"
+                                    disabled />
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">Member Details</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Enrollment Date</label>
+                                <input type="date" class="form-control" [(ngModel)]="newReallotment.enrollmentDate" />
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Address</label>
+                                <textarea class="form-control" [(ngModel)]="newReallotment.address" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">Authorization</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Authorized By <span class="required">*</span></label>
+                                <select class="form-control" [(ngModel)]="newReallotment.authorizedBy">
+                                    <option value="">-- Select --</option>
+                                    <option *ngFor="let auth of authorizedBy" [value]="auth">{{ auth }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label>Reason for Reallotment <span class="required">*</span></label>
+                                <textarea class="form-control" [(ngModel)]="newReallotment.reason"
+                                    placeholder="Enter reason for member reallotment" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Footer -->
+                <div class="form-footer">
+                    <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+                    <button class="btn btn-primary"
+                        (click)="operationType === 'removal' ? saveRemoval() : (operationType === 'transfer' ? saveTransfer() : saveReallotment())">
+                        Save {{ operationType | titlecase }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

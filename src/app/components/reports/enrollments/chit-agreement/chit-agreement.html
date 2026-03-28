@@ -1,0 +1,66 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Chit Agreement</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Admin</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Reports</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Enrollments</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Chit Agreement</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-section">
+    <form [formGroup]="agreementForm" (ngSubmit)="onGenerate()" class="report-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Report Date</label>
+          <input type="date" formControlName="reportDate" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Group Name</label>
+          <input formControlName="groupName" class="form-control" placeholder="Enter group name" />
+        </div>
+        <div class="form-group">
+          <label>Ticket No</label>
+          <input formControlName="ticketNo" class="form-control" placeholder="Enter ticket number" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Generate Agreement</button>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="showResults()" class="table-section">
+    <div class="section-header">
+      <h3>Chit Agreement</h3>
+    </div>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Report Date</th>
+            <th>Group Name</th>
+            <th>Ticket No</th>
+            <th>Subscriber</th>
+            <th>Terms</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let agreement of agreements()">
+            <td>{{ agreement.reportDate }}</td>
+            <td>{{ agreement.groupName }}</td>
+            <td>{{ agreement.ticketNo }}</td>
+            <td>{{ agreement.subscriber }}</td>
+            <td>{{ agreement.terms }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

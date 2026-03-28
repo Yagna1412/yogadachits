@@ -1,0 +1,148 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Payments to Removal Members</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Payments</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Payments to Removal Members</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Payment</button>
+</div>
+
+<div class="main-container">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Payments List</h3>
+      <div class="search-box">
+        <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search" /></span>
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterPayments()" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="table" *ngIf="filteredPayments.length">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Ticket</th>
+            <th>Paid To</th>
+            <th>Transaction Date</th>
+            <th>Amount</th>
+            <th>Paid Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of filteredPayments">
+            <td>{{p.groupName}}</td>
+            <td>{{p.ticketNo}}</td>
+            <td>{{p.paidTo}}</td>
+            <td>{{p.transactionDate}}</td>
+            <td>{{p.amount}}</td>
+            <td>{{p.paidAmount}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="!filteredPayments.length">
+        <p>No payments found. Click "Add Payment" to create one.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Add Removal Member Payment</h2>
+        <button class="close-btn" (click)="toggleForm()">×</button>
+      </div>
+
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Group Name</label>
+            <input class="form-control" [(ngModel)]="newPayment.groupName" placeholder="Group Name" />
+          </div>
+          <div class="form-group">
+            <label>Ticket Number</label>
+            <input class="form-control" [(ngModel)]="newPayment.ticketNo" placeholder="Ticket Number" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Paid To</label>
+            <input class="form-control" [(ngModel)]="newPayment.paidTo" placeholder="Paid To" />
+          </div>
+          <div class="form-group">
+            <label>Amount</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.amount" placeholder="Amount" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Including Charges</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.includingCharges" />
+          </div>
+          <div class="form-group">
+            <label>Postage Due</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.postageDue" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>BOC</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.boc" />
+          </div>
+          <div class="form-group">
+            <label>Forfeited</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.forfeited" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Company Commission</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.companyCommission" />
+          </div>
+          <div class="form-group">
+            <label>Subscription Paid</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.subscriptionPaid" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Stamps & Other</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.stampsOther" />
+          </div>
+          <div class="form-group">
+            <label>Rectification Adjustment</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.rectificationAdjustment" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Narration</label>
+            <input class="form-control" [(ngModel)]="newPayment.narration" />
+          </div>
+          <div class="form-group">
+            <label>Cheque Number</label>
+            <input class="form-control" [(ngModel)]="newPayment.chequeNumber" />
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="savePayment()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

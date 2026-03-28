@@ -1,0 +1,102 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Surety List</h1>
+        <nav class="c">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Reports</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Enrollments</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Surety List</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Filter Form -->
+    <div class="form-section">
+        <form [formGroup]="suretyForm" (ngSubmit)="onGenerate()">
+            <div class="form-grid">
+                <!-- Report Date -->
+                <div class="form-group">
+                    <label for="reportDate">Report Date *</label>
+                    <input type="date" id="reportDate" class="form-control" formControlName="reportDate"
+                        [class.error]="submitted && suretyForm.get('reportDate')?.invalid">
+                    <div class="error-message" *ngIf="submitted && suretyForm.get('reportDate')?.invalid">
+                        Report Date is required
+                    </div>
+                    <div class="error-message" *ngIf="suretyForm.errors?.['invalidFinancialYear']">
+                        Date must fall within the current financial year
+                    </div>
+                </div>
+                <!-- Report Format -->
+                <div class="form-group">
+                    <label for="reportFormat">Report Format *</label>
+                    <select id="reportFormat" class="form-control" formControlName="reportFormat">
+                        <option value="PDF">PDF</option>
+                        <option value="Excel">Excel</option>
+                    </select>
+                </div>
+                <!-- Group Name -->
+                <div class="form-group">
+                    <label for="groupName">Group Name</label>
+                    <input type="text" id="groupName" class="form-control" formControlName="groupName">
+                </div>
+                <!-- Ticket No -->
+                <div class="form-group">
+                    <label for="ticketNo">Ticket No</label>
+                    <input type="text" id="ticketNo" class="form-control" formControlName="ticketNo">
+                </div>
+                <!-- Subscriber Name -->
+                <div class="form-group">
+                    <label for="subscriberName">Subscriber Name</label>
+                    <input type="text" id="subscriberName" class="form-control" formControlName="subscriberName">
+                </div>
+                <!-- Surety Type -->
+                <div class="form-group">
+                    <label for="suretyType">Surety Type *</label>
+                    <select id="suretyType" class="form-control" formControlName="suretyType">
+                        <option value="All">All</option>
+                        <option value="Primary">Primary</option>
+                        <option value="Secondary">Secondary</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Generate</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Table -->
+
+    <div class="table-section" *ngIf="showResults()">
+        <div class="section-header">
+            <h3>Surety List</h3>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Report Date</th>
+                        <th>Group Name</th>
+                        <th>Ticket No</th>
+                        <th>Subscriber Name</th>
+                        <th>Surety Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let surety of sureties()">
+                        <td>{{ surety.reportDate }}</td>
+                        <td>{{ surety.groupName }}</td>
+                        <td>{{ surety.ticketNo }}</td>
+                        <td>{{ surety.subscriberName }}</td>
+                        <td>{{ surety.suretyType }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

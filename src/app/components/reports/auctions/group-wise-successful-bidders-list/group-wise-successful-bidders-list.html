@@ -1,0 +1,75 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Group Wise Successful Bidders List</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Admin</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Reports</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Auctions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Group Wise Successful Bidders List</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-section">
+    <form [formGroup]="groupForm" (ngSubmit)="onGenerate()" class="report-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Group Name</label>
+          <input formControlName="groupName" class="form-control" placeholder="Enter group name (optional)" />
+        </div>
+        <div class="form-group">
+          <label>Groups *</label>
+          <select formControlName="groupStatus" class="form-control">
+            <option *ngFor="let s of groupStatuses" [value]="s.value">{{ s.label }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>From Date *</label>
+          <input type="date" formControlName="fromDate" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>To Date *</label>
+          <input type="date" formControlName="toDate" class="form-control" />
+        </div>
+        <div *ngIf="submitted && groupForm.errors?.['invalidDateRange']" class="error-message">From Date cannot be after To Date.</div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Generate</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-section" *ngIf="showResults()">
+    <div class="section-header">
+      <h3>Group Wise Successful Bidders List</h3>
+    </div>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Groups</th>
+            <th>From Date</th>
+            <th>To Date</th>
+            <th>Bidder</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of bidders()">
+            <td>{{ b.groupName }}</td>
+            <td>{{ b.groupStatus }}</td>
+            <td>{{ b.fromDate }}</td>
+            <td>{{ b.toDate }}</td>
+            <td>{{ b.bidder }}</td>
+            <td>{{ b.amount | number }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

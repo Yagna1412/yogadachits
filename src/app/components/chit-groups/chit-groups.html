@@ -1,0 +1,385 @@
+<!-- Page Header -->
+<div class="page-header" *ngIf="!showAddGroupForm">
+  <div class="header-left">
+    <h1 class="page-title">Chit Groups</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Master</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Members</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Chit Groups</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary add-group-btn" (click)="toggleAddGroupForm()" *ngIf="!showAddGroupForm">
+    <span class="btn-icon">+</span>
+    <span>Add New Group</span>
+  </button>
+</div>
+<div class="chit-groups-container">
+
+
+  <!-- Add New Group Form -->
+  <div class="add-group-form" *ngIf="showAddGroupForm">
+    <div class="form-header">
+      <h2>Add New Group</h2>
+      <button class="close-btn" (click)="toggleAddGroupForm()">
+        ×
+      </button>
+    </div>
+
+    <form class="group-form" (ngSubmit)="createGroup()">
+      <div class="sub-form">
+        <h3>General Information</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="groupName">Group Name <span class="text-danger">*</span></label>
+            <input id="groupName" type="text" [(ngModel)]="newGroup.name" name="groupName" placeholder="e.g XYZ"
+              class="form-control" [class.is-invalid]="validationErrors['name']" />
+          </div>
+          <div class="form-group">
+            <label for="chitAmount">Chit Amount (₹) <span class="text-danger">*</span></label>
+            <input id="chitAmount" type="number" [(ngModel)]="newGroup.chitAmount" name="chitAmount"
+              placeholder="e.g 123456789" class="form-control" [class.is-invalid]="validationErrors['chitAmount']" />
+          </div>
+          <div class="form-group">
+            <label for="chitSeries">Chit Series</label>
+            <input id="chitSeries" type="text" [(ngModel)]="newGroup.chitSeries" name="chitSeries"
+              class="form-control" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="auctionType">Auction Type</label>
+            <input id="auctionType" type="text" [(ngModel)]="newGroup.auctionType" name="auctionType"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="noOfInstallments">No. of Installments</label>
+            <input id="noOfInstallments" type="number" [(ngModel)]="newGroup.noOfInstallments" name="noOfInstallments"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="psoDate">PSO Date</label>
+            <input id="psoDate" type="date" [(ngModel)]="newGroup.psoDate" name="psoDate" class="form-control" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="psoNumber">PSO Number</label>
+            <input id="psoNumber" type="text" [(ngModel)]="newGroup.psoNumber" name="psoNumber" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="commencementDate">Commencement Date</label>
+            <input id="commencementDate" type="date" [(ngModel)]="newGroup.commencementDate" name="commencementDate"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="termDate">Term Date</label>
+            <input id="termDate" type="date" [(ngModel)]="newGroup.termDate" name="termDate" class="form-control" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="caNumber">CA Number</label>
+            <input id="caNumber" type="text" [(ngModel)]="newGroup.caNumber" name="caNumber" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="caDate">CA Date</label>
+            <input id="caDate" type="date" [(ngModel)]="newGroup.caDate" name="caDate" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="enrollmentFee">Enrollment Fee</label>
+            <input id="enrollmentFee" type="number" [(ngModel)]="newGroup.enrollmentFee" name="enrollmentFee"
+              class="form-control" />
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-form">
+        <h3>Company Information</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="companyChitNumber">Company Chit Number</label>
+            <input id="companyChitNumber" type="text" [(ngModel)]="newGroup.companyChitNumber" name="companyChitNumber"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="noOfAuctionInstallments">No. of Auction Installments</label>
+            <input id="noOfAuctionInstallments" type="number" [(ngModel)]="newGroup.noOfAuctionInstallments"
+              name="noOfAuctionInstallments" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="companyCommission">Company Commission (%)</label>
+            <input id="companyCommission" type="number" [(ngModel)]="newGroup.companyCommission"
+              name="companyCommission" class="form-control" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="maxCeiling">Max Ceiling (%)</label>
+            <input id="maxCeiling" type="number" [(ngModel)]="newGroup.maxCeiling" name="maxCeiling"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="penaltyNps">Penalty for NPS (%)</label>
+            <input id="penaltyNps" type="number" [(ngModel)]="newGroup.penaltyNps" name="penaltyNps"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="penaltyPs">Penalty for PS (%)</label>
+            <input id="penaltyPs" type="number" [(ngModel)]="newGroup.penaltyPs" name="penaltyPs"
+              class="form-control" />
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-form">
+        <h3>Auction Information</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="auctionsPerMonth">Auctions Per Month</label>
+            <input id="auctionsPerMonth" type="number" [(ngModel)]="newGroup.auctionsPerMonth" name="auctionsPerMonth"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="installmentAmount">Installment Amount</label>
+            <input id="installmentAmount" type="number" [(ngModel)]="newGroup.installmentAmount"
+              name="installmentAmount" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="auctionDate">Auction Date</label>
+            <input id="auctionDate" type="date" [(ngModel)]="newGroup.auctionDate" name="auctionDate"
+              class="form-control" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="auctionDay">Auction Day</label>
+            <select id="auctionDay" [(ngModel)]="newGroup.auctionDay" name="auctionDay" class="form-control">
+              <option value="" disabled>Select Auction Day</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+              <option value="Sunday">Sunday</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="auctionTimeFrom">Auction Time From</label>
+            <input id="auctionTimeFrom" type="time" [(ngModel)]="newGroup.auctionTimeFrom" name="auctionTimeFrom"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="auctionTimeTo">Auction Time To</label>
+            <input id="auctionTimeTo" type="time" [(ngModel)]="newGroup.auctionTimeTo" name="auctionTimeTo"
+              class="form-control" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dividendMonth">Dividend Month</label>
+            <input id="dividendMonth" type="text" [(ngModel)]="newGroup.dividendMonth" name="dividendMonth"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="sendSms">Send SMS to All Customers</label>
+            <select id="sendSms" [(ngModel)]="newGroup.sendSms" name="sendSms" class="form-control">
+              <option value="" disabled>Select</option>
+              <option [ngValue]="true">Yes</option>
+              <option [ngValue]="false">No</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-form">
+        <h3>Auction Information</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fdrNumber">FDR Number</label>
+            <input id="fdrNumber" type="text" [(ngModel)]="newGroup.fdrNumber" name="fdrNumber" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="fdrType">FDR Type</label>
+            <input id="fdrType" type="text" [(ngModel)]="newGroup.fdrType" name="fdrType" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="fdrAmount">FDR Amount</label>
+            <input id="fdrAmount" type="number" [(ngModel)]="newGroup.fdrAmount" name="fdrAmount"
+              class="form-control" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fdrDate">FDR Date</label>
+            <input id="fdrDate" type="date" [(ngModel)]="newGroup.fdrDate" name="fdrDate" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="numberOfMonths">Number of Months</label>
+            <input id="numberOfMonths" type="number" [(ngModel)]="newGroup.numberOfMonths" name="numberOfMonths"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="maturityDate">Maturity Date</label>
+            <input id="maturityDate" type="date" [(ngModel)]="newGroup.maturityDate" name="maturityDate"
+              class="form-control" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="roiPerYear">ROI Per Year</label>
+            <input id="roiPerYear" type="number" [(ngModel)]="newGroup.roiPerYear" name="roiPerYear"
+              class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="fdrMaturityAmount">FDR Maturity Amount</label>
+            <input id="fdrMaturityAmount" type="number" [(ngModel)]="newGroup.fdrMaturityAmount"
+              name="fdrMaturityAmount" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="bankNameBranch">Bank Name and Branch</label>
+            <input id="bankNameBranch" type="text" [(ngModel)]="newGroup.bankNameBranch" name="bankNameBranch"
+              class="form-control" />
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Create Group</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Controls -->
+  <div class="groups-controls" *ngIf="!showAddGroupForm">
+    <div class="controls-left">
+      <h3>All Groups</h3>
+    </div>
+    <div class="controls-right">
+      <div class="search-box">
+        <img src="assets/images/icons/Search.png" alt="search" class="search-icon" />
+        <input type="text" placeholder="Search" [(ngModel)]="searchTerm" class="search-input" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')">
+          <img src="assets/images/icons/grid.png" alt="grid" />
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode === 'list'" (click)="setViewMode('list')">
+          <img src="assets/images/icons/list.png" alt="list" />
+        </button>
+      </div>
+
+      <select class="status-filter" [(ngModel)]="statusFilter">
+        <option value="">All Status</option>
+        <option value="Active">Active</option>
+        <option value="Upcoming">Upcoming</option>
+        <option value="Completed">Completed</option>
+        <option value="Inactive">Inactive</option>
+      </select>
+    </div>
+  </div>
+  <!-- Groups List/Grid View -->
+  <div class="groups-content" *ngIf="!showAddGroupForm">
+
+
+    <!-- Grid View -->
+    <div class="groups-grid" *ngIf="viewMode === 'grid'">
+      <div class="group-card" *ngFor="let group of filteredGroups">
+        <div class="card-header">
+          <h4 class="group-name">{{ group.name }}</h4>
+          <button class="card-menu-btn" (click)="editGroup(group)">
+            <img src="assets/images/icons/Group.png" alt="menu" />
+          </button>
+        </div>
+        <div class="card-amount">
+          <span class="currency">₹</span>
+          <span class="amount">{{ formatCurrency(group.chitAmount) }}</span>
+        </div>
+        <div class="card-details">
+          <div class="detail-item">
+            <img src="assets/images/icons/calen.png" alt="tenure" class="detail-icon" />
+            <span>{{ group.tenure }} Months</span>
+          </div>
+          <div class="detail-item">
+            <img src="assets/images/icons/inr.png" alt="monthly" class="detail-icon" />
+            <span>{{ formatCurrency(group.monthlyAmount) }}/Month</span>
+          </div>
+          <div class="detail-item">
+            <img src="assets/images/icons/star.png" alt="commission" class="detail-icon" />
+            <span>{{ group.commission }}% Comm</span>
+          </div>
+          <div class="detail-item">
+            <img src="assets/images/icons/user-round-check.png" alt="members" class="detail-icon" />
+            <span>{{ group.currentMembers }} Members</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="auction-info">
+            <span>Auction: {{ group.auctionSchedule }}</span>
+          </div>
+          <div class="status-badge" [ngClass]="'status-' + group.status.toLowerCase()">
+            {{ group.status }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table View -->
+    <div class="table-wrapper" *ngIf="viewMode === 'list'">
+      <table class="table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" /></th>
+            <th>Group ID</th>
+            <th>Name</th>
+            <th>Chit Amount</th>
+            <th>Tenure</th>
+            <th>Monthly</th>
+            <th>Commission</th>
+            <th>Auction Day</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let group of filteredGroups" class="table-row">
+            <td><input type="checkbox" /></td>
+            <td class="group-id">{{ group.id }}</td>
+            <td class="group-name">{{ group.name }}</td>
+            <td class="chit-amount">₹{{ formatCurrency(group.chitAmount) }}</td>
+            <td>{{ group.tenure }} months</td>
+            <td>₹{{ formatCurrency(group.monthlyAmount) }}</td>
+            <td>{{ group.commission }}%</td>
+            <td>{{ group.auctionDay }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="'status-' + group.status.toLowerCase()">
+                {{ group.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="table-pagination">
+        <div class="pagination-info">
+          <span>Showing 1 to 9 of 9 entries</span>
+        </div>
+        <div class="pagination-controls">
+          <button class="pagination-btn" disabled>
+            <i class="pi pi-angle-left"></i>
+          </button>
+          <span class="page-number active">1</span>
+          <button class="pagination-btn" disabled>
+            <i class="pi pi-angle-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

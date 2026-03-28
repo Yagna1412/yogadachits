@@ -1,0 +1,64 @@
+<div class="page-header">
+  <div class="header-left">
+    <div class="page-title">Minutes Filing Register</div>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Dashboard</span>
+      <span class="breadcrumb-separator">→</span>
+      <span class="breadcrumb-item">Reports</span>
+      <span class="breadcrumb-separator">→</span>
+      <span class="breadcrumb-item">Auctions</span>
+      <span class="breadcrumb-separator">→</span>
+      <span class="breadcrumb-item active">Minutes Filing Register</span>
+    </nav>
+  </div>
+</div>
+<div class="main-container">
+  <form [formGroup]="registerForm" (ngSubmit)="onPreview()" class="form-section">    
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Group Name <span class="required">*</span></label>
+        <input type="text" formControlName="groupName" class="form-control" placeholder="Enter group name" />
+        <div class="error-message" *ngIf="submitted && registerForm.get('groupName')?.invalid">Group Name is required.</div>
+      </div>
+      <div class="form-group">
+        <label>Notice Date <span class="required">*</span></label>
+        <input type="date" class="form-control" formControlName="noticeDate" />
+        <div class="error-message" *ngIf="submitted && registerForm.get('noticeDate')?.invalid">Notice Date is required.</div>
+      </div>
+      <div class="form-group">
+        <label>To Date <span class="required">*</span></label>
+        <input type="date" class="form-control" formControlName="toDate" />
+        <div class="error-message" *ngIf="submitted && registerForm.get('toDate')?.invalid">To Date is required.</div>
+        <div class="error-message" *ngIf="submitted && registerForm.errors?.['invalidDateRange']">Date range is invalid.</div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Preview</button>
+      <button type="button" class="btn btn-primary" (click)="onPrint()" [disabled]="!showResults()">Print</button>
+    </div>
+  </form>
+
+  <div class="table-section" *ngIf="showResults()">
+    <div class="section-header">Minutes Filing Register</div>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Notice Date</th>
+            <th>To Date</th>
+            <th>Minutes Filed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of results()">
+            <td>{{ row.group }}</td>
+            <td>{{ row.noticeDate }}</td>
+            <td>{{ row.toDate }}</td>
+            <td>{{ row.minutesFiled }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

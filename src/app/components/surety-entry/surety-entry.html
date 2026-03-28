@@ -1,0 +1,113 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Surety Entry</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Payments</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Surety Entry</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Surety</button>
+</div>
+
+<div class="main-container">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Surety List</h3>
+      <div class="search-box">
+        <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search" /></span>
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterSureties()" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="table" *ngIf="filteredSureties.length">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Ticket</th>
+            <th>Subscriber</th>
+            <th>Surety</th>
+            <th>Relation</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of filteredSureties">
+            <td>{{s.groupName}}</td>
+            <td>{{s.ticketNo}}</td>
+            <td>{{s.subscriberName}}</td>
+            <td>{{s.suretyName}}</td>
+            <td>{{s.suretyRelation}}</td>
+            <td>{{s.suretyDate}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="!filteredSureties.length">
+        <p>No sureties found. Click "Add Surety" to create one.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Add Surety</h2>
+        <button class="close-btn" (click)="toggleForm()">×</button>
+      </div>
+
+      <div class="form-body">
+        <!-- Validation Error Message -->
+        <div class="error-banner" *ngIf="validationError" style="background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.875rem; border: 1px solid #fecaca;">
+          {{validationError}}
+        </div>
+
+        <!-- Success Message -->
+        <div class="success-banner" *ngIf="successMessage" style="background: #dcfce7; color: #15803d; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.875rem; border: 1px solid #bbf7d0;">
+          {{successMessage}}
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Group Name</label>
+            <input class="form-control" [(ngModel)]="newSurety.groupName" placeholder="Group Name" />
+          </div>
+          <div class="form-group">
+            <label>Ticket Number</label>
+            <input class="form-control" [(ngModel)]="newSurety.ticketNo" placeholder="Ticket Number" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Subscriber Name</label>
+            <input class="form-control" [(ngModel)]="newSurety.subscriberName" placeholder="Subscriber Name" />
+          </div>
+          <div class="form-group">
+            <label>Surety Entry Date</label>
+            <input class="form-control" type="date" [(ngModel)]="newSurety.suretyDate" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Surety Name</label>
+            <input class="form-control" [(ngModel)]="newSurety.suretyName" placeholder="Surety Name" />
+          </div>
+          <div class="form-group">
+            <label>Relationship</label>
+            <input class="form-control" [(ngModel)]="newSurety.suretyRelation" placeholder="Relationship" />
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveSurety()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

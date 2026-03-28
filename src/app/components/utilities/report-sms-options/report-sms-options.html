@@ -1,0 +1,218 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Report SMS Options</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Utilities</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Report SMS Options</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- SMS Category Selection -->
+    <div class="form-group category-selection">
+        <label>SMS Category *</label>
+        <select class="form-control" [(ngModel)]="smsCategory" (change)="setActiveTab(getTabFromCategory(smsCategory))">
+            <option value="Outstanding">Outstanding</option>
+            <option value="Promotional">Promotional</option>
+            <option value="Receipts">Receipts</option>
+            <option value="Auctions">Auctions</option>
+            <option value="Greetings">Greetings</option>
+            <option value="Guarantor Dues">Guarantor Dues</option>
+        </select>
+    </div>
+
+    <!-- SMS Category Tabs -->
+    <div class="tabs-and-controls">
+        <div class="tabs-container">
+            <button class="tab-button" [class.active]="activeTab === 'outstanding'"
+                (click)="setActiveTab('outstanding')">Outstanding</button>
+            <button class="tab-button" [class.active]="activeTab === 'promotional'"
+                (click)="setActiveTab('promotional')">Promotional</button>
+            <button class="tab-button" [class.active]="activeTab === 'receipts'"
+                (click)="setActiveTab('receipts')">Receipts</button>
+            <button class="tab-button" [class.active]="activeTab === 'auctions'"
+                (click)="setActiveTab('auctions')">Auctions</button>
+            <button class="tab-button" [class.active]="activeTab === 'greetings'"
+                (click)="setActiveTab('greetings')">Greetings</button>
+            <button class="tab-button" [class.active]="activeTab === 'guarantor'"
+                (click)="setActiveTab('guarantor')">Guarantor Dues</button>
+        </div>
+    </div>
+
+    <!-- Outstanding Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'outstanding'">
+        <h3>Outstanding SMS</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Due Date *</label>
+                <input type="date" class="form-control" [(ngModel)]="model.dueDate" required />
+            </div>
+            <div class="form-group">
+                <label>Group Type</label>
+                <select class="form-control" [(ngModel)]="model.groupType">
+                    <option value="">Select</option>
+                    <option value="Running">Running</option>
+                    <option value="Closed">Closed</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Group Name</label>
+                <input class="form-control" [(ngModel)]="model.groupName" placeholder="Enter group name" />
+            </div>
+            <div class="form-group">
+                <label>Due Inst From</label>
+                <input type="number" class="form-control" [(ngModel)]="model.dueInstFrom" />
+            </div>
+            <div class="form-group">
+                <label>Due Inst To</label>
+                <input type="number" class="form-control" [(ngModel)]="model.dueInstTo" />
+            </div>
+            <div class="form-group">
+                <label>Is Penalty</label>
+                <select class="form-control" [(ngModel)]="model.isPenalty">
+                    <option value="">Select</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promotional Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'promotional'">
+        <h3>Promotional SMS</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Person Type</label>
+                <select class="form-control" [(ngModel)]="model.personType">
+                    <option value="">Select</option>
+                    <option value="All Members">All Members</option>
+                    <option value="Subscribers">Subscribers</option>
+                    <option value="Guarantors">Guarantors</option>
+                </select>
+            </div>
+            <div class="form-group full-width">
+                <label>Message Content *</label>
+                <textarea class="form-control" [(ngModel)]="model.messageContent" 
+                          placeholder="Enter promotional message content" rows="4" required></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipts Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'receipts'">
+        <h3>Receipts SMS</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Receipt Date *</label>
+                <input type="date" class="form-control" [(ngModel)]="model.receiptDate" required />
+            </div>
+            <div class="form-group">
+                <label>Receipt Type</label>
+                <select class="form-control" [(ngModel)]="model.receiptType">
+                    <option value="">Select</option>
+                    <option value="Monthly Receipts">Monthly Receipts</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Receipt Series</label>
+                <input class="form-control" [(ngModel)]="model.receiptSeries" />
+            </div>
+            <div class="form-group">
+                <label>Receipt No</label>
+                <input class="form-control" [(ngModel)]="model.receiptNo" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Auctions Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'auctions'">
+        <h3>Auctions SMS</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Auction Date *</label>
+                <input type="date" class="form-control" [(ngModel)]="model.auctionDate" required />
+            </div>
+            <div class="form-group">
+                <label>Group Name</label>
+                <input class="form-control" [(ngModel)]="model.groupName" />
+            </div>
+            <div class="form-group">
+                <label>Auction Type</label>
+                <select class="form-control" [(ngModel)]="model.auctionType">
+                    <option value="">Select</option>
+                    <option value="After Auction">After Auction</option>
+                    <option value="Before Auction">Before Auction</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Greetings Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'greetings'">
+        <h3>Greetings SMS</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Greeting Date *</label>
+                <input type="date" class="form-control" [(ngModel)]="model.greetingDate" required />
+            </div>
+        </div>
+    </div>
+
+    <!-- Guarantor Dues Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'guarantor'">
+        <h3>Guarantor Dues SMS</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Group Name</label>
+                <input class="form-control" [(ngModel)]="model.groupName" placeholder="Enter group name" />
+            </div>
+            <div class="form-group">
+                <label>Ticket No</label>
+                <input class="form-control" [(ngModel)]="model.ticketNo" placeholder="Enter ticket number" />
+            </div>
+            <div class="form-group">
+                <label>Subscriber Name</label>
+                <input class="form-control" [(ngModel)]="model.subscriberName" placeholder="Enter subscriber name" />
+            </div>
+            <div class="form-group">
+                <label>Date *</label>
+                <input type="date" class="form-control" [(ngModel)]="model.date" required />
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+        <button class="btn btn-primary" (click)="generate()">Generate</button>
+        <button class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        <button class="btn btn-success" (click)="sendSms()" *ngIf="showGenerated">Send SMS</button>
+    </div>
+
+    <!-- Generated List -->
+    <div class="generated-list" *ngIf="showGenerated">
+        <h3>Generated SMS List ({{generatedList.length}} members)</h3>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Message Preview</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let item of generatedList">
+                        <td>{{item.name}}</td>
+                        <td>{{item.phone}}</td>
+                        <td>{{item.message}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

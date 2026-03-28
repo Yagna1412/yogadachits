@@ -1,0 +1,11 @@
+<!-- Celebration Illustration SVG -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <circle cx="200" cy="100" r="40" fill="#ffe4b5"/>
+  <rect x="170" y="140" width="60" height="80" rx="5" fill="#ff6b6b"/>
+  <rect x="120" y="160" width="50" height="20" rx="10" fill="#ff6b6b" transform="rotate(-30 145 170)"/>
+  <rect x="230" y="160" width="50" height="20" rx="10" fill="#ff6b6b" transform="rotate(30 255 170)"/>
+  <rect x="160" y="220" width="80" height="60" rx="5" fill="#90ee90"/>
+  <circle cx="180" cy="95" r="5" fill="#333"/>
+  <circle cx="220" cy="95" r="5" fill="#333"/>
+  <path d="M 180 110 Q 200 120 220 110" stroke="#333" stroke-width="2" fill="none"/>
+</svg>

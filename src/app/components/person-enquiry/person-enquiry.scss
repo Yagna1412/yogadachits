@@ -1,0 +1,164 @@
+@use '../../../styles/colors.scss' as *;
+
+.main-container {
+  padding: 20px;
+  background-color: var(--color-bg-secondary);
+  min-height: 100vh;
+}
+
+.card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  padding: 16px;
+  box-shadow: 0 1px 3px var(--color-shadow-light);
+}
+
+.section-title {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .title-square {
+    width: 12px;
+    height: 12px;
+    background-color: var(--color-primary); // Matching the theme primary
+  }
+}
+
+/* PERSON LAYOUT */
+.person-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr 180px;
+  gap: 20px;
+}
+
+.info-details {
+  .detail-row {
+    display: flex;
+    margin-bottom: 8px;
+    font-size: 14px;
+
+    .label { width: 80px; color: var(--color-text-secondary); }
+    .separator { width: 15px; }
+    .value { font-weight: 500; color: var(--color-text-primary); }
+  }
+}
+
+/* ADDRESS TABS */
+.address-section {
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  overflow: hidden;
+  height: max-content;
+}
+
+.address-tabs {
+  display: flex;
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.addr-tab-btn {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: var(--color-primary); // Theme primary
+  cursor: pointer;
+  border-right: 1px solid var(--color-border-light);
+
+  &.active {
+    background-color: var(--color-bg-primary);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: -1px;
+    border-bottom: 1px solid var(--color-bg-primary);
+  }
+}
+
+.address-content {
+  padding: 12px;
+  font-size: 14px;
+  min-height: 80px;
+}
+
+/* PHOTO & SIGNATURE */
+.photo-sig-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.photo-box, .sig-box {
+  border: 1px solid var(--color-border-light);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  background: var(--color-bg-primary);
+}
+
+.photo-box img { width: 100px; height: 100px; }
+.sig-box {
+  padding: 5px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  border-style: dashed;
+}
+
+/* FOLDER TABS SYSTEM */
+.folder-tabs-container {
+  margin-top: 10px;
+}
+
+.folder-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.folder-tab {
+  padding: 8px 20px;
+  background-color: var(--color-primary); // Theme primary
+  color: var(--color-text-white);
+  border: none;
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 100px;
+
+  &.active {
+    background-color: var(--color-bg-primary);
+    color: var(--color-primary);
+    font-weight: 600;
+    box-shadow: 0 -2px 5px var(--color-shadow-light);
+    border: 1px solid var(--color-border-light);
+    border-bottom: none;
+  }
+}
+
+.tab-body {
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-primary);
+  min-height: 200px;
+  border-radius: 0 4px 4px 4px;
+}
+
+.btn-cancel {
+  border-radius: 4px;
+  font-weight: 600;
+  padding: 10px 24px;
+}
+
+.clickable-row {
+  cursor: pointer;
+  &:hover { background-color: var(--color-bg-tertiary); }
+}

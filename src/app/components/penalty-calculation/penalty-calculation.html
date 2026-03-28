@@ -1,0 +1,104 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Penalty Calculation</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Enquiry</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Penalty Calculation</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-card">
+    <div class="form-header">
+      <h2>Calculate Penalty</h2>
+    </div>
+    <div class="form-body">
+      <div class="form-filter">
+        <div class="form-group">
+          <label>Group Name *</label>
+          <select class="form-control" [(ngModel)]="groupName">
+            <option value="">Select Group</option>
+            <option *ngFor="let g of groups" [value]="g">{{g}}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ticket No *</label>
+          <select class="form-control" [(ngModel)]="ticketNo">
+            <option value="">Select Ticket</option>
+            <option *ngFor="let t of ticketNumbers" [value]="t">{{t}}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Installment Range *</label>
+          <select class="form-control" [(ngModel)]="installmentRange">
+            <option value="">Select Range</option>
+            <option *ngFor="let r of installmentRanges" [value]="r">{{r}}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dividend Amount *</label>
+          <input class="form-control" type="number" [(ngModel)]="dividend" placeholder="Enter dividend amount" />
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button class="btn btn-secondary" (click)="reset()">Reset</button>
+        <button class="btn btn-primary" (click)="generate()">Generate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result section -->
+  <div class="result-card" *ngIf="calculation">
+    <div class="result-header">
+      <h2>Penalty Calculation Result</h2>
+    </div>
+    <div class="result-body">
+      <div class="result-row">
+        <div class="result-item">
+          <label>Group Name</label>
+          <p>{{calculation.groupName}}</p>
+        </div>
+        <div class="result-item">
+          <label>Ticket No</label>
+          <p>{{calculation.ticketNo}}</p>
+        </div>
+      </div>
+
+      <div class="result-row">
+        <div class="result-item">
+          <label>Installment Range</label>
+          <p>{{calculation.installmentRange}}</p>
+        </div>
+        <div class="result-item">
+          <label>Dividend Amount</label>
+          <p>{{calculation.dividend}}</p>
+        </div>
+      </div>
+
+      <div class="result-row">
+        <div class="result-item">
+          <label>Penalty Rate (%)</label>
+          <p>{{calculation.penaltyRate}}%</p>
+        </div>
+        <div class="result-item highlight">
+          <label>Penalty Amount</label>
+          <p class="amount">{{calculation.penaltyAmount}}</p>
+        </div>
+      </div>
+
+      <div class="result-row">
+        <div class="result-item">
+          <label>Generated Date</label>
+          <p>{{calculation.generatedDate}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!calculation" class="empty-state">
+    <p>Fill in the form and click "Generate" to calculate penalty.</p>
+  </div>
+</div>

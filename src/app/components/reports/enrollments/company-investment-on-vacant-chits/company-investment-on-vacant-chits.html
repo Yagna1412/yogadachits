@@ -1,0 +1,179 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Company Investment On Vacant Chits</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Reports</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Enrollments</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Company Investment On Vacant Chits</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Filter Form -->
+    <div class="form-section">
+        <form [formGroup]="investmentForm" (ngSubmit)="onGenerate()">
+            <div class="form-grid">
+                <!-- Date -->
+                <div class="form-group">
+                    <label for="date">Date *</label>
+                    <input
+                        type="date"
+                        id="date"
+                        class="form-control"
+                        formControlName="date"
+                        [class.error]="submitted && investmentForm.get('date')?.invalid">
+                    <div class="error-message" *ngIf="submitted && investmentForm.get('date')?.invalid">
+                        Date is required
+                    </div>
+                    <div class="error-message" *ngIf="investmentForm.errors?.['invalidFinancialYear']">
+                        Date must fall within the current financial year
+                    </div>
+                </div>
+
+                <!-- Group Status -->
+                <div class="form-group">
+                    <label for="groupStatus">Groups *</label>
+                    <select id="groupStatus" class="form-control" formControlName="groupStatus">
+                        <option value="Running">Running</option>
+                        <option value="Closed">Closed</option>
+                        <option value="Both">Both</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && investmentForm.get('groupStatus')?.invalid">
+                        Group status is required
+                    </div>
+                </div>
+
+                <!-- Report Format -->
+                <div class="form-group">
+                    <label for="reportFormat">Report Format *</label>
+                    <select id="reportFormat" class="form-control" formControlName="reportFormat">
+                        <option value="PDF">PDF</option>
+                        <option value="Excel">Excel</option>
+                        <option value="HTML">HTML</option>
+                        <option value="CSV">CSV</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && investmentForm.get('reportFormat')?.invalid">
+                        Report format is required
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Generate</button>
+                <button type="button" class="btn btn-secondary" (click)="onClear()">Clear</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Investment Results -->
+    <div class="investment-section" *ngIf="showResults()">
+        <div class="section-header">
+            <h3>Company Investment Report ({{investments().length}} investments)</h3>
+            <div class="export-actions">
+                <button class="btn btn-primary" (click)="exportReport()">
+                    Export Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card total-investment">
+                <div class="card-icon">
+                    <img src="assets/images/icons/check-check.png" alt="Investment Icon" />
+                </div>
+                <div class="card-content">
+                    <h4>Total Investment</h4>
+                    <p class="amount">{{getTotalInvestment() | currency:'INR':'symbol':'1.0-0'}}</p>
+                </div>
+            </div>
+
+            <div class="summary-card expected-return">
+                <div class="card-icon">
+                    <img src="assets/images/icons/check-check.png" alt="Investment Icon" />
+                </div>
+                <div class="card-content">
+                    <h4>Expected Return</h4>
+                    <p class="amount">{{getTotalExpectedReturn() | currency:'INR':'symbol':'1.0-0'}}</p>
+                </div>
+            </div>
+
+            <div class="summary-card net-profit" [class.positive]="getNetProfit() >= 0" [class.negative]="getNetProfit() < 0">
+                <div class="card-icon">
+                    <img src="assets/images/icons/check-check.png" alt="Investment Icon" />
+                </div>
+                <div class="card-content">
+                    <h4>Net Profit</h4>
+                    <p class="amount">{{getNetProfit() | currency:'INR':'symbol':'1.0-0'}}</p>
+                </div>
+            </div>
+
+            <div class="summary-card groups-count">
+                <div class="card-icon">
+                    <img src="assets/images/icons/check-check.png" alt="Investment Icon" />
+                </div>
+                <div class="card-content">
+                    <h4>Groups</h4>
+                    <p class="amount">{{getRunningGroupsCount()}} Running / {{getClosedGroupsCount()}} Closed</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Investments Table -->
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Investment ID</th>
+                        <th>Group ID</th>
+                        <th>Group Name</th>
+                        <th>Chit Type</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Vacant Position</th>
+                        <th>Investment Amount</th>
+                        <th>Monthly Subscription</th>
+                        <th>Expected Return</th>
+                        <th>Tenure (Months)</th>
+                        <th>Investment Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let investment of investments()">
+                        <td>{{investment.id}}</td>
+                        <td>{{investment.groupId}}</td>
+                        <td>{{investment.groupName}}</td>
+                        <td>{{investment.chitType}}</td>
+                        <td>{{investment.location}}</td>
+                        <td>
+                            <span class="status-badge" [class.running]="investment.groupStatus === 'Running'" [class.closed]="investment.groupStatus === 'Closed'">
+                                {{investment.groupStatus}}
+                            </span>
+                        </td>
+                        <td class="text-center">{{investment.vacantPosition}}</td>
+                        <td class="amount-cell">
+                            {{investment.investmentAmount | currency:'INR':'symbol':'1.0-0'}}
+                        </td>
+                        <td class="amount-cell">
+                            {{investment.monthlySubscription | currency:'INR':'symbol':'1.0-0'}}
+                        </td>
+                        <td class="amount-cell expected-return">
+                            {{investment.expectedReturn | currency:'INR':'symbol':'1.0-0'}}
+                        </td>
+                        <td class="text-center">{{investment.tenure}}</td>
+                        <td>{{investment.investmentDate | date:'dd/MM/yyyy'}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="empty-state" *ngIf="investments().length === 0">
+            <p>No company investments found for the selected criteria.</p>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,185 @@
+<!-- Page Header -->
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Monthly Auctions</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Members</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Auctions</span>
+    </nav>
+  </div>
+</div>
+
+<!-- Auction Header Card -->
+<div class="auction-main">
+  <div class="auction-header-section">
+  <div class="auction-number-badge">
+    <span class="badge-number">#{{ auctionHeader.auctionNumber }}</span>
+  </div>
+  
+  <div class="auction-header-grid">
+    <div class="header-item">
+      <span class="header-label">Group Name</span>
+      <span class="header-value">{{ auctionHeader.groupName }}</span>
+    </div>
+    <div class="header-item">
+      <span class="header-label">Auction Number</span>
+      <span class="header-value-with-total">
+        <span class="current">{{ auctionHeader.currentAuction }}</span>
+        <span class="total">of {{ auctionHeader.totalAuctions }}</span>
+      </span>
+    </div>
+    <div class="header-item">
+      <span class="header-label">Auction Date</span>
+      <span class="header-value">{{ auctionHeader.auctionDate }}</span>
+    </div>
+    <div class="header-item">
+      <span class="header-label">Total Members</span>
+      <span class="header-value">{{ auctionHeader.totalMembers }}</span>
+    </div>
+  </div>
+</div>
+<div class="auction-content-section">
+  <div class="auction-content-wrapper">
+    <!-- Left Panel: Highest Bid & Calculation Summary -->
+    <div class="auction-left-panel">
+      <!-- Current Highest Bid Card -->
+      <div class="highest-bid-card">
+        <h3 class="card-title">Current Highest Bid</h3>
+        <div class="bidder-info">
+          <span class="bidder-icon">
+            <img src="assets/images/icons/user1.png" alt="Bidder Icon" />
+          </span>
+          <span class="bidder-name">{{ bids[6].subscriber }}</span>
+        </div>
+        <div class="bid-divider"></div>
+        <div class="winning-bid-section">
+          <span class="winning-label">Winning Bid</span>
+          <span class="winning-amount">{{ formatCurrency(bids[6].bidAmount) }}</span>
+        </div>
+      </div>
+
+      <!-- Calculation Summary Card -->
+      <div class="calculation-card">
+        
+        <div class="calc-icon">
+          <span>₹</span>
+        </div>
+        <h3 class="card-title">Calculation Summary</h3>
+        
+        <div class="calculation-items">
+          <div class="calc-item">
+            <span class="calc-label">Chit Amount</span>
+            <span class="calc-value">{{ formatCurrency(calculationSummary.chitAmount) }}</span>
+          </div>
+          <div class="calc-item">
+            <span class="calc-label">Winning Bid</span>
+            <span class="calc-value">{{ formatCurrency(calculationSummary.winningBid) }}</span>
+          </div>
+          <div class="calc-item">
+            <span class="calc-label">Bid Loss</span>
+            <span class="calc-value">{{ formatCurrency(calculationSummary.bidLoss) }}</span>
+          </div>
+          <div class="calc-item">
+            <span class="calc-label">Commission ({{ calculationSummary.commissionPercentage }}%)</span>
+            <span class="calc-value">{{ formatCurrency(calculationSummary.commissionAmount) }}</span>
+          </div>
+          <div class="calc-item">
+            <span class="calc-label">Dividend per Member</span>
+            <span class="calc-value">{{ formatCurrency(calculationSummary.dividendPerMember) }}</span>
+          </div>
+          <div class="calc-item total-item">
+            <span class="calc-label">Net Payable</span>
+            <span class="calc-value">{{ formatCurrency(calculationSummary.netPayable) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button class="btn btn-secondary">Download Detail</button>
+        <button class="btn btn-primary" (click)="openConfirmModal()">Confirm Winner</button>
+      </div>
+    </div>
+
+    <!-- Right Panel: Bid Entry Table -->
+    <div class="auction-right-panel">
+      <div class="bid-table-section">
+        <h3 class="section-title">Bid Entry</h3>
+        
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Ticket Number</th>
+                <th>Subscriber</th>
+                <th>Bid Amount (₹)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let bid of bids" [class.highest-bid-row]="bid.status === 'Highest Bid'">
+                <td>{{ bid.ticketNumber }}</td>
+                <td>{{ bid.subscriber }}</td>
+                <td>
+                  <input type="number" class="bid-input" [(ngModel)]="bid.bidAmount" placeholder="0" />
+                </td>
+                <td><span class="status-badge" [class.bid-paid]="bid.status === 'Bid Paid'" [class.highest-bid]="bid.status === 'Highest Bid'">{{ bid.status }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Main Content Section -->
+
+<!-- Confirm Winner Modal -->
+<div class="modal-overlay" *ngIf="showConfirmModal" (click)="closeConfirmModal()">
+  <div class="modal-content confirm-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Confirm Winner</h2>
+      <button class="modal-close" (click)="closeConfirmModal()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="winner-card">
+        <h3>Winning Bid</h3>
+        <div class="winner-details">
+          <span class="winner-icon"><img src="assets/images/icons/user1.png" alt="Bidder Icon" /></span>
+          <span class="winner-name">{{ bids[6].subscriber }}</span>
+        </div>
+        <div class="winner-divider"></div>
+        <div class="winner-amount-section">
+          <span class="amount-label">Highest Bid</span>
+          <span class="amount-value">{{ formatCurrency(bids[6].bidAmount) }}</span>
+        </div>
+      </div>
+
+      <div class="net-payable-section">
+        <label>Net Payable</label>
+        <div class="net-payable-input">{{ formatCurrency(calculationSummary.netPayable) }}</div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeConfirmModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="confirmWinner()">Confirm Winner</button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+  <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+    <div class="success-icon">🏆</div>
+    <h2 class="success-title">{{ bids[6].subscriber }} Won the Auction !</h2>
+    <button class="btn btn-primary btn-large" (click)="closeSuccessModal()">Continue</button>
+  </div>
+</div>

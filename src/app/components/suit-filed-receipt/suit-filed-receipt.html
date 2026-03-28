@@ -1,0 +1,121 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Suit Filed Receipt</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item active">Suit File</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Suit Receipt</button>
+</div>
+
+<div class="main-container">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Suit Filed Receipts</h3>
+      <div class="search-box">
+        <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search"/></span>
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterReceipts()"/>
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="table" *ngIf="filteredReceipts.length">
+        <thead>
+          <tr>
+            <th>Group Name</th><th>Ticket Number</th><th>Receipt Date</th><th>Subscriber Name</th><th>Receipt Amount</th><th>Total Charges</th><th>Payment Mode</th><th>Receipt No</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of filteredReceipts">
+            <td>{{r.groupName}}</td><td>{{r.ticketNumber}}</td><td>{{r.receiptDate}}</td><td>{{r.subscriberName}}</td><td>{{r.receiptAmount}}</td><td>{{r.totalCharges}}</td><td>{{r.paymentMode}}</td><td>{{r.receiptNo}}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="!filteredReceipts.length">
+        <p>No suit receipts found. Click "Add Suit Receipt" to record one.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Record Suit Filed Receipt</h2>
+        <button class="close-btn" (click)="toggleForm()">×</button>
+      </div>
+      <div class="form-body">
+        <!-- Row 1 -->
+        <div class="form-row">
+          <div class="form-group"><label>Group Name *</label><input class="form-control" [(ngModel)]="newReceipt.groupName" placeholder="Group name"/></div>
+          <div class="form-group"><label>Ticket Number *</label><input class="form-control" [(ngModel)]="newReceipt.ticketNumber" placeholder="Ticket number"/></div>
+        </div>
+        <!-- Row 2 -->
+        <div class="form-row">
+          <div class="form-group"><label>Receipt Date</label><input class="form-control" type="date" [(ngModel)]="newReceipt.receiptDate"/></div>
+          <div class="form-group"><label>Payment Mode</label><select class="form-control" [(ngModel)]="newReceipt.paymentMode"><option value="">Select Mode</option><option value="Cash">Cash</option><option value="Cheque">Cheque</option><option value="RTGS">RTGS</option><option value="NEFT">NEFT</option></select></div>
+        </div>
+        <!-- Row 3 -->
+        <div class="form-row">
+          <div class="form-group"><label>Receipt Series</label><input class="form-control" [(ngModel)]="newReceipt.receiptSeries" placeholder="SFR"/></div>
+          <div class="form-group"><label>Receipt No</label><input class="form-control" [(ngModel)]="newReceipt.receiptNo"/></div>
+        </div>
+        <!-- Row 4 -->
+        <div class="form-row">
+          <div class="form-group"><label>TR No</label><input class="form-control" [(ngModel)]="newReceipt.trNo"/></div>
+          <div class="form-group"><label>TR Date</label><input class="form-control" type="date" [(ngModel)]="newReceipt.trDate"/></div>
+        </div>
+        <!-- Row 5 -->
+        <div class="form-row">
+          <div class="form-group"><label>Subscriber Name *</label><input class="form-control" [(ngModel)]="newReceipt.subscriberName" placeholder="Member name"/></div>
+          <div class="form-group"><label>Debit To</label><input class="form-control" [(ngModel)]="newReceipt.debitTo" placeholder="Account"/></div>
+        </div>
+        <!-- Row 6 -->
+        <div class="form-row">
+          <div class="form-group"><label>Collection Agent</label><input class="form-control" [(ngModel)]="newReceipt.collectionAgent" placeholder="Agent name"/></div>
+          <div class="form-group"><label>Receipt Amount *</label><input class="form-control" type="number" [(ngModel)]="newReceipt.receiptAmount"/></div>
+        </div>
+        <!-- Row 7 -->
+        <div class="form-row">
+          <div class="form-group"><label>Bank Charge</label><input class="form-control" type="number" [(ngModel)]="newReceipt.bankCharge" placeholder="0"/></div>
+          <div class="form-group"><label>Penalty</label><input class="form-control" type="number" [(ngModel)]="newReceipt.penalty" placeholder="0"/></div>
+        </div>
+        <!-- Row 8 -->
+        <div class="form-row">
+          <div class="form-group"><label>INC Charge</label><input class="form-control" type="number" [(ngModel)]="newReceipt.incCharge" placeholder="0"/></div>
+          <div class="form-group"><label>Verification Charge</label><input class="form-control" type="number" [(ngModel)]="newReceipt.verificationCharge" placeholder="0"/></div>
+        </div>
+        <!-- Row 9 -->
+        <div class="form-row">
+          <div class="form-group"><label>Enrollment Fee</label><input class="form-control" type="number" [(ngModel)]="newReceipt.enrollmentFee" placeholder="0"/></div>
+          <div class="form-group"><label>Total Charges</label><input class="form-control" type="number" [(ngModel)]="newReceipt.totalCharges" placeholder="Sum of charges"/></div>
+        </div>
+        <!-- Row 10 -->
+        <div class="form-row">
+          <div class="form-group"><label>Subscription</label><input class="form-control" [(ngModel)]="newReceipt.subscription" placeholder="Active/Inactive"/></div>
+          <div class="form-group"><label>Reasons</label><textarea class="form-control" [(ngModel)]="newReceipt.reasons" placeholder="Reason for receipt" style="resize: vertical; min-height: 50px;"></textarea></div>
+        </div>
+        <!-- Row 11 -->
+        <div class="form-row">
+          <div class="form-group"><label>Cheque/RTGS/NEFT Bank Name</label><input class="form-control" [(ngModel)]="newReceipt.bankName" placeholder="Bank name"/></div>
+          <div class="form-group"><label>Cheque Date</label><input class="form-control" type="date" [(ngModel)]="newReceipt.chequeDate"/></div>
+        </div>
+        <!-- Row 12 -->
+        <div class="form-row">
+          <div class="form-group"><label>Deposit Date</label><input class="form-control" type="date" [(ngModel)]="newReceipt.depositDate"/></div>
+          <div class="form-group"><label>Local/N-Local</label><select class="form-control" [(ngModel)]="newReceipt.localNLocal"><option value="">Select</option><option value="Local">Local</option><option value="N-Local">N-Local</option></select></div>
+        </div>
+        <!-- Row 13 -->
+        <div class="form-row">
+          <div class="form-group"><label>Same Cheque Pending</label><select class="form-control" [(ngModel)]="newReceipt.sameChequePending"><option value="">Select</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+        </div>
+        <!-- Footer -->
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveReceipt()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

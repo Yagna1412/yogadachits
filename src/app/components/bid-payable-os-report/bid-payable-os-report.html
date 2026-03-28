@@ -1,0 +1,60 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Bid Payable O/S As On Date</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Consolidation</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Bid Payable O/S As On Date</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-filter">
+        <div class="form-group">
+            <label>Report Type</label>
+            <select class="form-control" [(ngModel)]="reportType">
+                <option value="">Select Report Type</option>
+                <option *ngFor="let t of types" [value]="t">{{t}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Report Date *</label>
+            <input type="date" class="form-control" [(ngModel)]="reportDate" />
+        </div>
+        <div class="form-group">
+            <label>Group Name</label>
+            <input class="form-control" [(ngModel)]="groupName" placeholder="Enter group name" />
+        </div>
+        <div class="form-group" style="align-self:flex-end;">
+            <button class="btn btn-primary" (click)="generate()">Generate</button>
+            <button class="btn btn-secondary" style="margin-left:8px;" (click)="reset()">Reset</button>
+        </div>
+    </div>
+
+    <div>
+        <p *ngIf="showReport">Bid payable outstanding as on {{reportDate}} for {{groupName || 'all groups'}} (Type:
+            {{reportType || 'Any'}}).</p>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Group</th>
+                        <th>Type</th>
+                        <th>Payable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let r of filtered()">
+                        <td>{{r.group}}</td>
+                        <td>{{r.type}}</td>
+                        <td>{{r.payable | number:'1.2-2'}}</td>
+                    </tr>
+                    <tr *ngIf="filtered().length === 0">
+                        <td colspan="3" style="text-align:center;">No data available.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

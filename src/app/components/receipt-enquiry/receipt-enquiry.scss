@@ -1,0 +1,96 @@
+@use '../../../styles/colors.scss' as *;
+
+.main-container {
+  padding: 20px;
+  background-color: #f0f4f8;
+  min-height: 100vh;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e1e8f0;
+  border-radius: 4px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.section-title {
+  color: #4a5568;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .title-square {
+    width: 12px;
+    height: 12px;
+    background-color: #585ad4;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  
+  thead th {
+    background-color: #f7fafc;
+    color: #4a5568;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    padding: 12px;
+    border-bottom: 2px solid #e1e8f0;
+    text-align: left;
+  }
+
+  tbody td {
+    padding: 12px;
+    font-size: 14px;
+    border-bottom: 1px solid #edf2f7;
+    color: #2d3748;
+  }
+
+  tbody tr:hover {
+    background-color: #f7fafc;
+  }
+}
+
+.form-control {
+  border-radius: 4px;
+  border: 1px solid #cbd5e0;
+  padding: 8px 12px;
+  font-size: 14px;
+  
+  &:focus {
+    border-color: #585ad4;
+    box-shadow: 0 0 0 2px rgba(88, 90, 212, 0.1);
+  }
+}
+
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #718096;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  
+  &.cash { background: #e6fffa; color: #2c7a7b; }
+  &.upi { background: #ebf8ff; color: #2b6cb0; }
+  &.cheque { background: #fff5f5; color: #c53030; }
+  &.others { background: #f7fafc; color: #4a5568; }
+}
+
+.amount-cell {
+  font-weight: 700;
+  color: #2d3748;
+}

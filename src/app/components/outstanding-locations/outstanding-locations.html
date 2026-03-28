@@ -1,0 +1,45 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Outstanding Locations</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">MIS</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Outstanding Locations</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-filter" style="margin-bottom:1rem;">
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" class="form-control" [(ngModel)]="filterDate" />
+    </div>
+    <div class="form-group">
+      <label>Region</label>
+      <select class="form-control" [(ngModel)]="regionFilter">
+        <option value="">All Regions</option>
+        <option *ngFor="let r of regions" [value]="r">{{r}}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Group</label>
+      <select class="form-control" [(ngModel)]="groupFilter">
+        <option value="">All Groups</option>
+        <option *ngFor="let g of groups" [value]="g">{{g}}</option>
+      </select>
+    </div>
+    <div class="form-group" style="align-self:flex-end;">
+      <button class="btn btn-primary" (click)="view()">View</button>
+      <button class="btn btn-secondary" style="margin-left:8px;" (click)="reset()">Reset</button>
+    </div>
+  </div>
+
+  <div *ngIf="showMap">
+    <p>Outstanding amounts distribution (as of {{ filterDate || 'today' }}).</p>
+    <!-- placeholder for outstanding amounts map -->
+    <div style="height:400px; background:#eef; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+      <span>Outstanding amounts map would appear here</span>
+    </div>
+  </div>
+</div>

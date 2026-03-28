@@ -1,0 +1,80 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Member Account Copy (Cr/Dr Columns)</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Reports</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Enrollments</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Member Account Copy (Cr/Dr Columns)</span>
+        </nav>
+    </div>
+</div>
+<div class="main-container">
+    <div class="form-section">
+        <form [formGroup]="crdrForm" (ngSubmit)="onGenerate()">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Group Name</label>
+                    <input formControlName="groupName" class="form-control" placeholder="Enter group name" />
+                </div>
+                <div class="form-group">
+                    <label>Ticket No</label>
+                    <input formControlName="ticketNo" class="form-control"
+                        placeholder="Enter ticket number (optional)" />
+                </div>
+                <div class="form-group">
+                    <label>Subscriber Name</label>
+                    <input formControlName="subscriberName" class="form-control"
+                        placeholder="Enter subscriber name (optional)" />
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" formControlName="allReceipts" /> All Receipts</label>
+                </div>
+                <div class="form-group">
+                    <label>Report Date</label>
+                    <input type="date" formControlName="reportDate" class="form-control" />
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Generate Report</button>
+            </div>
+        </form>
+    </div>
+
+    <div *ngIf="showResults()" class="table-section">
+        <div class="section-header">
+            <h3>Member Account Copy (Cr/Dr Columns)</h3>
+        </div>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Group Name</th>
+                        <th>Ticket No</th>
+                        <th>Subscriber Name</th>
+                        <th>All Receipts</th>
+                        <th>Report Date</th>
+                        <th>Credit</th>
+                        <th>Debit</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let account of accounts()">
+                        <td>{{ account.groupName }}</td>
+                        <td>{{ account.ticketNo }}</td>
+                        <td>{{ account.subscriberName }}</td>
+                        <td>{{ account.allReceipts ? 'Yes' : 'No' }}</td>
+                        <td>{{ account.reportDate }}</td>
+                        <td>{{ account.credit }}</td>
+                        <td>{{ account.debit }}</td>
+                        <td>{{ account.balance }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

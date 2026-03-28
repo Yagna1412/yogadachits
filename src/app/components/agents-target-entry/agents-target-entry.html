@@ -1,0 +1,95 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Agents Target Entry</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Master</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Members</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Agents Target Entry</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Target</button>
+</div>
+
+<div class="agents-target-entry">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Agent targets</h3>
+      <div class="search-box">
+        <span class="search-icon">
+          <img src="assets/images/icons/Search.png" alt="Search" />
+        </span>
+        <input type="text" placeholder="Search" class="search-input" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+
+    <div *ngIf="savedTargets.length > 0" class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Amount</th>
+            <th>Month</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of savedTargets">
+            <td>{{ agentName(t.agentId) }}</td>
+            <td>{{ t.amount }}</td>
+            <td>{{ t.month }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="savedTargets.length === 0" class="empty-state">
+      <p>No targets yet. Click "Add Target" to start assigning.</p>
+    </div>
+  </div>
+
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-container">
+      <div class="form-content">
+        <div class="form-header">
+          <h2>Add Target</h2>
+          <button class="close-btn" (click)="toggleForm()">×</button>
+        </div>
+        <div class="form-body">
+          <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="agent">Agent <span class="text-danger">*</span></label>
+              <select id="agent" [(ngModel)]="selectedAgent" class="form-control">
+                <option value="">-- select agent --</option>
+                <option *ngFor="let a of agents" [value]="a.id">{{ a.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="amount">Target Amount <span class="text-danger">*</span></label>
+              <input id="amount" type="number" placeholder="Enter amount" [(ngModel)]="targetAmount" class="form-control" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="month">Target Month <span class="text-danger">*</span></label>
+              <input id="month" type="month" [(ngModel)]="targetMonth" class="form-control" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">
+            Cancel
+          </button>
+          <button class="btn btn-primary" (click)="saveTarget()">
+            Save Target
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

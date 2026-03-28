@@ -1,0 +1,52 @@
+@use '../../../styles/colors.scss' as *;
+
+.business-agent-transfer {
+  padding: 16px;
+  background: #f7fbfe;
+  min-height: 100vh;
+
+  .add-entry-form {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+  }
+
+  .form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+  }
+}
+
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-size: 14px;
+  }
+
+  input[type="checkbox"] {
+    margin-right: 6px;
+  }
+
+  .form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 1.5rem;
+  }
+}

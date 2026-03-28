@@ -1,0 +1,212 @@
+<div class="dashboard-content">
+  <!-- Page Header -->
+  <div class="dashboard-header">
+    <div>
+      <h1 *ngIf="!selectedBid">Bids History</h1>
+      <h1 *ngIf="selectedBid">
+        <button class="back-btn" (click)="goBack()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        Bid Details - {{selectedBid.id}}
+      </h1>
+      <p *ngIf="!selectedBid">Review your past bidding participation and historical data.</p>
+      <p *ngIf="selectedBid">Auction Month: {{selectedBid.auctionMonth}} · {{selectedBid.chitGroup}}</p>
+    </div>
+  </div>
+
+  <!-- Bid History List View -->
+  <div class="table-section" *ngIf="!selectedBid">
+    <div class="section-header">
+      <h2>All Bids Placed</h2>
+      <div class="section-actions">
+        <button class="btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filter
+        </button>
+      </div>
+    </div>
+    
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Bid ID</th>
+            <th>Auction Month</th>
+            <th>Group Code</th>
+            <th>Bid Amount</th>
+            <th>Discount</th>
+            <th>Bid Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let bid of bidHistoryRecords">
+            <td><span class="code-badge">{{bid.id}}</span></td>
+            <td><strong>{{bid.auctionMonth}}</strong></td>
+            <td>
+              <div class="client-cell">
+                <div class="client-avatar">{{bid.chitGroup.charAt(0)}}</div>
+                <div>
+                  <div class="client-name">{{bid.chitGroup}}</div>
+                  <div class="client-meta">{{bid.groupCode}}</div>
+                </div>
+              </div>
+            </td>
+            <td><strong>{{bid.bidAmount}}</strong></td>
+            <td>{{bid.discount}}</td>
+            <td>
+              <span class="status-badge" [ngClass]="{
+                'shipped': bid.bidStatus === 'Won',
+                'cancelled': bid.bidStatus === 'Lost'
+              }">{{bid.bidStatus}}</span>
+            </td>
+            <td>
+              <button class="btn-view" (click)="openBidDetails(bid)">View Details</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bid Detail View -->
+  <div class="bid-detail-view" *ngIf="selectedBid">
+    
+    <!-- Outcome Stats Container -->
+    <div class="stats-container">
+      <div class="stat-card" [ngClass]="{'bg-success': selectedBid.bidStatus === 'Won', 'bg-error': selectedBid.bidStatus === 'Lost'}">
+        <div class="stat-info">
+          <div class="stat-label">Your Bid Result</div>
+          <div class="stat-value">{{selectedBid.bidStatus}}</div>
+          <div class="stat-trend">
+            <span>{{selectedBid.bidDate}}</span>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <svg *ngIf="selectedBid.bidStatus === 'Won'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <svg *ngIf="selectedBid.bidStatus === 'Lost'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Your Bid Amount</div>
+          <div class="stat-value">{{selectedBid.bidAmount}}</div>
+          <div class="stat-trend positive">
+            <span>Equivalent to {{selectedBid.discount}} discount</span>
+          </div>
+        </div>
+        <div class="stat-icon blue">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Winning Bid</div>
+          <div class="stat-value">{{selectedBid.winningBid}}</div>
+          <div class="stat-trend positive">
+            <span>Highest acceptable bid</span>
+          </div>
+        </div>
+        <div class="stat-icon orange">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Winner Name</div>
+          <div class="stat-value">{{selectedBid.winnerName}}</div>
+          <div class="stat-trend positive">
+            <span>Auction Winner</span>
+          </div>
+        </div>
+        <div class="stat-icon purple">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Information Grids -->
+    <div class="detail-grid">
+      <!-- Bid Specifics -->
+      <div class="table-section detail-card">
+        <div class="section-header">
+          <h2>Your Bid Details</h2>
+        </div>
+        <div class="detail-info-grid">
+          <div class="info-row">
+            <span class="info-label">Bid ID</span>
+            <span class="info-value code">{{selectedBid.id}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Bid Date & Time</span>
+            <span class="info-value">{{selectedBid.bidDate}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Bid Amount Submitted</span>
+            <span class="info-value highlight">{{selectedBid.bidAmount}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Implied Discount</span>
+            <span class="info-value">{{selectedBid.discount}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Bid Result</span>
+            <span class="status-badge" [ngClass]="{'shipped': selectedBid.bidStatus === 'Won', 'cancelled': selectedBid.bidStatus === 'Lost'}">
+              {{selectedBid.bidStatus}}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Outcome resulting from the auction -->
+      <div class="table-section detail-card">
+        <div class="section-header">
+          <h2>Financial Outcome (Post Auction)</h2>
+        </div>
+        <div class="detail-info-grid">
+          <div class="info-row">
+            <span class="info-label">Auction Month</span>
+            <span class="info-value">{{selectedBid.auctionMonth}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Chit Group</span>
+            <span class="info-value">{{selectedBid.chitGroup}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Total Dividend Per Member</span>
+            <span class="info-value highlight dividend-color">{{selectedBid.dividendPerMember}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Net Payable Amount</span>
+            <span class="info-value highlight">{{selectedBid.netPayable}}</span>
+          </div>
+        </div>
+        
+        <div class="section-info-callout" style="margin-top: 1.5rem; padding: 1rem; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+          <p style="margin: 0; font-size: 0.875rem; color: #1e3a8a;">
+            <strong>Note:</strong> Historical data is maintained exclusively for your reference. The winning bid sets the dividend distributed to all active participants in the chit group.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,76 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Repeated Persons</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Utilities</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Repeated Persons</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-section">
+        <form [formGroup]="personForm" (ngSubmit)="onRetrieve()">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="mode">Mode *</label>
+                    <select id="mode" class="form-control" formControlName="mode">
+                        <option value="">Select Mode</option>
+                        <option value="Name">Name</option>
+                        <option value="Phone">Phone</option>
+                        <option value="Email">Email</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && personForm.get('mode')?.invalid">
+                        Mode is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="personName">Person Name *</label>
+                    <input type="text" id="personName" class="form-control" formControlName="personName"
+                        placeholder="Enter person name" />
+                    <div class="error-message" *ngIf="submitted && personForm.get('personName')?.invalid">
+                        Person Name is required
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Retrieve</button>
+                <button type="button" class="btn btn-secondary" (click)="onClear()">Clear</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Repeated Persons Table -->
+    <div class="persons-section" *ngIf="showPersons">
+        <div class="section-header">
+            <h3>Repeated Persons ({{repeatedPersons.length}} records)</h3>
+        </div>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Address</th>
+                        <th>Duplicate Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let person of repeatedPersons">
+                        <td>{{person.id}}</td>
+                        <td>{{person.name}}</td>
+                        <td>{{person.phone}}</td>
+                        <td>{{person.email}}</td>
+                        <td>{{person.address}}</td>
+                        <td>{{person.duplicateCount}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

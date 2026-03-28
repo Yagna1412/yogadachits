@@ -1,0 +1,34 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Position Wise Locations</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">MIS</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Position Wise Locations</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-row">
+    <div class="form-group">
+      <label>Position</label>
+      <select class="form-control" [(ngModel)]="selectedPosition">
+        <option value="">Select Position</option>
+        <option *ngFor="let p of positions" [value]="p">{{p}}</option>
+      </select>
+    </div>
+    <div class="form-group" style="align-self:flex-end;">
+      <button class="btn btn-primary" (click)="view()">View</button>
+      <button class="btn btn-secondary" style="margin-left:8px;" (click)="reset()">Reset</button>
+    </div>
+  </div>
+
+  <div *ngIf="showMap">
+    <p>Viewing locations for {{ selectedPosition }} positions.</p>
+    <!-- placeholder for position hierarchy map -->
+    <div style="height:400px; background:#eef; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+      <span>Position-wise location map would appear here</span>
+    </div>
+  </div>
+</div>

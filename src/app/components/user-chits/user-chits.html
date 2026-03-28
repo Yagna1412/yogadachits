@@ -1,0 +1,270 @@
+<div class="dashboard-content">
+  <!-- Page Header -->
+  <div class="dashboard-header">
+    <div>
+      <h1 *ngIf="!selectedChit">Chit Details</h1>
+      <h1 *ngIf="selectedChit">
+        <button class="back-btn" (click)="goBack()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        {{selectedChit.name}}
+      </h1>
+      <p *ngIf="!selectedChit">Select a chit group to view complete details.</p>
+      <p *ngIf="selectedChit">{{selectedChit.code}} · Complete group information</p>
+    </div>
+  </div>
+
+  <!-- Chit Group Selection Cards -->
+  <div class="chit-selection" *ngIf="!selectedChit">
+    <div class="stats-container chit-cards">
+      <div class="stat-card chit-select-card" *ngFor="let chit of chitGroups" (click)="selectChit(chit)">
+        <div class="stat-info">
+          <div class="stat-label">{{chit.name}}</div>
+          <div class="stat-value">{{chit.chitValue}}</div>
+          <div class="stat-trend positive">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+                clip-rule="evenodd" />
+            </svg>
+            <span>{{chit.status}}</span>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chit Groups Table -->
+    <div class="table-section">
+      <div class="section-header">
+        <h2>All Enrolled Chit Groups</h2>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Chit Name</th>
+              <th>Chit Value</th>
+              <th>Monthly Amount</th>
+              <th>Start Date</th>
+              <th>Auction Date</th>
+              <th>Progress</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let chit of chitGroups">
+              <td>
+                <div class="client-cell">
+                  <div class="client-avatar">{{chit.name.charAt(0)}}</div>
+                  <div>
+                    <div class="client-name">{{chit.name}}</div>
+                    <div class="client-meta">{{chit.code}}</div>
+                  </div>
+                </div>
+              </td>
+              <td><strong>{{chit.chitValue}}</strong></td>
+              <td>{{chit.monthlyAmount}}</td>
+              <td>{{chit.startDate}}</td>
+              <td>{{chit.auctionDate}}</td>
+              <td>
+                <div class="installment-progress">
+                  <div class="progress-text">{{chit.installmentsPaid}} / {{chit.totalInstallments}}</div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="getProgressPercent(chit)"></div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="status-badge shipped">{{chit.status}}</span></td>
+              <td>
+                <button class="btn-view" (click)="selectChit(chit)">View Details</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chit Detail View -->
+  <div class="chit-detail-view" *ngIf="selectedChit">
+    <!-- Quick Stats -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Chit Value</div>
+          <div class="stat-value">{{selectedChit.chitValue}}</div>
+          <div class="stat-trend positive">
+            <span>{{selectedChit.duration}} months</span>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Monthly Amount</div>
+          <div class="stat-value">{{selectedChit.monthlyAmount}}</div>
+          <div class="stat-trend positive">
+            <span>Per installment</span>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Installments Paid</div>
+          <div class="stat-value">{{selectedChit.installmentsPaid}} / {{selectedChit.totalInstallments}}</div>
+          <div class="stat-trend positive">
+            <span>{{getProgressPercent(selectedChit)}}% Complete</span>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <div class="stat-label">Dividend Rate</div>
+          <div class="stat-value">{{selectedChit.dividendRate}}</div>
+          <div class="stat-trend positive">
+            <span>Last auction</span>
+          </div>
+        </div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Grid -->
+    <div class="detail-grid">
+      <!-- Group Information Card -->
+      <div class="table-section detail-card">
+        <div class="section-header">
+          <h2>Group Information</h2>
+          <div class="section-actions">
+            <span class="status-badge shipped">{{selectedChit.status}}</span>
+          </div>
+        </div>
+        <div class="detail-info-grid">
+          <div class="info-row">
+            <span class="info-label">Chit Name</span>
+            <span class="info-value">{{selectedChit.name}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Group Code</span>
+            <span class="info-value code">{{selectedChit.code}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Chit Value</span>
+            <span class="info-value highlight">{{selectedChit.chitValue}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Monthly Amount</span>
+            <span class="info-value">{{selectedChit.monthlyAmount}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Duration</span>
+            <span class="info-value">{{selectedChit.duration}} Months</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Total Members</span>
+            <span class="info-value">{{selectedChit.totalMembers}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Foreman</span>
+            <span class="info-value">{{selectedChit.foreman}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule & Dates Card -->
+      <div class="table-section detail-card">
+        <div class="section-header">
+          <h2>Schedule & Dates</h2>
+        </div>
+        <div class="detail-info-grid">
+          <div class="info-row">
+            <span class="info-label">Start Date</span>
+            <span class="info-value">{{selectedChit.startDate}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">End Date</span>
+            <span class="info-value">{{selectedChit.endDate}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Auction Date</span>
+            <span class="info-value highlight">{{selectedChit.auctionDate}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Next Due Date</span>
+            <span class="info-value highlight">{{selectedChit.nextDueDate}}</span>
+          </div>
+        </div>
+
+        <div class="section-header" style="margin-top: 1.5rem;">
+          <h2>Last Auction Result</h2>
+        </div>
+        <div class="detail-info-grid">
+          <div class="info-row">
+            <span class="info-label">Winner</span>
+            <span class="info-value">{{selectedChit.lastAuctionWinner}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Winning Bid</span>
+            <span class="info-value highlight">{{selectedChit.lastAuctionBid}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Dividend Rate</span>
+            <span class="info-value">{{selectedChit.dividendRate}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Installment Progress -->
+    <div class="table-section">
+      <div class="section-header">
+        <h2>Installment Progress</h2>
+        <div class="section-actions">
+          <span class="progress-label">{{selectedChit.installmentsPaid}} of {{selectedChit.totalInstallments}} paid</span>
+        </div>
+      </div>
+      <div class="full-progress-bar">
+        <div class="progress-track">
+          <div class="progress-fill-large" [style.width.%]="getProgressPercent(selectedChit)"></div>
+        </div>
+        <div class="progress-info">
+          <span>{{getProgressPercent(selectedChit)}}% Complete</span>
+          <span>{{selectedChit.totalInstallments - selectedChit.installmentsPaid}} remaining</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

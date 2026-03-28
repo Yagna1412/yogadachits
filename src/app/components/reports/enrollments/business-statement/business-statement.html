@@ -1,0 +1,178 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Business Statement</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Reports</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Enrollments</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Business Statement</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Filter Form -->
+    <div class="form-section">
+        <form [formGroup]="statementForm" (ngSubmit)="onGenerate()">
+            <div class="form-grid">
+                <!-- By -->
+                <div class="form-group">
+                    <label for="by">By *</label>
+                    <select id="by" class="form-control" formControlName="by">
+                        <option value="">Select Criteria</option>
+                        <option value="Date">Date</option>
+                        <option value="Category">Category</option>
+                        <option value="Transaction Type">Transaction Type</option>
+                        <option value="Business Type">Business Type</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && statementForm.get('by')?.invalid">
+                        Selection criteria is required
+                    </div>
+                </div>
+
+                <!-- Report Format -->
+                <div class="form-group">
+                    <label for="reportFormat">Report Format *</label>
+                    <select id="reportFormat" class="form-control" formControlName="reportFormat">
+                        <option value="PDF">PDF</option>
+                        <option value="Excel">Excel</option>
+                        <option value="HTML">HTML</option>
+                        <option value="CSV">CSV</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && statementForm.get('reportFormat')?.invalid">
+                        Report format is required
+                    </div>
+                </div>
+
+                <!-- Date Range -->
+                <div class="form-group">
+                    <label for="fromDate">From Date *</label>
+                    <input
+                        type="date"
+                        id="fromDate"
+                        class="form-control"
+                        formControlName="fromDate"
+                        [class.error]="submitted && statementForm.get('fromDate')?.invalid">
+                    <div class="error-message" *ngIf="submitted && statementForm.get('fromDate')?.invalid">
+                        From date is required
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="toDate">To Date *</label>
+                    <input
+                        type="date"
+                        id="toDate"
+                        class="form-control"
+                        formControlName="toDate"
+                        [class.error]="submitted && statementForm.get('toDate')?.invalid">
+                    <div class="error-message" *ngIf="submitted && statementForm.get('toDate')?.invalid">
+                        To date is required
+                    </div>
+                    <div class="error-message" *ngIf="statementForm.errors?.['invalidDateRange']">
+                        From date cannot be later than to date
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Generate</button>
+                <button type="button" class="btn btn-secondary" (click)="onClear()">Clear</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Business Statement Results -->
+    <div class="statement-section" *ngIf="showResults()">
+        <div class="section-header">
+            <h3>Business Statement Report ({{businessStatements().length}} transactions)</h3>
+            <div class="export-actions">
+                <button class="btn btn-primary" (click)="exportReport()">
+                    Export Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card income">
+                <div class="card-icon">
+                    <i class="pi pi-arrow-up"></i>
+                </div>
+                <div class="card-content">
+                    <h4>Total Income</h4>
+                    <p class="amount">{{getTotalIncome() | currency:'INR':'symbol':'1.0-0'}}</p>
+                </div>
+            </div>
+
+            <div class="summary-card expense">
+                <div class="card-icon">
+                    <i class="pi pi-arrow-down"></i>
+                </div>
+                <div class="card-content">
+                    <h4>Total Expenses</h4>
+                    <p class="amount">{{getTotalExpenses() | currency:'INR':'symbol':'1.0-0'}}</p>
+                </div>
+            </div>
+
+            <div class="summary-card net" [class.positive]="getNetAmount() >= 0" [class.negative]="getNetAmount() < 0">
+                <div class="card-icon">
+                    <i class="pi pi-chart-line"></i>
+                </div>
+                <div class="card-content">
+                    <h4>Net Amount</h4>
+                    <p class="amount">{{getNetAmount() | currency:'INR':'symbol':'1.0-0'}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Business Type</th>
+                        <th>Description</th>
+                        <th>Transaction Date</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                        <th>Category</th>
+                        <th>Reference</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let statement of businessStatements()">
+                        <td>{{statement.id}}</td>
+                        <td>{{statement.businessType}}</td>
+                        <td>{{statement.description}}</td>
+                        <td>{{statement.transactionDate | date:'dd/MM/yyyy'}}</td>
+                        <td class="amount-cell" [class.income]="statement.transactionType === 'Income'" [class.expense]="statement.transactionType === 'Expense'">
+                            {{statement.amount | currency:'INR':'symbol':'1.0-0'}}
+                        </td>
+                        <td>
+                            <span class="type-badge" [class.income]="statement.transactionType === 'Income'" [class.expense]="statement.transactionType === 'Expense'">
+                                {{statement.transactionType}}
+                            </span>
+                        </td>
+                        <td>{{statement.category}}</td>
+                        <td>{{statement.reference}}</td>
+                        <td>
+                            <span class="status-badge" [class.completed]="statement.status === 'Completed'" [class.pending]="statement.status === 'Pending'">
+                                {{statement.status}}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="empty-state" *ngIf="businessStatements().length === 0">
+            <p>No business transactions found for the selected criteria.</p>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,81 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Agent Commission Payment</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item">Agents</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item active">Agent Commission Payment</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Generate Bill</button>
+</div>
+
+<div class="main-container">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Commission Bills</h3>
+      <div class="search-box">
+        <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search"/></span>
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterBills()"/>
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="table" *ngIf="filteredBills.length">
+        <thead>
+          <tr>
+            <th>Agent</th><th>Voucher Date</th><th>Voucher No</th><th>Total Bill</th><th>Final Bill</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of filteredBills">
+            <td>{{b.agentName}}</td><td>{{b.voucherDate}}</td><td>{{b.voucherNo}}</td><td>{{b.totalBill}}</td><td>{{b.finalBill}}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="!filteredBills.length">
+        <p>No bills found. Click "Generate Bill" to create one.</p>
+      </div>
+    </div>
+  </div>
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Prepare Commission Bill</h2>
+        <button class="close-btn" (click)="toggleForm()">×</button>
+      </div>
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group"><label>Agent Name</label><input class="form-control" [(ngModel)]="newBill.agentName"/></div>
+          <div class="form-group"><label>Voucher Date</label><input class="form-control" type="date" [(ngModel)]="newBill.voucherDate"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>TDS %</label><input class="form-control" type="number" [(ngModel)]="newBill.tdsPct"/></div>
+          <div class="form-group"><label>TDS Amount</label><input class="form-control" type="number" [(ngModel)]="newBill.tdsAmount"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Voucher Series</label><input class="form-control" [(ngModel)]="newBill.series"/></div>
+          <div class="form-group"><label>Voucher Number</label><input class="form-control" [(ngModel)]="newBill.voucherNo"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>GST %</label><input class="form-control" type="number" [(ngModel)]="newBill.gstPct"/></div>
+          <div class="form-group"><label>GST Amount</label><input class="form-control" type="number" [(ngModel)]="newBill.gstAmount"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>From Date</label><input class="form-control" type="date" [(ngModel)]="newBill.fromDate"/></div>
+          <div class="form-group"><label>To Date</label><input class="form-control" type="date" [(ngModel)]="newBill.toDate"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Total Bill Payment</label><input class="form-control" type="number" [(ngModel)]="newBill.totalBill"/></div>
+          <div class="form-group"><label>Final Bill payment</label><input class="form-control" type="number" [(ngModel)]="newBill.finalBill"/></div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveBill()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,115 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Business/Collection Agent Transfer</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Master</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Members</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Business/Collection Agent Transfer</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Agent Transfer</button>
+</div>
+
+<div class="business-agent-transfer">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Past Transfers</h3>
+      <div class="search-box">
+        <span class="search-icon">
+          <img src="assets/images/icons/Search.png" alt="Search" />
+        </span>
+        <input type="text" placeholder="Search" class="search-input" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+
+    <div *ngIf="transfers.length > 0" class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>From Agent</th>
+            <th>To Agent</th>
+            <th>Members</th>
+            <th>Routes</th>
+            <th>Groups</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of transfers">
+            <td>{{agentName(t.fromAgent)}}</td>
+            <td>{{agentName(t.toAgent)}}</td>
+            <td>{{t.members.join(', ')}}</td>
+            <td>{{t.routes.join(', ')}}</td>
+            <td>{{t.groups.join(', ')}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="transfers.length === 0" class="empty-state">
+      <p>No transfers yet. Click "Transfer" to start.</p>
+    </div>
+  </div>
+
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-container">
+      <div class="form-content">
+        <div class="form-header">
+          <h2>Transfer Business</h2>
+          <button class="close-btn" (click)="toggleForm()">×</button>
+        </div>
+        <div class="form-body">
+          <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fromAgent">From Agent <span class="text-danger">*</span></label>
+              <select id="fromAgent" [(ngModel)]="fromAgent" class="form-control">
+                <option value="">-- select agent --</option>
+                <option *ngFor="let a of agents" [value]="a.id">{{ a.name }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="toAgent">To Agent <span class="text-danger">*</span></label>
+              <select id="toAgent" [(ngModel)]="toAgent" class="form-control">
+                <option value="">-- select agent --</option>
+                <option *ngFor="let a of agents" [value]="a.id">{{ a.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Members</label>
+              <div *ngFor="let m of members">
+                <input type="checkbox" [value]="m" (change)="toggleSelection('members', m, $event)" /> {{m}}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Routes</label>
+              <div *ngFor="let r of routes">
+                <input type="checkbox" [value]="r" (change)="toggleSelection('routes', r, $event)" /> {{r}}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Groups</label>
+              <div *ngFor="let g of groups">
+                <input type="checkbox" [value]="g" (change)="toggleSelection('groups', g, $event)" /> {{g}}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveTransfer()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

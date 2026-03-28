@@ -1,0 +1,71 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Intimation Card</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Admin</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Reports</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Notices</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Intimation Card</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-section">
+    <form [formGroup]="cardForm" (ngSubmit)="onGenerate()" class="report-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Group Name *</label>
+          <input formControlName="groupName" class="form-control" placeholder="Enter group name" />
+        </div>
+        <div class="form-group">
+          <label>Ticket From *</label>
+          <input formControlName="ticketFrom" class="form-control" type="number" placeholder="From" />
+        </div>
+        <div class="form-group">
+          <label>Ticket To *</label>
+          <input formControlName="ticketTo" class="form-control" type="number" placeholder="To" />
+        </div>
+        <div class="form-group">
+          <label>Notice Date *</label>
+          <input type="date" formControlName="noticeDate" class="form-control" />
+        </div>
+        <div *ngIf="submitted && cardForm.errors?.['invalidTicketRange']" class="error-message">Ticket From cannot be greater than Ticket To.</div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Preview / Print / Send via WhatsApp</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-section" *ngIf="showResults()">
+    <div class="section-header">
+      <h3>Intimation Card</h3>
+    </div>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Ticket From</th>
+            <th>Ticket To</th>
+            <th>Notice Date</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of cards()">
+            <td>{{ c.groupName }}</td>
+            <td>{{ c.ticketFrom }}</td>
+            <td>{{ c.ticketTo }}</td>
+            <td>{{ c.noticeDate }}</td>
+            <td>{{ c.message }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
