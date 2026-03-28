@@ -1,0 +1,136 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Member Account Copy</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Reports</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Enrollments</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Member Account Copy</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Filter Form -->
+    <div class="form-section">
+        <form [formGroup]="accountForm" (ngSubmit)="onGenerate()">
+            <div class="form-grid">
+                <!-- Group Name -->
+                <div class="form-group">
+                    <label for="groupName">Group Name *</label>
+                    <input type="text" id="groupName" class="form-control" formControlName="groupName"
+                        [class.error]="submitted && accountForm.get('groupName')?.invalid">
+                    <div class="error-message" *ngIf="submitted && accountForm.get('groupName')?.invalid">
+                        Group Name is required
+                    </div>
+                </div>
+                <!-- Ticket Number -->
+                <div class="form-group">
+                    <label for="ticketNo">Ticket Number *</label>
+                    <input type="text" id="ticketNo" class="form-control" formControlName="ticketNo"
+                        [class.error]="submitted && accountForm.get('ticketNo')?.invalid">
+                    <div class="error-message" *ngIf="submitted && accountForm.get('ticketNo')?.invalid">
+                        Ticket Number is required
+                    </div>
+                </div>
+                <!-- Subscriber Name -->
+                <div class="form-group">
+                    <label for="subscriberName">Subscriber Name</label>
+                    <input type="text" id="subscriberName" class="form-control" formControlName="subscriberName">
+                </div>
+                <!-- All Receipts -->
+                <div class="form-group">
+                    <label><input type="checkbox" formControlName="allReceipts"> All Receipts</label>
+                </div>
+                <!-- Guarantor -->
+                <div class="form-group">
+                    <label><input type="checkbox" formControlName="guarantor"> Guarantor</label>
+                </div>
+                <!-- Auction Particulars -->
+                <div class="form-group">
+                    <label><input type="checkbox" formControlName="auctionParticulars"> Auction Particulars</label>
+                </div>
+                <!-- Due Information -->
+                <div class="form-group">
+                    <label><input type="checkbox" formControlName="dueInfo"> Due Information</label>
+                </div>
+                <!-- Payment Position -->
+                <div class="form-group">
+                    <label><input type="checkbox" formControlName="paymentPosition"> Payment Position</label>
+                </div>
+                <!-- DFD Yes/No -->
+                <div class="form-group">
+                    <label for="dfd">DFD</label>
+                    <select id="dfd" class="form-control" formControlName="dfd">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+                <!-- Report Date -->
+                <div class="form-group">
+                    <label for="reportDate">Report Date *</label>
+                    <input type="date" id="reportDate" class="form-control" formControlName="reportDate"
+                        [class.error]="submitted && accountForm.get('reportDate')?.invalid">
+                    <div class="error-message" *ngIf="submitted && accountForm.get('reportDate')?.invalid">
+                        Report Date is required
+                    </div>
+                </div>
+                <!-- Report Format -->
+                <div class="form-group">
+                    <label for="reportFormat">Format *</label>
+                    <select id="reportFormat" class="form-control" formControlName="reportFormat">
+                        <option value="PDF">PDF</option>
+                        <option value="Excel">Excel</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Generate</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Table -->
+    <div *ngIf="showResults()" class="table-section">
+        <div class="section-header">
+            <h3>Member Account Statement</h3>
+        </div>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Group Name</th>
+                        <th>Ticket No</th>
+                        <th>Subscriber Name</th>
+                        <th>All Receipts</th>
+                        <th>Guarantor</th>
+                        <th>Auction Particulars</th>
+                        <th>Due Info</th>
+                        <th>Payment Position</th>
+                        <th>DFD</th>
+                        <th>Report Date</th>
+                        <th>Format</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let acc of accounts()">
+                        <td>{{ acc.groupName }}</td>
+                        <td>{{ acc.ticketNo }}</td>
+                        <td>{{ acc.subscriberName }}</td>
+                        <td>{{ acc.allReceipts ? 'Yes' : 'No' }}</td>
+                        <td>{{ acc.guarantor ? 'Yes' : 'No' }}</td>
+                        <td>{{ acc.auctionParticulars ? 'Yes' : 'No' }}</td>
+                        <td>{{ acc.dueInfo ? 'Yes' : 'No' }}</td>
+                        <td>{{ acc.paymentPosition ? 'Yes' : 'No' }}</td>
+                        <td>{{ acc.dfd }}</td>
+                        <td>{{ acc.reportDate }}</td>
+                        <td>{{ acc.reportFormat }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

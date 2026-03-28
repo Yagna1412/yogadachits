@@ -1,0 +1,53 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Audit Log</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Consolidation</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Audit Log</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-filter">
+        <div class="form-group">
+            <label>From Date</label>
+            <input type="date" class="form-control" [(ngModel)]="fromDate" />
+        </div>
+        <div class="form-group">
+            <label>To Date</label>
+            <input type="date" class="form-control" [(ngModel)]="toDate" />
+        </div>
+        <div class="form-group" style="align-self:flex-end;">
+            <button class="btn btn-primary" (click)="generate()">Generate</button>
+            <button class="btn btn-secondary" style="margin-left:8px;" (click)="reset()">Reset</button>
+        </div>
+    </div>
+
+
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let e of filtered()">
+                    <td>{{e.date}}</td>
+                    <td>{{e.time}}</td>
+                    <td>{{e.user}}</td>
+                    <td>{{e.action}}</td>
+                </tr>
+                <tr *ngIf="filtered().length === 0">
+                    <td colspan="4" style="text-align:center;">No audit records found.(Select the from and to dates)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>

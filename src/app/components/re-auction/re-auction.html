@@ -1,0 +1,173 @@
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Re-Auction Entry</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Transactions</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Members</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Re-Auction Entry</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-rea-auction">
+    <!-- previous auction status -->
+    <div class="page-inner-header">
+        <img src="assets/images/icons/arrow-left.png" alt="Info Icon" class="info-icon" />
+        <h2 class="page-inner-title">Golden Circle 2024</h2>
+        <div class="status-badge failed">Re-Auction Required</div>
+    </div>
+
+
+    <div class="previous-auction-card" [ngClass]="{'failed': true}">
+        <h3>Previous Auction Failed <span class="status-tag">Admin Cancellation</span></h3>
+        <div class="prev-info">
+            <div class="avatar">
+                <img src="https://i.pravatar.cc/150?img=2" alt="" />
+                <div class="info-text">
+                    <div class="name">{{ previous.name }}</div>
+                    <div class="ticket-no">
+                        ({{ previous.ticket }})
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-right">
+                <div class="label">
+                    <div class="name">Bid Amount </div>
+                    <div class="text">{{ formatCurrency(previous.bidAmount) }}</div>
+                </div>
+                <div class="label">
+                    <div class="name">Auction Date</div>
+                    <div class="text">{{ previous.auctionDate }}</div>
+                </div>
+                <div class="label">
+                    <div class="name">Net Payable</div>
+                    <div class="text">{{ formatCurrency(previous.netPayable) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- new auction winner selection -->
+    <div class="new-auction-section">
+        <h3>New Auction Winner</h3>
+        <div class="replace-row">
+            <button class="replace-btn" (click)="newWinner = previous.name; newBid = previous.bidAmount">
+                Replace with ↓
+            </button>
+        </div>
+        <div class="form-group">
+            <div class="form-row">
+            <label for="member">Select Member</label>
+            <select id="member" [(ngModel)]="newWinner">
+                <option value="" disabled>Select member</option>
+                <option *ngFor="let m of members" [value]="m">{{ m }}</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label for="amount">Amount (₹)</label>
+            <input id="amount" type="number" [(ngModel)]="newBid" />
+        </div>
+        <div class="form-row">
+            <label>Net Payable</label>
+            <input type="text" [value]="formatCurrency(computedNetPayable)" readonly />
+        </div>
+        </div>
+        <div class="action-row">
+            <button class="btn btn-primary" (click)="openConfirmModal()">Confirm Re-Auction</button>
+        </div>
+    </div>
+
+    <!-- past auctions table -->
+    <div class="past-auctions">
+        <h3>Past Auctions</h3>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Auction #</th>
+                        <th>Winner</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let p of pastAuctions">
+                        <td>{{ p.auctionNumber }}</td>
+                        <td>{{ p.winner }}</td>
+                        <td>{{ formatCurrency(p.amount) }}</td>
+                        <td>{{ p.date }}</td>
+                        <td>
+                            <button class="view-btn">👁️</button>
+                            <button class="print-btn">🖨️</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Re-Auction Modal -->
+<div class="modal-overlay" *ngIf="showConfirmModal" (click)="closeConfirmModal()">
+    <div class="modal-content confirm-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Confirm Re-Auction</h2>
+            <button class="modal-close" (click)="closeConfirmModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="winner-card">
+                <h3>Winning Bid</h3>
+                <div class="winner-details">
+                    <span class="winner-icon"><img src="assets/images/icons/user1.png" alt="Bidder Icon" /></span>
+                    <span class="winner-name">{{ newWinner }}</span>
+                </div>
+                <div class="winner-divider"></div>
+                <div class="winner-amount-section">
+                    <span class="amount-label">Highest Bid</span>
+                    <span class="amount-value">{{ formatCurrency(newBid) }}</span>
+                </div>
+            </div>
+            <div class="net-payable-section">
+                <label>Net Payable</label>
+                <div class="net-payable-input">{{ formatCurrency(computedNetPayable) }}</div>
+            </div>
+            <div class="difference-row">
+                <div>
+                    <label>Bid Difference (₹)</label>
+                    <div class="difference-input">{{ bidDifference > 0 ? '+' : '' }}{{ formatCurrency(bidDifference) }}
+                    </div>
+                </div>
+                <div>
+                    <label>Payable Difference (₹)</label>
+                    <div class="difference-input">{{ payableDifference > 0 ? '+' : '' }}{{
+                        formatCurrency(payableDifference) }}</div>
+                </div>
+            </div>
+            <div class="what-changes">
+                <ul>
+                    <li>Previous winner {{ previous.name }} was removed</li>
+                    <li>Member contributions were recalculated</li>
+                    <li>New receipts are now active</li>
+                </ul>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeConfirmModal()">Cancel</button>
+            <button class="btn btn-primary" (click)="confirmReAuction()">Confirm Winner</button>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+    <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+        <div class="success-icon">🏆</div>
+        <h2 class="success-title">Winner Updated</h2>
+        <button class="btn btn-primary btn-large" (click)="closeSuccessModal()">Continue</button>
+    </div>
+</div>

@@ -1,0 +1,300 @@
+<!-- Creditors Debtors Closing Page -->
+
+<!-- Header Section -->
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Creditors Debtors Closing</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Transactions</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Members</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Creditors Debtors Closing</span>
+        </nav>
+    </div>
+    <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Closing</button>
+</div>
+
+<div class="creditors-debtors-closing">
+    <!-- Form Section -->
+    <div class="form-section" *ngIf="showForm">
+        <div class="form-card">
+            <div class="form-header">
+                <h2>Close Balance for {{ closingType === 'debtor' ? 'Debtor' : 'Creditor' }}</h2>
+                <button class="close-btn" (click)="toggleForm()">×</button>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div *ngIf="errorMessage" class="alert alert-error">
+                {{ errorMessage }}
+            </div>
+            <div *ngIf="successMessage" class="alert alert-success">
+                {{ successMessage }}
+            </div>
+
+            <!-- Closing Type Selector -->
+            <div class="form-group">
+                <label>Type of Closing</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="closingType" value="debtor" (change)="setClosingType('debtor')"
+                            [checked]="closingType === 'debtor'" />
+                        <span>Debtor</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="closingType" value="creditor" (change)="setClosingType('creditor')"
+                            [checked]="closingType === 'creditor'" />
+                        <span>Creditor</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Member Selection -->
+            <div class="form-section-divider"></div>
+            <h4>Select Member</h4>
+
+            <div class="member-search">
+                <div class="filter-row">
+                    <div class="search-filter">
+                        <span class="search-icon">
+                            <img src="assets/images/icons/Search.png" alt="Search" />
+                        </span>
+                        <input type="text" placeholder="Search member..." [(ngModel)]="searchTerm"
+                            (input)="filterMembers()" />
+                    </div>
+                    <div class="search-filter">
+                        <select [(ngModel)]="searchGroup" (change)="filterMembers()">
+                            <option value="">All Groups</option>
+                            <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Member List -->
+                <div class="member-list">
+                    <div class="table-wrapper">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Member Name</th>
+                                    <th>Group</th>
+                                    <th>Ticket No</th>
+                                    <th>Balance</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let member of filteredMembers">
+                                    <td class="member-name">{{ member.name }}</td>
+                                    <td>{{ member.groupName }}</td>
+                                    <td>{{ member.ticketNo }}</td>
+                                    <td class="balance-amount">₹{{ member.balance | number: '1.2-2' }}</td>
+                                    <td>
+                                        <button class="action-link" (click)="selectMember(member)">
+                                            Select
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Closing Details -->
+            <div class="form-section-divider"></div>
+            <h4>Closing Details</h4>
+
+            <form (ngSubmit)="saveClosing()" class="form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Member Name<span class="required">*</span></label>
+                        <input type="text" [(ngModel)]="newClosing.member" name="member" disabled
+                            class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label>Group<span class="required">*</span></label>
+                        <input type="text" [(ngModel)]="newClosing.groupName" name="groupName" disabled
+                            class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ticket Number<span class="required">*</span></label>
+                        <input type="text" [(ngModel)]="newClosing.ticketNumber" name="ticketNumber" disabled
+                            class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label>Closing Date<span class="required">*</span></label>
+                        <input type="date" [(ngModel)]="newClosing.closingDate" name="closingDate"
+                            class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Closing Balance<span class="required">*</span></label>
+                        <input type="number" [(ngModel)]="newClosing.closingBalance" name="closingBalance"
+                            placeholder="Enter numeric value" class="form-control" min="0" step="0.01" />
+                        <small class="form-text">Numeric only</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Authorized By<span class="required">*</span></label>
+                        <input type="text" [(ngModel)]="newClosing.authorizedBy" name="authorizedBy"
+                            placeholder="Enter authorizer name" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <textarea [(ngModel)]="newClosing.remarks" name="remarks" placeholder="Enter any remarks"
+                        class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Closing</button>
+                    <button type="button" class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table Section - Hidden when showing form -->
+    <div class="table-section" *ngIf="!showForm">
+        <!-- Tabs -->
+        <div class="closing-list-section">
+            <div class="section-header">
+                <div class="tabs-container">
+                    <button class="tab-button" (click)="setClosingType('debtor')"
+                        [class.active]="closingType === 'debtor'">
+                        Debtors ({{ getTotalDebtors() }})
+                    </button>
+                    <button class="tab-button" (click)="setClosingType('creditor')"
+                        [class.active]="closingType === 'creditor'">
+                        Creditors ({{ getTotalCreditors() }})
+                    </button>
+                </div>
+                <div class="search-box">
+                    <span class="search-icon">
+                        <img src="assets/images/icons/Search.png" alt="Search" />
+                    </span>
+                    <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm"
+                        (input)="filterClosings()" />
+                    <span class="search-shortcut">Ctrl Shift K</span>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-row">
+                <div class="search-filter">
+                    <select [(ngModel)]="searchGroup" (change)="filterClosings()">
+                        <option value="">All Groups</option>
+                        <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
+                    </select>
+                </div>
+                <div class="search-filter">
+                    <input type="date" [(ngModel)]="searchDate" (change)="filterClosings()" class="form-control" />
+                </div>
+                <div class="search-filter">
+                    <button class="btn btn-secondary" (click)="exportToCSV()">
+                        📥 Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Info -->
+            <div class="summary-info" *ngIf="filteredClosings.length > 0">
+                <div class="summary-item">
+                    <span class="summary-label">Total Records:</span>
+                    <span class="summary-value">{{ filteredClosings.length }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Closing Amount:</span>
+                    <span class="summary-value">₹{{ getTotalClosingAmount() | number: '1.2-2' }}</span>
+                </div>
+            </div>
+
+            <!-- Closing Records Table -->
+            <div class="table-wrapper">
+                <table class="table" *ngIf="filteredClosings.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Member Name</th>
+                            <th>Group</th>
+                            <th>Ticket No</th>
+                            <th>Closing Date</th>
+                            <th>Closing Balance</th>
+                            <th>Type</th>
+                            <th>Authorized By</th>
+                            <th>Remarks</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let closing of filteredClosings">
+                            <td class="member-name">{{ closing.member }}</td>
+                            <td>{{ closing.groupName }}</td>
+                            <td>{{ closing.ticketNumber }}</td>
+                            <td>{{ closing.closingDate }}</td>
+                            <td class="amount">₹{{ closing.closingBalance | number: '1.2-2' }}</td>
+                            <td>
+                                <span class="badge" [ngClass]="{
+                                    'badge-debtor': closing.debtorCreditorType === 'Debtor',
+                                    'badge-creditor': closing.debtorCreditorType === 'Creditor'
+                                }">
+                                    {{ closing.debtorCreditorType }}
+                                </span>
+                            </td>
+                            <td>{{ closing.authorizedBy }}</td>
+                            <td class="remarks-cell">{{ closing.remarks || '-' }}</td>
+                            <td>
+                                <button class="action-delete" (click)="deleteClosing(closing.id!)" title="Delete">
+                                    🗑️
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- No Records Message -->
+                <div class="empty-state" *ngIf="filteredClosings.length === 0">
+                    <p>No closing records found. Click "Add Closing" to create one.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debtors/Creditors History -->
+        <div class="history-section">
+            <h3>Historical Records</h3>
+            <div class="table-wrapper">
+                <table class="table" *ngIf="debtorCreditorsHistory.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Group</th>
+                            <th>Ticket Number</th>
+                            <th>Member</th>
+                            <th>Transaction Date</th>
+                            <th>Amount</th>
+                            <th>Payable</th>
+                            <th>Paid Amount</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let record of debtorCreditorsHistory">
+                            <td>{{ record.groupName }}</td>
+                            <td>{{ record.ticketNumber }}</td>
+                            <td class="member-name">{{ record.paidTo }}</td>
+                            <td>{{ record.transactionDate }}</td>
+                            <td class="amount">₹{{ record.amount | number: '1.2-2' }}</td>
+                            <td class="amount">₹{{ record.payable | number: '1.2-2' }}</td>
+                            <td class="amount">₹{{ record.paidAmount | number: '1.2-2' }}</td>
+                            <td class="amount balance">₹{{ record.balance | number: '1.2-2' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

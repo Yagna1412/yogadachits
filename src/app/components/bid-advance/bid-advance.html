@@ -1,0 +1,94 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Bid Advance</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Payments</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Bid Advance</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Advance</button>
+</div>
+
+<div class="main-container">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Advance List</h3>
+      <div class="search-box">
+        <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search"/></span>
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterAdvances()"/>
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="table" *ngIf="filteredAdvances.length">
+        <thead>
+          <tr>
+            <th>Group</th><th>Ticket</th><th>Paid To</th><th>Transaction Date</th><th>Amount</th><th>Total Paid</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of filteredAdvances">
+            <td>{{a.groupName}}</td><td>{{a.ticketNo}}</td><td>{{a.paidTo}}</td><td>{{a.transactionDate}}</td><td>{{a.amount}}</td><td>{{a.totalPaid}}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="!filteredAdvances.length">
+        <p>No advances found. Click "Add Advance" to create one.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Add Bid Advance</h2>
+        <button class="close-btn" (click)="toggleForm()">×</button>
+      </div>
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group"><label>Group Name</label><input class="form-control" [(ngModel)]="newAdvance.groupName"/></div>
+          <div class="form-group"><label>Ticket No</label><input class="form-control" [(ngModel)]="newAdvance.ticketNo"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Paid To</label><input class="form-control" [(ngModel)]="newAdvance.paidTo"/></div>
+          <div class="form-group"><label>Series</label><input class="form-control" [(ngModel)]="newAdvance.series"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>No</label><input class="form-control" [(ngModel)]="newAdvance.no"/></div>
+          <div class="form-group"><label>Transaction Date</label><input class="form-control" type="date" [(ngModel)]="newAdvance.transactionDate"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Cash/Bank A/C</label><input class="form-control" [(ngModel)]="newAdvance.account"/></div>
+          <div class="form-group"><label>Amount</label><input class="form-control" type="number" [(ngModel)]="newAdvance.amount"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Narration</label><input class="form-control" [(ngModel)]="newAdvance.narration"/></div>
+          <div class="form-group"><label>Cheque No</label><input class="form-control" [(ngModel)]="newAdvance.chequeNumber"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Cheque Date</label><input class="form-control" type="date" [(ngModel)]="newAdvance.chequeDate"/></div>
+          <div class="form-group"><label>Current Installment No</label><input class="form-control" [(ngModel)]="newAdvance.currentInstallment"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Paid Up To</label><input class="form-control" [(ngModel)]="newAdvance.paidUpTo"/></div>
+          <div class="form-group"><label>Chit Amount</label><input class="form-control" type="number" [(ngModel)]="newAdvance.chitAmount"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Company Commission</label><input class="form-control" type="number" [(ngModel)]="newAdvance.companyCommission"/></div>
+          <div class="form-group"><label>Advance Amount</label><input class="form-control" type="number" [(ngModel)]="newAdvance.advanceAmount"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Adjustment Amount</label><input class="form-control" type="number" [(ngModel)]="newAdvance.adjustmentAmount"/></div>
+          <div class="form-group"><label>Total Paid</label><input class="form-control" type="number" [(ngModel)]="newAdvance.totalPaid"/></div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveAdvance()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

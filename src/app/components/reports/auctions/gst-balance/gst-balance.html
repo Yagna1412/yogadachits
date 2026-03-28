@@ -1,0 +1,61 @@
+<div class="page-header">
+  <div class="header-left">
+    <div class="page-title">GST Balance</div>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Dashboard</span>
+      <span class="breadcrumb-separator">→</span>
+      <span class="breadcrumb-item">Reports</span>
+      <span class="breadcrumb-separator">→</span>
+      <span class="breadcrumb-item">Auctions</span>
+      <span class="breadcrumb-separator">→</span>
+      <span class="breadcrumb-item active">GST Balance</span>
+    </nav>
+  </div>
+</div>
+<div class="main-container">
+  <form [formGroup]="balanceForm" (ngSubmit)="onGenerate()" class="form-section">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Group Name <span class="required">*</span></label>
+        <select formControlName="group" class="form-control">
+          <option value="">Select group</option>
+          <option *ngFor="let g of groups" [value]="g">{{ g }}</option>
+        </select>
+        <div class="error-message" *ngIf="submitted && balanceForm.get('group')?.invalid">Group is required.</div>
+      </div>
+      <div class="form-group">
+        <label>Report Date <span class="required">*</span></label>
+        <input type="date" formControlName="reportDate" class="form-control"/>
+        <div class="error-message" *ngIf="submitted && balanceForm.get('reportDate')?.invalid">Report Date is required.</div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Generate</button>
+      <button type="button" class="btn btn-primary" (click)="onPrint()" [disabled]="!showResults()">Print</button>
+    </div>
+  </form>
+
+  <div class="table-section" *ngIf="showResults()">
+    <div class="section-header">GST Balance as on {{ balanceForm.value.reportDate }}</div>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>GST Payable</th>
+            <th>GST Adjusted</th>
+            <th>GST Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of results()">
+            <td>{{ row.group }}</td>
+            <td>{{ row.gstPayable | number:'1.2-2' }}</td>
+            <td>{{ row.gstAdjusted | number:'1.2-2' }}</td>
+            <td>{{ row.gstBalance | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

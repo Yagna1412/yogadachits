@@ -1,0 +1,80 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Agents Target Report</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Reports</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Enrollments</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Agents Target Report</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-section">
+        <form [formGroup]="targetForm" (ngSubmit)="onGenerate()" class="report-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Agent Type</label>
+                    <select formControlName="agentType" class="form-control">
+                        <option *ngFor="let type of agentTypes" [value]="type.value">{{ type.label }}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Agent Name</label>
+                    <input formControlName="agentName" class="form-control" placeholder="Enter agent name (optional)" />
+                </div>
+                <div class="form-group">
+                    <label>From Date</label>
+                    <input type="date" formControlName="fromDate" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>To Date</label>
+                    <input type="date" formControlName="toDate" class="form-control" />
+                </div>
+
+                <div *ngIf="submitted && targetForm.errors?.['invalidDateRange']" class="error-message">From Date cannot
+                    be
+                    after To
+                    Date.</div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Generate Report</button>
+            </div>
+        </form>
+    </div>
+
+
+    <div *ngIf="showResults()" class="table-section">
+        <div class="section-header">
+            <h3>Agents Target Report</h3>
+        </div>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Agent Type</th>
+                        <th>Agent Name</th>
+                        <th>From Date</th>
+                        <th>To Date</th>
+                        <th>Target</th>
+                        <th>Achieved</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let agent of agents()">
+                        <td>{{ agent.agentType }}</td>
+                        <td>{{ agent.agentName }}</td>
+                        <td>{{ agent.fromDate }}</td>
+                        <td>{{ agent.toDate }}</td>
+                        <td>{{ agent.target }}</td>
+                        <td>{{ agent.achieved }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

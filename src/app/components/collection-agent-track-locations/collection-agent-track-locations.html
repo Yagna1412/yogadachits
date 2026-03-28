@@ -1,0 +1,40 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Collection Agent Track Locations</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">MIS</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Collection Agent Track Locations</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-filter">
+        <div class="form-group">
+            <label>Agent *</label>
+            <select class="form-control" [(ngModel)]="selectedAgent">
+                <option value="">Select Agent</option>
+                <option *ngFor="let a of agents" [value]="a">{{a}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" class="form-control" [(ngModel)]="reportDate" />
+        </div>
+    </div>
+
+    <div class="form-footer">
+        <button class="btn btn-primary" (click)="view()">View</button>
+        <button class="btn btn-secondary" (click)="reset()">Reset</button>
+    </div>
+
+    <div *ngIf="showTracking">
+        <p>GPS tracking data for {{ selectedAgent }} (as of {{ reportDate || 'today' }}).</p>
+        <!-- placeholder for live tracking map -->
+        <div
+            style="height:400px; background:#eef; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+            <span>Live agent tracking map would appear here</span>
+        </div>
+    </div>
+</div>

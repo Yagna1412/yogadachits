@@ -1,0 +1,167 @@
+<!-- Page Header -->
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Member Receipts</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Members</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Member Receipts</span>
+    </nav>
+  </div>
+</div>
+<!-- Bid Entry Section -->
+<div class="bid-entry-container">
+  <div class="bid-entry-wrapper">
+    <!-- Bid Entry Form -->
+    <div class="bid-entry-form">
+      <h2 class="section-title">Bid Entry</h2>
+      
+      <div class="form-grid">
+        <!-- Select Member -->
+        <div class="form-group">
+          <label class="form-label">Select Member</label>
+          <select class="form-control">
+            <option>Rajesh Kumar (MEM001)</option>
+            <option>Priya Sharma (MEM002)</option>
+            <option>Amit Patel (MEM003)</option>
+          </select>
+        </div>
+
+        <!-- Amount -->
+        <div class="form-group">
+          <label class="form-label">Amount (₹)</label>
+          <input type="number" class="form-control" placeholder="Enter Amount" value="18,000" />
+        </div>
+
+        <!-- Payment Mode -->
+        <div class="form-group">
+          <label class="form-label">Payment Mode</label>
+          <select class="form-control">
+            <option>Cash</option>
+            <option>UPI</option>
+            <option>Cheque</option>
+            <option>Bank Transfer</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Member Details Section -->
+      <div class="member-details">
+        <div class="detail-item">
+          <span class="detail-label">Total Members</span>
+          <span class="detail-value">Golden Circle 2024</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Ticket Number</span>
+          <span class="detail-value">T001</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Net Due</span>
+          <span class="detail-value">₹25,000</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Arrears</span>
+          <span class="detail-value">₹0</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="button-group">
+        <button class="btn btn-ghost">Save & Print Receipt</button>
+        <button class="btn btn-primary">Save Receipt</button>
+      </div>
+    </div>
+
+    <!-- Today's Collection Card -->
+    <div class="today-collection">
+      <h2 class="section-title">Today's Collection</h2>
+      
+      <div class="collection-amount">
+        <span class="currency-symbol">₹</span>
+        <span class="amount-value">5,00,000</span>
+      </div>
+
+      <div class="collection-breakdown">
+        <div class="breakdown-item">
+          <span class="breakdown-label">Cash</span>
+          <span class="breakdown-value">₹5,00,000</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">UPI</span>
+          <span class="breakdown-value">₹5,00,000</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Cheque</span>
+          <span class="breakdown-value">₹5,00,000</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-label">Bank Transfer</span>
+          <span class="breakdown-value">₹5,00,000</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bid Entry Table Section -->
+<div class="bid-entry-table-section">
+  <div class="bid-inner">
+    <div class="table-header">
+    <h2 class="section-title">Bid Entry</h2>
+    <div class="table-controls">
+      <div class="search-box">
+        <span class="search-icon">
+          <img src="assets/images/icons/Search.png" alt="Search" />
+        </span>
+        <input type="text" class="search-input" placeholder="Search receipts" [(ngModel)]="searchTerm" (input)="filterReceipts()" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Receipt ID</th>
+          <th>Member</th>
+          <th>Group</th>
+          <th>Amount</th>
+          <th>Payment Mode</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let receipt of filteredReceipts">
+          <td>{{ receipt.id }}</td>
+          <td>{{ receipt.member }}</td>
+          <td>{{ receipt.group }}</td>
+          <td>{{ receipt.amount }}</td>
+          <td>{{ receipt.paymentMode }}</td>
+          <td>{{ receipt.date }}</td>
+          <td>
+            <div class="action-icons">
+              <button class="icon-btn" title="View">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+              <button class="icon-btn" title="Print">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                  <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+</div>

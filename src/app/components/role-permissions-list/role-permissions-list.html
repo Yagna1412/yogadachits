@@ -1,0 +1,52 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Role Permissions List</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Security</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item">Roles</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item active">Permissions List</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-row" style="margin-bottom:1rem;">
+    <div class="form-group"><label>Role *</label>
+      <select class="form-control" [(ngModel)]="selectedRole">
+        <option value="">Select Role</option>
+        <option *ngFor="let r of roles" [value]="r">{{r}}</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Module</label>
+      <select class="form-control" [(ngModel)]="selectedModule">
+        <option value="">All Modules</option>
+        <option *ngFor="let m of modules" [value]="m">{{m}}</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Sub Module</label>
+      <select class="form-control" [(ngModel)]="selectedSubModule">
+        <option value="">All Sub Modules</option>
+        <option *ngFor="let s of subModules" [value]="s">{{s}}</option>
+      </select>
+    </div>
+    <div class="form-group" style="align-self:flex-end;">
+      <button class="btn btn-primary" (click)="viewPermissions()">View</button>
+    </div>
+  </div>
+
+  <div class="table-wrapper" *ngIf="permissions.length">
+    <table class="table">
+      <thead><tr><th>Role</th><th>Module</th><th>Sub Module</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let p of permissions">
+          <td>{{p.role}}</td><td>{{p.module}}</td><td>{{p.subModule}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="empty-state" *ngIf="!permissions.length">
+    <p>No permissions to display. Choose role and click View.</p>
+  </div>
+</div>

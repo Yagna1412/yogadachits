@@ -1,0 +1,51 @@
+@use '../../../styles/colors.scss' as *;
+
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0;
+  align-items: center;
+}
+
+.filter-row label {
+  font-weight: 600;
+}
+
+.filter-row input,
+.filter-row select {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.summary {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.search-filter {
+  label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #0F172A;
+    margin-bottom: 4px;
+  } 
+  input, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f6;
+      outline: none;
+    }
+  }
+}

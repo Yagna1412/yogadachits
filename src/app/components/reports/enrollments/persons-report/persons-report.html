@@ -1,0 +1,90 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Persons Report</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Reports</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Enrollments</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Persons Report</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Filter Form -->
+    <div class="form-section">
+        <form [formGroup]="personsForm" (ngSubmit)="onGenerate()">
+            <div class="form-grid">
+                <!-- From Date -->
+                <div class="form-group">
+                    <label for="fromDate">From Date *</label>
+                    <input type="date" id="fromDate" class="form-control" formControlName="fromDate"
+                        [class.error]="submitted && personsForm.get('fromDate')?.invalid">
+                    <div class="error-message" *ngIf="submitted && personsForm.get('fromDate')?.invalid">
+                        From Date is required
+                    </div>
+                </div>
+                <!-- To Date -->
+                <div class="form-group">
+                    <label for="toDate">To Date *</label>
+                    <input type="date" id="toDate" class="form-control" formControlName="toDate"
+                        [class.error]="submitted && personsForm.get('toDate')?.invalid">
+                    <div class="error-message" *ngIf="submitted && personsForm.get('toDate')?.invalid">
+                        To Date is required
+                    </div>
+                    <div class="error-message" *ngIf="personsForm.errors?.['invalidDateRange']">
+                        From Date must be before To Date
+                    </div>
+                </div>
+                <!-- Person Type -->
+                <div class="form-group">
+                    <label for="personType">Types of Persons *</label>
+                    <select id="personType" class="form-control" formControlName="personType">
+                        <option *ngFor="let type of personTypes" [value]="type.value">{{ type.label }}</option>
+                    </select>
+                </div>
+                <!-- Address -->
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" class="form-control" formControlName="address">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Generate</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Table -->
+    <div *ngIf="showResults()" class="table-section">
+        <div class="section-header">
+            <h3>Persons Report</h3>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Address</th>
+                        <th>From Date</th>
+                        <th>To Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let person of persons()">
+                        <td>{{ person.name }}</td>
+                        <td>{{ person.type }}</td>
+                        <td>{{ person.address }}</td>
+                        <td>{{ person.fromDate }}</td>
+                        <td>{{ person.toDate }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

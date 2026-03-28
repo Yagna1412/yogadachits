@@ -1,0 +1,297 @@
+<div class="dashboard-content">
+  <!-- Page Header -->
+  <div class="dashboard-header">
+    <div>
+      <h1>Chit Affordability Calculator</h1>
+      <p>Analyze how much you can comfortably invest in a chit based on your monthly financials.</p>
+    </div>
+  </div>
+
+  <!-- Calculator Tabs Navigation -->
+  <div class="tabs-container">
+    <div class="tabs-wrapper">
+      <button class="tab-item" [class.active]="activeTab === 'affordability'" (click)="setActiveTab('affordability')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        Affordability Calculator
+      </button>
+      <button class="tab-item" [class.active]="activeTab === 'income'" (click)="setActiveTab('income')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Monthly Income
+      </button>
+      <button class="tab-item" [class.active]="activeTab === 'emi'" (click)="setActiveTab('emi')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        Existing EMI
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Calculator Card -->
+  <div class="calculator-card">
+    
+    <!-- TAB 1: CHIT AFFORDABILITY CALCULATOR -->
+    <div class="tab-content" *ngIf="activeTab === 'affordability'">
+      <div class="section-header">
+        <h2>Safe Investment Analysis</h2>
+        <p class="section-desc">Evaluate your monthly obligations to recommend a safe installment and corresponding chit value.</p>
+      </div>
+      
+      <div class="calc-grid">
+        <!-- Input Panel -->
+        <div class="form-panel">
+          <div class="form-group">
+            <label>Monthly Gross Income (₹)</label>
+            <div class="input-wrapper">
+              <span class="currency-symbol">₹</span>
+              <input type="number" class="calc-input" [(ngModel)]="monthlyIncome" placeholder="e.g. 50000" />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Existing Monthly EMIs (₹) <span class="optional">(optional)</span></label>
+            <div class="input-wrapper">
+              <span class="currency-symbol">₹</span>
+              <input type="number" class="calc-input" [(ngModel)]="existingEmis" placeholder="e.g. 15000" />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Preferred Chit Tenure (Months)</label>
+            <div class="tenure-grid">
+              <label *ngFor="let option of tenureOptions" [class.active]="selectedTenure === option.value" class="tenure-btn">
+                <input type="radio" name="tenure" [value]="option.value" [(ngModel)]="selectedTenure">
+                {{option.label}}
+              </label>
+            </div>
+          </div>
+
+          <!-- Validation Alert -->
+          <div class="error-alert" *ngIf="validationError">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{validationError}}</span>
+          </div>
+
+          <button class="btn-calculate" (click)="calculateAffordability()">Calculate Recommendations</button>
+          <p class="calc-footer-note">Guideline calculation only. Does not prevent you from proceeding with higher values.</p>
+        </div>
+
+        <!-- Recommendation Dashboard -->
+        <div class="result-panel">
+          
+          <!-- Empty State -->
+          <div class="result-box empty-state" *ngIf="!isCalculated">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>Enter your financial details to view your personalized affordability status and suggested chit values.</p>
+          </div>
+
+          <!-- Results State -->
+          <div class="results-dashboard" *ngIf="isCalculated">
+            <!-- Risk Status Badge -->
+            <div class="risk-indicator-banner" [ngClass]="{
+              'safe': riskStatus === 'Safe',
+              'moderate': riskStatus === 'Moderate',
+              'high': riskStatus === 'High'
+            }">
+              <div class="risk-label">Affordability Status</div>
+              <div class="risk-status">{{riskStatus}} Investment</div>
+            </div>
+
+            <div class="result-metrics-grid">
+              <div class="metric-card">
+                <div class="metric-label">Suggested Monthly Installment</div>
+                <div class="metric-value">₹{{suggestedInstallment | number}}</div>
+                <div class="metric-subtext">Safe estimate based on surplus</div>
+              </div>
+              <div class="metric-card highlight">
+                <div class="metric-label">Estimated Chit Value</div>
+                <div class="metric-value">₹{{suggestedChitValue | number}}</div>
+                <div class="metric-subtext">At {{selectedTenure}} months tenure</div>
+              </div>
+            </div>
+
+            <div class="breakdown-list">
+              <div class="breakdown-item">
+                <span>Monthly Income</span>
+                <strong>₹{{monthlyIncome | number}}</strong>
+              </div>
+              <div class="breakdown-item">
+                <span>Existing Obligations</span>
+                <strong class="text-error">₹{{(existingEmis || 0) | number}}</strong>
+              </div>
+              <div class="divider"></div>
+              <div class="breakdown-item surplus">
+                <span>Net Disposable Income</span>
+                <strong class="text-success">₹{{surplusIncome | number}}</strong>
+              </div>
+            </div>
+            
+            <div class="result-callout">
+              <p>Following this recommendation helps prevent defaults and reduces financial stress.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: MONTHLY INCOME INPUT -->
+    <div class="tab-content monthly-income-tab" *ngIf="activeTab === 'income'">
+      <div class="section-header">
+        <h2>Monthly Earnings Profile</h2>
+        <p class="section-desc">Monthly income represents your total earnings and forms the base for affordability analysis.</p>
+      </div>
+
+      <div class="calc-grid">
+        <div class="form-panel">
+          <div class="form-group large-group">
+            <label>Total Monthly Income (₹)</label>
+            <div class="input-wrapper">
+              <span class="currency-symbol">₹</span>
+              <input 
+                type="number" 
+                class="calc-input large-input" 
+                [(ngModel)]="monthlyIncome" 
+                placeholder="Enter total gross earnings" 
+              />
+            </div>
+          </div>
+
+          <!-- Specific Validation Alert -->
+          <div class="error-alert" *ngIf="incomeValidationError">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{incomeValidationError}}</span>
+          </div>
+
+          <button class="btn-calculate" (click)="acceptMonthlyIncome()">Set Income for Analysis</button>
+          
+          <div class="info-alert compact mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p><strong>Note:</strong> Income data is used exclusively for your private affordability estimation.</p>
+          </div>
+        </div>
+
+        <div class="result-panel">
+          <!-- Idle State -->
+          <div class="result-box empty-state" *ngIf="!incomeAccepted">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+            </svg>
+            <p>Capture your monthly earning capacity to see your basic investment ceiling.</p>
+          </div>
+
+          <!-- Accepted State -->
+          <div class="results-dashboard income-success-view" *ngIf="incomeAccepted">
+             <div class="success-icon-large">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+             </div>
+             <h3>Income Accepted</h3>
+             <p>A monthly capacity of <strong>₹{{monthlyIncome | number}}</strong> has been locked in for calculations.</p>
+             
+             <div class="next-step-card" (click)="setActiveTab('affordability')">
+                <div class="card-text">
+                  <span>Next Step</span>
+                  <strong>View Affordability Analysis</strong>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: EXISTING EMI INPUT -->
+    <div class="tab-content existing-emi-tab" *ngIf="activeTab === 'emi'">
+      <div class="section-header">
+        <h2>Existing Financial Obligations</h2>
+        <p class="section-desc">Account for your monthly EMI outputs to improve calculation accuracy. This is optional.</p>
+      </div>
+
+      <div class="calc-grid">
+        <div class="form-panel">
+          <div class="form-group large-group">
+            <label>Existing Monthly EMIs (₹)</label>
+            <div class="input-wrapper">
+              <span class="currency-symbol">₹</span>
+              <input 
+                type="number" 
+                class="calc-input large-input" 
+                [(ngModel)]="existingEmis" 
+                placeholder="Enter total monthly EMIs" 
+              />
+            </div>
+          </div>
+
+          <!-- Specific Validation Alert -->
+          <div class="error-alert" *ngIf="emiValidationError">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{emiValidationError}}</span>
+          </div>
+
+          <div style="display: flex; gap: 1rem;">
+            <button class="btn-calculate" style="flex: 2;" (click)="acceptExistingEmis()">Account for EMI</button>
+            <button class="btn-calculate" style="flex: 1; background: #94a3b8; box-shadow: none;" (click)="skipExistingEmis()">Skip</button>
+          </div>
+          
+          <div class="info-alert compact mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p><strong>Note:</strong> Higher EMIs naturally reduce your safe chit investment capacity.</p>
+          </div>
+        </div>
+
+        <div class="result-panel">
+          <!-- Idle State -->
+          <div class="result-box empty-state" *ngIf="!emiAccepted">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+            </svg>
+            <p>Subtracting your existing debts helps us find the optimal subscription range for you.</p>
+          </div>
+
+          <!-- Accepted State -->
+          <div class="results-dashboard emi-summary-view" *ngIf="emiAccepted">
+             <div class="metric-card highlight" style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+                <div class="metric-label" style="font-size: 0.8125rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase;">Net Usable Income</div>
+                <div class="metric-value" style="font-size: 1.5rem; font-weight: 800; color: #111827;">
+                  ₹{{(monthlyIncome || 0) - (existingEmis || 0) | number}}
+                </div>
+                <div class="metric-subtext" style="font-size: 0.75rem; color: #6366f1; font-weight: 600; margin-top: 0.5rem;">
+                  After deducting ₹{{(existingEmis || 0) | number}} EMI
+                </div>
+             </div>
+             
+             <div class="next-step-card" (click)="setActiveTab('affordability')" style="cursor: pointer;">
+                <div class="card-text">
+                  <span>Logic Applied</span>
+                  <strong>Calculate Final Affordability</strong>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

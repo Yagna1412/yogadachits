@@ -1,0 +1,185 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Bid Payments</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Payments</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Bid Payments</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Bid Payment</button>
+</div>
+
+<div class="main-container">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Bid Payment List</h3>
+      <div class="search-box">
+        <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search" /></span>
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterPayments()" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="table" *ngIf="filteredPayments.length">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Ticket</th>
+            <th>Paid To</th>
+            <th>Transaction Date</th>
+            <th>Amount</th>
+            <th>Paid Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of filteredPayments">
+            <td>{{p.groupName}}</td>
+            <td>{{p.ticketNo}}</td>
+            <td>{{p.paidTo}}</td>
+            <td>{{p.transactionDate}}</td>
+            <td>{{p.amount}}</td>
+            <td>{{p.paidAmount}}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="!filteredPayments.length">
+        <p>No bid payments found. Click "Add Bid Payment" to create one.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Add Bid Payment</h2>
+        <button class="close-btn" (click)="toggleForm()">×</button>
+      </div>
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Group Name</label>
+            <input class="form-control" [(ngModel)]="newPayment.groupName" />
+          </div>
+          <div class="form-group">
+            <label>Ticket No</label>
+            <input class="form-control" [(ngModel)]="newPayment.ticketNo" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Paid To</label>
+            <input class="form-control" [(ngModel)]="newPayment.paidTo" />
+          </div>
+          <div class="form-group">
+            <label>Series</label>
+            <input class="form-control" [(ngModel)]="newPayment.series" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>No</label>
+            <input class="form-control" [(ngModel)]="newPayment.no" />
+          </div>
+          <div class="form-group">
+            <label>Transaction Date</label>
+            <input class="form-control" type="date" [(ngModel)]="newPayment.transactionDate" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cash/Bank A/C</label>
+            <input class="form-control" [(ngModel)]="newPayment.account" />
+          </div>
+          <div class="form-group">
+            <label>Amount</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.amount" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Narration</label>
+            <input class="form-control" [(ngModel)]="newPayment.narration" />
+          </div>
+          <div class="form-group">
+            <label>Cheque No</label>
+            <input class="form-control" [(ngModel)]="newPayment.chequeNumber" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cheque Date</label>
+            <input class="form-control" type="date" [(ngModel)]="newPayment.chequeDate" />
+          </div>
+          <div class="form-group">
+            <label>Current Installment No</label>
+            <input class="form-control" [(ngModel)]="newPayment.currentInstallment" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Paid Up To</label>
+            <input class="form-control" [(ngModel)]="newPayment.paidUpTo" />
+          </div>
+          <div class="form-group">
+            <label>Auction On</label>
+            <input class="form-control" [(ngModel)]="newPayment.auctionOn" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Installment Month & Year</label>
+            <input class="form-control" [(ngModel)]="newPayment.installmentMonth" />
+          </div>
+          <div class="form-group">
+            <label>Chit Amount</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.chitAmount" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Company Commission</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.companyCommission" />
+          </div>
+          <div class="form-group">
+            <label>Bid Amount</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.bidAmount" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Bid Payable</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.bidPayable" />
+          </div>
+          <div class="form-group">
+            <label>BP Adjustment</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.bpAdjustment" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Advance Adjustment</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.advanceAdjustment" />
+          </div>
+          <div class="form-group">
+            <label>Paid Amount</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.paidAmount" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Net Payable</label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.netPayable" />
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="savePayment()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

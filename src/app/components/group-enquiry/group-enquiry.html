@@ -1,0 +1,52 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Group Enquiry</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Enquiry</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Group Enquiry</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="section-header">
+        <h3>Group Enquiry</h3>
+        <div class="search-box">
+            <span class="search-icon">
+                <img src="assets/images/icons/Search.png" alt="Search" />
+            </span>
+            <input type="text" placeholder="Search by group name" [(ngModel)]="nameQuery" (ngModelChange)="search()"
+                class="search-input" />
+            <span class="search-shortcut">Ctrl Shift K</span>
+        </div>
+    </div>
+
+    <div class="table-wrapper" *ngIf="results.length">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Members</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let g of results">
+                    <td>{{g.name}}</td>
+                    <td>{{g.status}}</td>
+                    <td>{{g.members}}</td>
+                    <td>{{g.startDate}}</td>
+                    <td>{{g.endDate}}</td>
+                    <td>{{g.amount}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="empty-state" *ngIf="!results.length">
+        <p>Use the form above to search for a group.</p>
+    </div>
+</div>

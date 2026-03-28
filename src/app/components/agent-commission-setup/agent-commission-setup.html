@@ -1,0 +1,73 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Agent Commission Setup Entry</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item">Agents</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item active">Commission Setup</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Commission Setup</button>
+</div>
+
+<div class="main-container">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Commission Setup Configuration</h3>
+      <div class="search-box">
+        <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search"/></span>
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterSetups()"/>
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="table" *ngIf="filteredSetups.length">
+        <thead>
+          <tr>
+            <th>Agent</th><th>Commission Type</th><th>Agent TDS %</th><th>Agent GST %</th><th>Part 1 %</th><th>Part 1 Installment</th><th>Part 2 %</th><th>Part 2 Installment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of filteredSetups">
+            <td>{{s.agent}}</td><td>{{s.commissionType}}</td><td>{{s.tdsPct}}</td><td>{{s.gstPct}}</td><td>{{s.part1Pct}}</td><td>{{s.part1InstallmentNo}}</td><td>{{s.part2Pct}}</td><td>{{s.part2InstallmentNo}}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="!filteredSetups.length">
+        <p>No commission setups found. Click "Add Commission Setup" to create one.</p>
+      </div>
+    </div>
+  </div>
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Configure Agent Commission</h2>
+        <button class="close-btn" (click)="toggleForm()">×</button>
+      </div>
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group"><label>Agent</label><input class="form-control" [(ngModel)]="newSetup.agent" placeholder="Select or enter agent name"/></div>
+          <div class="form-group"><label>Commission Type</label><select class="form-control" [(ngModel)]="newSetup.commissionType"><option value="">Select Type</option><option value="Collection">Collection</option><option value="Business">Business</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Agent TDS %</label><input class="form-control" type="number" step="0.01" [(ngModel)]="newSetup.tdsPct" placeholder="0"/></div>
+          <div class="form-group"><label>Agent GST %</label><input class="form-control" type="number" step="0.01" [(ngModel)]="newSetup.gstPct" placeholder="0"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Part 1 %</label><input class="form-control" type="number" step="0.01" [(ngModel)]="newSetup.part1Pct" placeholder="0"/></div>
+          <div class="form-group"><label>Part 1 Installment No</label><input class="form-control" type="number" [(ngModel)]="newSetup.part1InstallmentNo" placeholder="1"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Part 2 %</label><input class="form-control" type="number" step="0.01" [(ngModel)]="newSetup.part2Pct" placeholder="0"/></div>
+          <div class="form-group"><label>Part 2 Installment No</label><input class="form-control" type="number" [(ngModel)]="newSetup.part2InstallmentNo" placeholder="2"/></div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveSetup()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

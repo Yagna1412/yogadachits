@@ -1,0 +1,284 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Company Setup</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Utilities</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Company Setup</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Company Setup</button>
+</div>
+
+<div class="main-container">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Company Setups List</h3>
+      <div class="search-box">
+        <span class="search-icon">
+          <img src="assets/images/icons/Search.png" alt="Search" />
+        </span>
+        <input type="text" placeholder="Search by company name" [(ngModel)]="nameQuery" (ngModelChange)="search()"
+          class="search-input" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="table" *ngIf="filteredCompanies.length">
+        <thead>
+          <tr>
+            <th>Company Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>GST No</th>
+            <th>Enrollment Charges</th>
+            <th>Company Commission %</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of filteredCompanies">
+            <td>{{c.companyName}}</td>
+            <td>{{c.phone}}</td>
+            <td>{{c.email}}</td>
+            <td>{{c.gstNo}}</td>
+            <td>{{c.enrollmentCharges}}</td>
+            <td>{{c.companyCommission}}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="!filteredCompanies.length">
+        <p>No company setups found.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Add Company Setup</h2>
+        <button class="close-btn" (click)="toggleForm()">×</button>
+      </div>
+      <div class="form-body">
+        <form #companyForm="ngForm" (ngSubmit)="save()">
+          <!-- General Section -->
+          <div class="section">
+            <h3>General</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Company Name *</label>
+                <input name="companyName" class="form-control" [(ngModel)]="model.companyName" required />
+                <div class="error" *ngIf="companyForm.submitted && !model.companyName">This field is required.</div>
+              </div>
+
+              <div class="form-group">
+                <label>Address</label>
+                <input name="address" class="form-control" [(ngModel)]="model.address" />
+              </div>
+
+              <div class="form-group">
+                <label>Phone</label>
+                <input name="phone" class="form-control" [(ngModel)]="model.phone" />
+              </div>
+
+              <div class="form-group">
+                <label>Email</label>
+                <input name="email" type="email" class="form-control" [(ngModel)]="model.email" />
+              </div>
+
+              <div class="form-group">
+                <label>Location</label>
+                <input name="location" class="form-control" [(ngModel)]="model.location" />
+              </div>
+
+              <div class="form-group">
+                <label>Latitude</label>
+                <input name="latitude" type="number" step="any" class="form-control" [(ngModel)]="model.latitude" />
+              </div>
+
+              <div class="form-group">
+                <label>Longitude</label>
+                <input name="longitude" type="number" step="any" class="form-control" [(ngModel)]="model.longitude" />
+              </div>
+
+              <div class="form-group">
+                <label>PAN</label>
+                <input name="pan" class="form-control" [(ngModel)]="model.pan" />
+              </div>
+
+              <div class="form-group">
+                <label>GST No</label>
+                <input name="gstNo" class="form-control" [(ngModel)]="model.gstNo" />
+                <div class="error" *ngIf="companyForm.submitted && model.gstNo && !validGst(model.gstNo)">Invalid GST format.</div>
+              </div>
+
+              <div class="form-group">
+                <label>GST Type</label>
+                <select name="gstType" class="form-control" [(ngModel)]="model.gstType">
+                  <option value="">Select GST Type</option>
+                  <option value="Regular">Regular</option>
+                  <option value="Composition">Composition</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>SAC Code</label>
+                <input name="sacCode" class="form-control" [(ngModel)]="model.sacCode" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Charges Section -->
+          <div class="section">
+            <h3>Charges</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Enrollment Charges</label>
+                <input name="enrollmentCharges" type="number" class="form-control" [(ngModel)]="model.enrollmentCharges" />
+              </div>
+
+              <div class="form-group">
+                <label>Notice Charges</label>
+                <input name="noticeCharges" type="number" class="form-control" [(ngModel)]="model.noticeCharges" />
+              </div>
+
+              <div class="form-group">
+                <label>Cheque Return Charges</label>
+                <input name="chequeReturnCharges" type="number" class="form-control" [(ngModel)]="model.chequeReturnCharges" />
+              </div>
+
+              <div class="form-group">
+                <label>Adjustment Type</label>
+                <select name="adjustmentType" class="form-control" [(ngModel)]="model.adjustmentType">
+                  <option value="">Select Type</option>
+                  <option value="Amount">Amount</option>
+                  <option value="%">%</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Adjustment Value</label>
+                <input name="adjustmentValue" type="number" class="form-control" [(ngModel)]="model.adjustmentValue" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Group Rules Section -->
+          <div class="section">
+            <h3>Group Rules</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>First Auction</label>
+                <select name="firstAuction" class="form-control" [(ngModel)]="model.firstAuction">
+                  <option value="">Select</option>
+                  <option value="Same Month">Same Month</option>
+                  <option value="Next Month">Next Month</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Company Chit</label>
+                <select name="companyChit" class="form-control" [(ngModel)]="model.companyChit">
+                  <option value="">Select</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Company Commission %</label>
+                <input name="companyCommission" type="number" class="form-control" [(ngModel)]="model.companyCommission" />
+              </div>
+
+              <div class="form-group">
+                <label>Max Ceiling %</label>
+                <input name="maxCeiling" type="number" class="form-control" [(ngModel)]="model.maxCeiling" />
+              </div>
+
+              <div class="form-group">
+                <label>Penalty % (PS / NPS)</label>
+                <input name="penaltyPercent" type="number" class="form-control" [(ngModel)]="model.penaltyPercent" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Accounting Section -->
+          <div class="section">
+            <h3>Accounting</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Auction Posting Type</label>
+                <input name="auctionPostingType" class="form-control" [(ngModel)]="model.auctionPostingType" />
+              </div>
+
+              <div class="form-group">
+                <label>Accounting Structure</label>
+                <select name="accountingStructure" class="form-control" [(ngModel)]="model.accountingStructure">
+                  <option value="">Select</option>
+                  <option value="Summary">Summary</option>
+                  <option value="Customer Wise">Customer Wise</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Agent Commission TDS</label>
+                <select name="agentCommissionTds" class="form-control" [(ngModel)]="model.agentCommissionTds">
+                  <option value="">Select</option>
+                  <option value="Billing Time">Billing Time</option>
+                  <option value="Payment Time">Payment Time</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Daily Receipt Posting</label>
+                <select name="dailyReceiptPosting" class="form-control" [(ngModel)]="model.dailyReceiptPosting">
+                  <option value="">Select</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- SMS Section -->
+          <div class="section">
+            <h3>SMS</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>SMS Status</label>
+                <select name="smsStatus" class="form-control" [(ngModel)]="model.smsStatus">
+                  <option value="">Select</option>
+                  <option value="Enabled">Enabled</option>
+                  <option value="Disabled">Disabled</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Company SMS Name</label>
+                <input name="companySmsName" class="form-control" [(ngModel)]="model.companySmsName" />
+              </div>
+
+              <div class="form-group">
+                <label>Subscription SMS</label>
+                <select name="subscriptionSms" class="form-control" [(ngModel)]="model.subscriptionSms">
+                  <option value="">Select</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>SMS Balance</label>
+                <input name="smsBalance" type="number" class="form-control" [(ngModel)]="model.smsBalance" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-footer">
+            <button class="btn btn-secondary" type="button" (click)="reset()">Reset</button>
+            <button class="btn btn-primary" type="submit">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

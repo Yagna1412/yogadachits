@@ -1,0 +1,106 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Users List</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Security</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Users</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Users List</span>
+        </nav>
+    </div>
+    <button class="btn btn-primary btn-add" (click)="addNewUser()">+ New User</button>
+</div>
+
+<div class="main-container">
+    <!-- add / edit user form -->
+    <div class="add-entry-form" *ngIf="showForm">
+        <div class="form-card">
+            <div class="form-header">
+                <h2>{{ editingUser ? 'Edit User' : 'New User' }}</h2>
+                <button class="close-btn" (click)="toggleForm()">×</button>
+            </div>
+            <div class="form-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>User Code *</label>
+                        <input class="form-control" [(ngModel)]="newUser.code" placeholder="User Code" />
+                    </div>
+                    <div class="form-group">
+                        <label>Name *</label>
+                        <input class="form-control" [(ngModel)]="newUser.name" placeholder="Name" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date *</label>
+                        <input class="form-control" type="date" [(ngModel)]="newUser.date" />
+                    </div>
+                    <div class="form-group">
+                        <label>Role *</label>
+                        <select class="form-control" [(ngModel)]="newUser.role">
+                            <option value="">Select role</option>
+                            <option *ngFor="let r of roles" [value]="r">{{r}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-footer">
+                    <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+                    <button class="btn btn-primary" (click)="saveUser()">
+                        {{ editingUser ? 'Update' : 'Save' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="table-section" *ngIf="!showForm">
+        <div class="section-header">
+            <h3>Enrollments</h3>
+            <div class="table-controls">
+                <div class="search-box">
+                    <span class="search-icon">
+                        <img src="assets/images/icons/Search.png" alt="Search" />
+                    </span>
+                    <input type="text" class="search-input" placeholder="Search" [(ngModel)]="searchTerm"
+                        (input)="filterUsers()" />
+                    <span class="search-shortcut">Ctrl Shift K</span>
+                </div>
+                <button class="btn btn-outline-primary" (click)="export('PDF')">Export PDF</button>
+                <button class="btn btn-outline-primary" (click)="export('Excel')">Export Excel</button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table class="table" *ngIf="filteredUsers.length">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Date</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let u of filteredUsers">
+                        <td>{{u.code}}</td>
+                        <td>{{u.name}}</td>
+                        <td>{{u.date}}</td>
+                        <td>{{u.role}}</td>
+                        <td class="member-actions">
+                            <button class="action-btn edit" (click)="editUser(u)" title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="empty-state" *ngIf="!filteredUsers.length">
+                No Users yet. Click "Add Users" to get started.
+            </p>
+        </div>
+    </div>
+</div>

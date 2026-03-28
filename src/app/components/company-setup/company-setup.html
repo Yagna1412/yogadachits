@@ -1,0 +1,348 @@
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Company Setup</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Transactions</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Members</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Re-Auction Entry</span>
+        </nav>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-container">
+    <div class="stat-card pending-card">
+        <div class="stat-header">
+            <h3 class="stat-title">Pending Cheques</h3>
+            <span class="stat-icon pending-icon">
+                <img src="assets/images/icons/clock.png" alt="Pending Icon" />
+            </span>
+        </div>
+        <div class="stat-value">{{ pendingStats.count }}</div>
+        <div class="stat-amount">{{ formatCurrency(pendingStats.amount) }}</div>
+    </div>
+
+    <div class="stat-card cleared-card">
+        <div class="stat-header">
+            <h3 class="stat-title">Cleared Cheques</h3>
+            <span class="stat-icon cleared-icon">
+                <img src="assets/images/icons/check-check.png" alt="Cleared Icon" />
+            </span>
+        </div>
+        <div class="stat-value">{{ clearedStats.count }}</div>
+        <div class="stat-amount cleared-amount">{{ formatCurrency(clearedStats.amount) }}</div>
+    </div>
+
+    <div class="stat-card bounced-card">
+        <div class="stat-header">
+            <h3 class="stat-title">Bounced Cheques</h3>
+            <span class="stat-icon bounced-icon">
+                <img src="assets/images/icons/bounced.png" alt="Bounced Icon" />
+            </span>
+        </div>
+        <div class="stat-value">{{ bouncedStats.count }}</div>
+        <div class="stat-amount bounced-amount">{{ formatCurrency(bouncedStats.amount) }}</div>
+    </div>
+</div>
+
+<!-- Past Auctions Section -->
+<div class="past-auctions-section">
+    <div class="section-header">
+        <h3>Past Auctions</h3>
+        <div class="search-box">
+            <span class="search-icon">
+                <img src="assets/images/icons/Search.png" alt="Search" />
+            </span>
+            <input type="text" placeholder="Search" [(ngModel)]="searchTerm" class="search-input" />
+            <span class="search-shortcut">Ctrl Shift K</span>
+        </div>
+        <button class="btn btn-primary" (click)="saveContinue()">Save & Continue</button>
+    </div>
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Auction #</th>
+                    <th>Winner</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let auction of pastAuctions">
+                    <td>{{ auction.auctionNumber }}</td>
+                    <td>{{ auction.winner }}</td>
+                    <td>{{ formatCurrency(auction.amount) }}</td>
+                    <td>{{ auction.date }}</td>
+                    <td>
+                        <button class="view-btn" title="View">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                        <button class="print-btn" title="Print">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4 6H7m6 0H7m8-10H5a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M9 17h.01M9 21h.01M13 17h.01M13 21h.01" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- Step-wise Add Member Form modal -->
+<div class="modal-overlay" *ngIf="showAddMemberModal" (click)="closeAddMemberModal()">
+    <div class="add-member-form" (click)="$event.stopPropagation()">
+        <div class="form-container">
+            <!-- Step Navigation Sidebar -->
+            <div class="step-sidebar">
+                <div class="step-item" *ngFor="let step of steps" [class.active]="step.number === currentStep"
+                    [class.completed]="step.completed">
+                    <div class="step-circle" (click)="goToStep(step.number)">
+                        <span *ngIf="!step.completed">{{ step.number }}</span>
+                        <span *ngIf="step.completed" class="checkmark">✓</span>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-number">Step {{ step.number }}</div>
+                        <div class="step-title">{{ step.title }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Content -->
+            <div class="form-content">
+                <div class="form-header">
+                    <h2>Company Details</h2>
+                    <button class="close-btn" (click)="closeAddMemberModal()">×</button>
+                </div>
+
+                <div class="form-body">
+                    <!-- Step 1: Basic -->
+                    <div class="step-form" *ngIf="currentStep === 1">
+                        <div class="sub-form">
+                            <h3>General Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Company Name</label>
+                                    <input type="text" placeholder="e.g John Grisham" class="form-control">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Email </label>
+                                    <input type="email" placeholder="e.g joshn@gmail.com" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Phone</label>
+                                    <input type="tel" placeholder="e.g 1234567890" class="form-control">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Location</label>
+                                    <input type="text" placeholder="e.g Bangalore" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Latitude</label>
+                                    <input type="tel" placeholder="e.g 1234567890" class="form-control">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Longitude</label>
+                                    <input type="tel" placeholder="e.g 1234567890" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input type="text" placeholder="e.g ABC Residence" class="form-control">
+                            </div>
+                        </div>
+                        <div class="sub-form">
+                            <h3>Statutory Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>PAN</label>
+                                    <input type="text" placeholder="e.g ABCDXXXXX" class="form-control">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>GST Number </label>
+                                    <input type="text" placeholder="e.g 123456789012345" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>GST Type</label>
+                                    <input type="text" placeholder="e.g Regular" class="form-control">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>SAC Code</label>
+                                    <input type="text" placeholder="e.g 123456789012345" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Personal -->
+                    <div class="step-form" *ngIf="currentStep === 2">
+
+                        <div class="form-group">
+                            <label>Enrollment Charges</label>
+                            <input type="text" placeholder="e.g 300/-" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notice Charges</label>
+                            <input type="text" placeholder="e.g 100/-" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Cheque Return Charges</label>
+                            <input type="text" placeholder="e.g 50/-" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Adjustment Type</label>
+                            <select class="form-control">
+                                <option value="">Select Adjustment Type</option>
+                                <option value="amount">Amount</option>
+                                <option value="percentage">Percentage</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Adjustment Value</label>
+                            <input type="text" placeholder="e.g 50/-" class="form-control">
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Bank -->
+                    <div class="step-form" *ngIf="currentStep === 3">
+                        <div class="form-group">
+                            <label> First Auction </label>
+                            <select class="form-control">
+                                <option value="">Select Auction</option>
+                                <option value="auction1">Same</option>
+                                <option value="auction2">Next Month</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Company Chit</label>
+                            <select class="form-control">
+                                <option value="">Select Company Chit</option>
+                                <option value="auction1">Yes</option>
+                                <option value="auction2">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Company Commission %</label>
+                            <input type="text" placeholder="e.g 50/-" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Max Ceiling %</label>
+                            <input type="text" placeholder="e.g 50/-" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <select class="form-control">
+                                <label>Penalty %</label>
+                                <option value="">Select Penalty Type</option>
+                                <option value="auction1">PS</option>
+                                <option value="auction2">NPS</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <!-- Step 4: Occupation -->
+                    <div class="step-form" *ngIf="currentStep === 4">
+                        <div class="form-group">
+                            <label>Auction Posting Type</label>
+                            <input type="text" placeholder="e.g Terabite" [(ngModel)]="newMember.companyName"
+                                class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <select class="form-control">
+                                <label>Accounting Structure</label>
+                                <option value="">Select Accounting Structure</option>
+                                <option value="auction1">Summary</option>
+                                <option value="auction2">Customer Wise</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <select class="form-control">
+                                <label>Agent Commission TDS</label>
+                                <option value="">Select Agent Commission TDS</option>
+                                <option value="auction1">Billing</option>
+                                <option value="auction2">Payment Time</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Daily Receipt Posting</label>
+                            <input type="text" placeholder="e.g Terabite" [(ngModel)]="newMember.companyName"
+                                class="form-control">
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Nominee -->
+                    <div class="step-form" *ngIf="currentStep === 5">
+
+                        <div class="form-group">
+                            <label>SMS Status</label>
+                            <input type="text" placeholder="e.g Status" [(ngModel)]="newMember.companyName"
+                                class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Company SMS Name</label>
+                            <input type="text" placeholder="e.g Name" [(ngModel)]="newMember.companyName"
+                                class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>SMS Balance</label>
+                            <input type="text" placeholder="e.g Balance" [(ngModel)]="newMember.companyName"
+                                class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Subscription SMS</label>
+                            <select class="form-control">
+                                <option value="">Select Subscription SMS</option>
+                                <option value="auction1">Yes</option>
+                                <option value="auction2">No</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Form Navigation -->
+                <div class="form-footer">
+                    <button class="btn btn-secondary" (click)="previousStep()" *ngIf="currentStep > 1">
+                        Undo
+                    </button>
+
+                    <button class="btn btn-primary" (click)="nextStep()" *ngIf="currentStep < totalSteps">
+                        Save & Continue
+                    </button>
+
+                    <button class="btn btn-success" *ngIf="currentStep === totalSteps">
+                        Save Member
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>

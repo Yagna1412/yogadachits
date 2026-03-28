@@ -1,0 +1,30 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Home Dashboards</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">MIS</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Home Dashboards</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-row" style="margin-bottom:1rem;">
+    <div class="form-group">
+      <label>Dashboard Type</label>
+      <select class="form-control" [(ngModel)]="selectedType">
+        <option value="">Select</option>
+        <option *ngFor="let d of dashboardTypes" [value]="d">{{d}}</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="showContent">
+    <p>Displaying {{selectedType}} dashboard data here.</p>
+    <!-- placeholder for actual dashboard content -->
+  </div>
+  <div *ngIf="!showContent">
+    <p>Please select a dashboard type to view.</p>
+  </div>
+</div>

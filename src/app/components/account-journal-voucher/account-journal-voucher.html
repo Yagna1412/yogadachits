@@ -1,0 +1,79 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Journal Voucher</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item">Accounts</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item active">Journal Voucher</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Journal Voucher</button>
+</div>
+
+<div class="main-container">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Journal Vouchers Entry</h3>
+      <div class="search-box">
+        <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search"/></span>
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterVouchers()"/>
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="table" *ngIf="filteredVouchers.length">
+        <thead>
+          <tr>
+            <th>Transaction Type</th><th>Voucher Series</th><th>Voucher No</th><th>Transaction Date</th><th>Account</th><th>Debit Amount</th><th>Credit Amount</th><th>Total Debit</th><th>Total Credit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let v of filteredVouchers">
+            <td>{{v.transactionType}}</td><td>{{v.voucherSeries}}</td><td>{{v.voucherNo}}</td><td>{{v.transactionDate}}</td><td>{{v.account}}</td><td>{{v.debitAmount}}</td><td>{{v.creditAmount}}</td><td>{{v.totalDebit}}</td><td>{{v.totalCredit}}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="!filteredVouchers.length">
+        <p>No journal vouchers found. Click "Add Journal Voucher" to create one.</p>
+      </div>
+    </div>
+  </div>
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>Record Journal Voucher</h2>
+        <button class="close-btn" (click)="toggleForm()">×</button>
+      </div>
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group"><label>Transaction Type</label><input class="form-control" [(ngModel)]="newVoucher.transactionType" placeholder="Adjustment, Transfer, Correction"/></div>
+          <div class="form-group"><label>Voucher Series</label><input class="form-control" [(ngModel)]="newVoucher.voucherSeries" placeholder="JV"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Voucher No</label><input class="form-control" [(ngModel)]="newVoucher.voucherNo"/></div>
+          <div class="form-group"><label>Transaction Date</label><input class="form-control" type="date" [(ngModel)]="newVoucher.transactionDate"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Account</label><input class="form-control" [(ngModel)]="newVoucher.account" placeholder="Ledger account name"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Narration</label><textarea class="form-control" [(ngModel)]="newVoucher.narration" placeholder="Description of the adjustment" style="resize: vertical; min-height: 60px;"></textarea></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Debit Amount</label><input class="form-control" type="number" [(ngModel)]="newVoucher.debitAmount" placeholder="0"/></div>
+          <div class="form-group"><label>Credit Amount</label><input class="form-control" type="number" [(ngModel)]="newVoucher.creditAmount" placeholder="0"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Total Debit</label><input class="form-control" type="number" [(ngModel)]="newVoucher.totalDebit" placeholder="Total debit amount"/></div>
+          <div class="form-group"><label>Total Credit</label><input class="form-control" type="number" [(ngModel)]="newVoucher.totalCredit" placeholder="Total credit amount"/></div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveVoucher()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

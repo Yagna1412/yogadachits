@@ -1,0 +1,22 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class CashAccountService {
+    private apiUrl = 'http://localhost:8080/chitfunds/api/admin/account-cash';
+
+    constructor(private http: HttpClient) { }
+
+    getTransactions(tenantId: number, type: string): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/list?tenantId=${tenantId}&type=${type}`);
+    }
+
+    saveReceipt(data: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/receipt`, data);
+    }
+
+    savePayment(data: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/payment`, data);
+    }
+}

@@ -1,0 +1,445 @@
+@use '../../../styles/colors.scss' as *;
+
+.dashboard-content {
+  padding: 0;
+  background: #f7fbfe;
+  min-height: 100vh;
+  width: 100%;
+
+  // Dashboard Header
+  .dashboard-header {
+    background: white;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 1rem;
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 0.25rem 0;
+    }
+
+    p {
+      font-size: 0.9375rem;
+      color: #6b7280;
+      margin: 0;
+    }
+  }
+
+  // Tabs Container
+  .tabs-container {
+    padding: 0 1rem;
+    margin-bottom: 1.5rem;
+
+    .tabs-wrapper {
+      display: inline-flex;
+      background: #e2e8f0;
+      padding: 0.375rem;
+      border-radius: 12px;
+      gap: 0.375rem;
+      max-width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+      &::-webkit-scrollbar { display: none; }
+
+      .tab-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+
+        svg {
+          width: 18px;
+          height: 18px;
+          color: #94a3b8;
+        }
+
+        &.active {
+          background: white;
+          color: #6366f1;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+          svg { color: #6366f1; }
+        }
+      }
+    }
+  }
+
+  // Calculator Card
+  .calculator-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 0 1rem 2rem 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+    max-width: 1000px;
+
+    .section-header {
+      margin-bottom: 2rem;
+
+      h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 0.5rem 0;
+      }
+
+      .section-desc {
+        font-size: 0.9375rem;
+        color: #6b7280;
+        margin: 0;
+      }
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+
+      @media (max-width: 1024px) {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+    }
+
+    // Form Interactions
+    .form-panel {
+      .form-group {
+        margin-bottom: 1.5rem;
+
+        label {
+          display: block;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 0.5rem;
+
+          .optional { color: #9ca3af; font-size: 0.75rem; font-weight: normal; margin-left: 0.25rem; }
+        }
+
+        .input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+
+          .currency-symbol {
+            position: absolute;
+            left: 1rem;
+            color: #94a3b8;
+            font-weight: 600;
+          }
+
+          .calc-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2rem;
+            font-size: 1rem;
+            color: #111827;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            transition: all 0.2s;
+
+            &:focus {
+              outline: none;
+              border-color: #6366f1;
+              box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            }
+          }
+        }
+      }
+
+      // Radio Button Tenure styles
+      .tenure-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+
+        .tenure-btn {
+          display: block;
+          text-align: center;
+          padding: 0.75rem;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #64748b;
+          cursor: pointer;
+          transition: all 0.2s;
+          background: #f8fafc;
+
+          input[type="radio"] { display: none; }
+
+          &:hover {
+            border-color: #cbd5e1;
+            background: #f1f5f9;
+          }
+
+          &.active {
+            border-color: #6366f1;
+            background: #eff6ff;
+            color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+          }
+        }
+      }
+
+      .btn-calculate {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+        &:hover {
+          box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+          transform: translateY(-1px);
+        }
+      }
+
+      .calc-footer-note {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 1rem;
+        text-align: center;
+        line-height: 1.4;
+      }
+      
+      .error-alert {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        color: #dc2626;
+        font-size: 0.875rem;
+        font-weight: 500;
+        
+        svg { width: 18px; height: 18px; }
+      }
+    }
+
+    // Result Panel Design
+    .result-panel {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 2.5rem;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+
+      .empty-state {
+        margin: auto;
+        text-align: center;
+        max-width: 280px;
+
+        svg {
+          width: 56px;
+          height: 56px;
+          color: #cbd5e1;
+          margin-bottom: 1.25rem;
+        }
+
+        p {
+          font-size: 0.9375rem;
+          color: #64748b;
+          line-height: 1.6;
+        }
+      }
+
+      // Calculated Results View
+      .results-dashboard {
+        .risk-indicator-banner {
+          padding: 1.5rem;
+          border-radius: 12px;
+          text-align: center;
+          margin-bottom: 2rem;
+
+          .risk-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+          }
+
+          .risk-status {
+            font-size: 1.5rem;
+            font-weight: 800;
+          }
+
+          &.safe { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; .risk-status { color: #059669; } }
+          &.moderate { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; .risk-status { color: #d97706; } }
+          &.high { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; .risk-status { color: #dc2626; } }
+        }
+
+        .result-metrics-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.25rem;
+          margin-bottom: 2rem;
+
+          @media (max-width: 640px) {
+            grid-template-columns: 1fr;
+          }
+
+          .metric-card {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+
+            &.highlight { border-left: 4px solid #6366f1; }
+
+            .metric-label { font-size: 0.8125rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; }
+            .metric-value { font-size: 1.25rem; font-weight: 800; color: #111827; margin-bottom: 0.25rem; }
+            .metric-subtext { font-size: 0.75rem; color: #94a3b8; }
+          }
+        }
+
+        .breakdown-list {
+          background: white;
+          padding: 1.25rem;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          margin-bottom: 1.5rem;
+
+          .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+
+            span { color: #64748b; font-weight: 500; }
+            strong { color: #1e293b; font-weight: 700; }
+            .text-error { color: #ef4444; }
+            .text-success { color: #10b981; }
+
+            &.surplus { margin-top: 0.75rem; font-size: 1rem; }
+          }
+
+          .divider { height: 1px; background: #f1f5f9; margin: 0.75rem 0; }
+        }
+
+        .result-callout {
+          background: #eff6ff;
+          padding: 1rem;
+          border-radius: 8px;
+          border-left: 4px solid #3b82f6;
+
+          p { font-size: 0.8125rem; color: #1e40af; line-height: 1.5; margin: 0; font-weight: 500; }
+        }
+      }
+    }
+    // Income specific refinements
+    &.monthly-income-tab {
+      .large-group { margin-bottom: 2.5rem; }
+      .large-input { 
+        padding-top: 1.25rem; 
+        padding-bottom: 1.25rem; 
+        font-size: 1.5rem; 
+        font-weight: 800;
+        border-color: #cbd5e1;
+        background: #fdfdfd;
+      }
+      
+      .next-step-card {
+        margin-top: 2rem;
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+
+        &:hover {
+          border-color: #6366f1;
+          transform: translateX(4px);
+          box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.1);
+        }
+
+        .card-text {
+          display: flex;
+          flex-direction: column;
+          span { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #94a3b8; }
+          strong { font-size: 0.9375rem; color: #6366f1; }
+        }
+
+        svg { width: 24px; height: 24px; color: #6366f1; }
+      }
+    }
+
+    // Common info alert within card
+    .info-alert.compact {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-radius: 8px;
+
+      svg { width: 18px; height: 18px; color: #94a3b8; }
+      p { font-size: 0.75rem; margin: 0; }
+    }
+
+    // Success View
+    .income-success-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin: auto 0;
+
+      .success-icon-large {
+        width: 80px;
+        height: 80px;
+        background: #ecfdf5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+
+        svg { width: 48px; height: 48px; color: #10b981; }
+      }
+
+      h3 { font-size: 1.25rem; font-weight: 700; color: #065f46; margin-bottom: 0.5rem; }
+      p { font-size: 0.9375rem; color: #047857; }
+    }
+  }
+}

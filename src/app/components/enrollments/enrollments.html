@@ -1,0 +1,123 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Enrollments</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Master</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Members</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Enrollments</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">
+    + Add Enrollment
+  </button>
+</div>
+
+<div class="main-container">
+  <!-- Table Section -->
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Enrollments</h3>
+      <div class="search-box">
+        <span class="search-icon">
+          <img src="assets/images/icons/Search.png" alt="Search" />
+        </span>
+        <input type="text" placeholder="Search" class="search-input" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+
+    <div *ngIf="enrollments.length > 0" class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Group</th>
+            <th>Ticket No</th>
+            <th>Business Agent</th>
+            <th>Collection Agent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of enrollments">
+            <td>{{ memberName(e.memberId) }}</td>
+            <td>{{ groupName(e.chitGroupId) }}</td>
+            <td>{{ e.ticketNo }}</td>
+            <td>{{ e.businessAgent }}</td>
+            <td>{{ e.collectionAgent }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="enrollments.length === 0" class="empty-state">
+      <p>No enrollments yet. Click "Add Enrollment" to get started.</p>
+    </div>
+  </div>
+
+  <!-- Form Section -->
+  <div class="add-enrollment-form" *ngIf="showForm">
+    <div class="form-container">
+      <!-- Form Content -->
+      <div class="form-content">
+        <div class="form-header">
+          <h2>Enroll a Member</h2>
+          <button class="close-btn" (click)="toggleForm()">×</button>
+        </div>
+
+        <div class="form-body">
+          <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="member">Member <span class="text-danger">*</span></label>
+              <select id="member" [(ngModel)]="selectedMemberId" class="form-control">
+                <option value="">-- select member --</option>
+                <option *ngFor="let m of members" [value]="m.id">{{ m.name }} ({{ m.id }})</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="group">Chit Group <span class="text-danger">*</span></label>
+              <select id="group" [(ngModel)]="selectedGroupId" class="form-control">
+                <option value="">-- select group --</option>
+                <option *ngFor="let g of chitGroups" [value]="g.id">{{ g.name }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ticket">Ticket No. <span class="text-danger">*</span></label>
+              <input id="ticket" type="text" placeholder="Enter ticket number" [(ngModel)]="ticketNo"
+                class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label for="businessAgent">Business Agent Name</label>
+              <input id="businessAgent" type="text" placeholder="e.g John Smith" [(ngModel)]="businessAgent"
+                class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="collectionAgent">Collection Agent Name</label>
+            <input id="collectionAgent" type="text" placeholder="e.g Robert Johnson" [(ngModel)]="collectionAgent"
+              class="form-control" />
+          </div>
+        </div>
+
+        <!-- Form Footer -->
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">
+            Cancel
+          </button>
+          <button class="btn btn-primary" (click)="saveEnrollment()">
+            Save Enrollment
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

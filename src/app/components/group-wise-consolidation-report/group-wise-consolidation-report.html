@@ -1,0 +1,61 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Group Wise Consolidation Report</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Consolidation</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Group Wise Consolidation Report</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-filter" style="margin-bottom:1rem;">
+        <div class="form-group">
+            <label>Group Name</label>
+            <input class="form-control" [(ngModel)]="groupName" placeholder="Enter group name" />
+        </div>
+        <div class="form-group">
+            <label>Groups Status</label>
+            <select class="form-control" [(ngModel)]="status">
+                <option value="">Select Status</option>
+                <option *ngFor="let s of statuses" [value]="s">{{s}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Report Date *</label>
+            <input type="date" class="form-control" [(ngModel)]="reportDate" />
+        </div>
+        <div class="form-group" style="align-self:flex-end;">
+            <button class="btn btn-primary" (click)="generate()">Generate</button>
+            <button class="btn btn-secondary" style="margin-left:8px;" (click)="reset()">Reset</button>
+        </div>
+    </div>
+
+    <p>Consolidated report for {{ groupName || 'all groups' }} (Status: {{ status || 'Any' }}) as of {{ reportDate
+        }}.</p>
+    <div class="table-wrapper" *ngIf="showReport">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>Running</th>
+                    <th>Closed</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of filteredData()">
+                    <td>{{row.group}}</td>
+                    <td>{{row.runningCount}}</td>
+                    <td>{{row.closedCount}}</td>
+                    <td>{{row.total}}</td>
+                </tr>
+                <tr *ngIf="filteredData().length === 0">
+                    <td colspan="4" style="text-align:center;">No data available for selected criteria.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>

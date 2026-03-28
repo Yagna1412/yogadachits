@@ -1,0 +1,186 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Groups List Report</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Reports</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Enrollments</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Groups List Report</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Filter Form -->
+    <div class="form-section">
+        <form [formGroup]="subscribersForm" (ngSubmit)="onSubmit()" class="filter-form">
+            <div class="form-grid">
+                <!-- Group Name -->
+                <div class="form-group">
+                    <label for="groupName" class="form-label required">Group Name</label>
+                    <input type="text" id="groupName" formControlName="groupName" class="form-control"
+                        placeholder="Enter group name"
+                        [class.error]="subscribersForm.get('groupName')?.invalid && subscribersForm.get('groupName')?.touched">
+                    <div class="error-message"
+                        *ngIf="subscribersForm.get('groupName')?.invalid && subscribersForm.get('groupName')?.touched">
+                        <span *ngIf="subscribersForm.get('groupName')?.errors?.['required']">Group name is
+                            required</span>
+                    </div>
+                </div>
+
+                <!-- Date Range -->
+                <div class="form-group">
+                    <div class="date-range">
+                        <div class="date-input-group">
+                            <label for="fromDate" class="date-label">From Date</label>
+                            <input type="date" id="fromDate" formControlName="fromDate" class="form-control date-input"
+                                [class.error]="subscribersForm.get('fromDate')?.invalid && subscribersForm.get('fromDate')?.touched">
+                        </div>
+                        <div class="date-input-group">
+                            <label for="toDate" class="date-label">To Date</label>
+                            <input type="date" id="toDate" formControlName="toDate" class="form-control date-input"
+                                [class.error]="subscribersForm.get('toDate')?.invalid && subscribersForm.get('toDate')?.touched">
+                        </div>
+                    </div>
+                    <div class="error-message"
+                        *ngIf="(subscribersForm.get('fromDate')?.invalid && subscribersForm.get('fromDate')?.touched) || (subscribersForm.get('toDate')?.invalid && subscribersForm.get('toDate')?.touched)">
+                        <span
+                            *ngIf="subscribersForm.get('fromDate')?.errors?.['required'] || subscribersForm.get('toDate')?.errors?.['required']">Date
+                            range is required</span>
+                    </div>
+                </div>
+
+                <!-- Group Status -->
+                <div class="form-group">
+                    <label class="form-label required">Groups</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" formControlName="running" [value]="true" class="radio-input">
+                            <span class="radio-text">Running</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" formControlName="closed" [value]="true" class="radio-input">
+                            <span class="radio-text">Closed</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" formControlName="both" [value]="true" class="radio-input">
+                            <span class="radio-text">Both</span>
+                        </label>
+                    </div>
+                    <div class="error-message"
+                        *ngIf="groupStatusForm.errors?.['atLeastOneRequired'] && groupStatusForm.touched">
+                        <span>At least one group status must be selected</span>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="form-group">
+                    <label class="form-label">Options</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" formControlName="includeCancelMembers" class="checkbox-input">
+                            <span class="checkbox-text">Cancel Members</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" formControlName="includeAddress" class="checkbox-input">
+                            <span class="checkbox-text">Address</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Format -->
+                <div class="form-group">
+                    <label for="format" class="form-label">Format</label>
+                    <select id="format" formControlName="format" class="form-control">
+                        <option value="PDF">PDF</option>
+                        <option value="Excel">Excel</option>
+                        <option value="HTML">HTML</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="pi pi-search"></i>
+                    Generate
+                </button>
+                <button type="button" class="btn btn-secondary" (click)="onClear()">
+                    <i class="pi pi-refresh"></i>
+                    Clear
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Table -->
+    <div class="table-section" *ngIf="showResults()">
+        <div class="section-header">
+            <h3>Subscribers List</h3>
+            <div class="search-box">
+                <span>Total Subscribers: {{ subscribers().length }}</span>
+                <button class="btn btn-outline" (click)="exportReport()">
+                    <i class="pi pi-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Subscriber ID</th>
+                        <th>Subscriber Name</th>
+                        <th>Group Code</th>
+                        <th>Group Name</th>
+                        <th>Group Status</th>
+                        <th>Enrollment Date</th>
+                        <th>Subscription Amount</th>
+                        <th>Total Paid</th>
+                        <th>Outstanding Amount</th>
+                        <th>Status</th>
+                        <th *ngIf="showAddress()">Address</th>
+                        <th *ngIf="showCancellationDetails() && hasCancelledSubscribers()">Cancellation Date</th>
+                        <th *ngIf="showCancellationDetails() && hasCancelledSubscribers()">Cancellation Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let subscriber of subscribers()">
+                        <td>{{ subscriber.subscriberId }}</td>
+                        <td>{{ subscriber.subscriberName }}</td>
+                        <td>{{ subscriber.groupCode }}</td>
+                        <td>{{ subscriber.groupName }}</td>
+                        <td>
+                            <span class="status-badge" [class.running]="subscriber.groupStatus === 'Running'"
+                                [class.closed]="subscriber.groupStatus === 'Closed'">
+                                {{ subscriber.groupStatus }}
+                            </span>
+                        </td>
+                        <td>{{ subscriber.enrollmentDate | date:'dd/MM/yyyy' }}</td>
+                        <td class="amount">{{ subscriber.subscriptionAmount | currency:'INR':'symbol':'1.0-0' }}</td>
+                        <td class="amount">{{ subscriber.totalPaid | currency:'INR':'symbol':'1.0-0' }}</td>
+                        <td class="amount">{{ subscriber.outstandingAmount | currency:'INR':'symbol':'1.0-0' }}</td>
+                        <td>
+                            <span class="status-badge" [class.active]="subscriber.status === 'Active'"
+                                [class.cancelled]="subscriber.status === 'Cancelled'">
+                                {{ subscriber.status }}
+                            </span>
+                        </td>
+                        <td *ngIf="showAddress()">{{ subscriber.address }}</td>
+                        <td *ngIf="showCancellationDetails() && subscriber.status === 'Cancelled'">{{
+                            subscriber.cancellationDate | date:'dd/MM/yyyy' }}</td>
+                        <td *ngIf="showCancellationDetails() && subscriber.status === 'Cancelled'">{{
+                            subscriber.cancellationReason }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="no-results" *ngIf="subscribers().length === 0">
+            <p>No subscribers found for the selected criteria.</p>
+        </div>
+    </div>
+</div>

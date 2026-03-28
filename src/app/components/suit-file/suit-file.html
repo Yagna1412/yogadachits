@@ -1,0 +1,389 @@
+<!-- Page Header -->
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Suit File Info</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Master</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Members</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Suit File Info</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary add-group-btn" (click)="openAddSuitDialog()">
+    <span class="btn-icon">+</span>
+    <span>Add Suit File</span>
+  </button>
+</div>
+
+<div class="suit-file-container">
+  <!-- LEFT SIDEBAR: Member Selection -->
+  <div class="member-selection-sidebar">
+    <h3>Select Member</h3>
+    <!-- Search Bar -->
+    <div class="search-box">
+      <span class="search-icon">
+        <img src="assets/images/icons/Search.png" alt="Search" />
+      </span>
+      <input type="text" placeholder="Search" [(ngModel)]="searchQuery" (input)="onSearch()" class="search-input" />
+      <span class="search-shortcut">Ctrl Shift K</span>
+    </div>
+
+    <!-- Search Results -->
+    <div class="search-results" *ngIf="searchResults.length > 0">
+      <div class="results-list">
+        <button *ngFor="let member of searchResults" class="member-item"
+          [class.active]="selectedMember?.id === member.id" (click)="selectMember(member)">
+          <img [src]="member.avatar" class="member-avatar" [alt]="member.name">
+          <div class="member-info">
+            <span class="member-name">{{ member.name }}</span>
+            <span class="member-joined">Joined: {{ member.joinedDate }}</span>
+          </div>
+        </button>
+      </div>
+      <div class="results-header">
+        <span class="results-title">End of results</span>
+      </div>
+
+      <div class="empty-state" *ngIf="searchQuery && searchResults.length === 0">
+        <p>No members found</p>
+      </div>
+    </div>
+
+    <!-- Suggestions -->
+    <div class="suggestions-section" *ngIf="!searchQuery || searchResults.length === 0">
+      <div class="suggestions-header">Suggestions</div>
+      <div class="suggestions-list">
+        <button *ngFor="let member of suggestedMembers" class="member-item"
+          [class.active]="selectedMember?.id === member.id" (click)="selectMember(member)">
+          <img [src]="member.avatar" class="member-avatar" [alt]="member.name">
+          <div class="member-info">
+            <span class="member-name">{{ member.name }}</span>
+            <span class="member-joined">Joined: {{ member.joinedDate }}</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Member Summary Card -->
+    <div class="member-summary-card" *ngIf="selectedMember" [ngClass]="selectedMember.status | lowercase">
+      <div class="summary-header">
+        <span class="summary-title">Member Summary</span>
+        <span class="status-badge" [ngClass]="selectedMember.status | lowercase">
+          {{ selectedMember.status }}
+        </span>
+      </div>
+
+      <div class="summary-member-info">
+        <div class="error-type">
+          <img src="assets/images/icons/error.png" class="info-icon" alt="Info">
+        </div>
+        <div class="summary-member-header">
+          <span class="summary-member-name">{{ selectedMember.name }}</span>
+          <span class="summary-member-joined">Joined: {{ selectedMember.joinedDate }}</span>
+        </div>
+      </div>
+
+      <div class="summary-divider"></div>
+
+      <div class="summary-amount-section">
+        <div class="amount-label">
+          <span class="amount-title">Outstanding Amount</span>
+          <img src="assets/images/icons/info.png" class="info-icon" alt="Info">
+        </div>
+        <span class="amount-value">{{ selectedMember.outstandingAmount }}</span>
+      </div>
+
+      <div class="summary-divider"></div>
+
+      <div class="enrolled-groups-section">
+        <span class="enrolled-title">Enrolled Groups</span>
+        <div class="groups-list">
+          <span class="group-badge" *ngFor="let group of selectedMember.enrolledGroups">
+            {{ group }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SECTION: Suit File Entry -->
+  <div class="suit-file-entry-section">
+    <div class="entry-header">
+      <h2 class="entry-title">Suit File Info Entry</h2>
+      <button class="btn-add-timeline" (click)="openTimelineDialog()">
+        <span class="plus-icon">+</span>
+        <span>Add Timeline Entry</span>
+      </button>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-container">
+      <div class="timeline">
+        <div *ngFor="let entry of timelineEntries; let i = index" class="timeline-item"
+          [class.last]="i === timelineEntries.length - 1">
+
+          <div class="timeline-marker">
+            <span class="timeline-number">{{ i + 1 }}</span>
+          </div>
+
+          <div class="timeline-content">
+            <div class="timeline-event-title">{{ entry.title }}</div>
+            <div class="timeline-event-subtitle">{{ entry.subtitle }}<span>•</span>{{ entry.date }} {{ entry.time }}
+            </div>
+            <!-- Document if exists -->
+            <div class="timeline-document" *ngIf="entry.document">
+              <div class="document-item">
+                <svg class="document-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <div class="document-info">
+                  <span class="document-name">{{ entry.document.name }}</span>
+                  <span class="document-size">{{ entry.document.size }}</span>
+                </div>
+                <button class="document-download">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Notification Section -->
+            <div class="timeline-notify" *ngIf="entry.notify">
+              <span class="notify-label">Notify</span>
+              <div class="notify-users">
+                <span class="notify-user" *ngFor="let user of entry.notify">
+                  <img src="assets/images/icons/user.png" class="notify-icon" alt="Notify">
+                  {{ user }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Suit Modal -->
+<div *ngIf="showAddSuitModal" class="modal-overlay">
+  <div class="modal-content add-suit-modal">
+    <div class="modal-header">
+      <h3>Add Suit Information</h3>
+      <button class="close-btn" (click)="closeAddSuitDialog()">×</button>
+    </div>
+
+    <form (ngSubmit)="submitSuitForm()" #suitForm="ngForm">
+      <div class="modal-body">
+        <div class="row">
+          <div class="col">
+            <label>Select Member</label>
+            <select [(ngModel)]="newSuit.memberId" name="memberId" class="form-control">
+              <option value="">Select Here</option>
+              <option *ngFor="let m of members" [value]="m.id">{{ m.name }}</option>
+            </select>
+          </div>
+
+          <div class="col">
+            <label>Suit Cause</label>
+            <input type="text" [(ngModel)]="newSuit.suitCause" name="suitCause" class="form-control" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>Suit Date</label>
+            <input type="date" [(ngModel)]="newSuit.suitDate" name="suitDate" class="form-control" />
+          </div>
+
+          <div class="col">
+            <label>Case Number</label>
+            <input type="text" [(ngModel)]="newSuit.caseNumber" name="caseNumber" placeholder="e.g 12345678"
+              class="form-control" />
+          </div>
+
+          <div class="col">
+            <label>Court Name</label>
+            <input type="text" [(ngModel)]="newSuit.courtName" name="courtName" class="form-control" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-full">
+            <label>Lawyer Details</label>
+            <input type="text" [(ngModel)]="newSuit.lawyerDetails" name="lawyerDetails" class="form-control" />
+          </div>
+        </div>
+
+        <h3>Suit Valuation</h3>
+
+
+        <!-- <div class="row">
+          <div class="col-full">
+            <label>Description</label>
+            <textarea [(ngModel)]="newSuit.description" name="description" class="form-control" rows="5"
+              placeholder="Enter event details..."></textarea>
+          </div>
+        </div> -->
+
+        <div class="row small-inputs">
+          <div class="col-small">
+            <label>Principal (₹)</label>
+            <input type="number" [(ngModel)]="newSuit.principal" name="principal" placeholder="e.g 12345678"
+              class="form-control" />
+          </div>
+          <div class="col-small">
+            <label>Interest (₹)</label>
+            <input type="number" [(ngModel)]="newSuit.interest" name="interest" placeholder="e.g 12345678"
+              class="form-control" />
+          </div>
+          <div class="col-small">
+            <label>Legal Cost (₹)</label>
+            <input type="number" [(ngModel)]="newSuit.legalCost" name="legalCost" placeholder="e.g 12345678"
+              class="form-control" />
+          </div>
+        </div>
+        <div class="row small-inputs">
+          <div class="col-small">
+            <label>Inc. Charges (₹)</label>
+            <input type="number" [(ngModel)]="newSuit.incCharges" name="incCharges" placeholder="e.g 12345678"
+              class="form-control" />
+          </div>
+          <div class="col-small">
+            <label>Claim Amount (₹)</label>
+            <input type="number" [(ngModel)]="newSuit.claimAmount" name="claimAmount" placeholder="e.g 12345678"
+              class="form-control" />
+          </div>
+          <div class="col-small">
+            <label>Legal Notice Date</label>
+            <input type="date" [(ngModel)]="newSuit.legalNoticeDate" name="legalNoticeDate" class="form-control" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div *ngIf="showSuccessModal" class="modal-overlay success-overlay">
+  <div class="modal-content success-content">
+    <div class="success-body">
+      <div class="success-icon">
+        <img src="assets/images/icons/icons8-spinner.gif" alt="Success">
+      </div>
+      <h3>Member Added Successfully</h3>
+      <button class="btn btn-primary btn-continue" (click)="closeSuccessModal()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Timeline Entry Modal (independent) -->
+<div *ngIf="showTimelineModal" class="modal-overlay">
+  <div class="modal-content timeline-modal">
+    <div class="modal-header">
+      <h3>Add Timeline Entry <span class="case-badge">123456</span></h3>
+      <button class="close-btn" (click)="closeTimelineDialog()">×</button>
+    </div>
+
+    <form (ngSubmit)="submitTimelineForm()" #timelineForm="ngForm">
+      <div class="modal-body timeline-body">
+        <div class="left-col">
+          <label>Title</label>
+          <input type="text" class="form-control" [(ngModel)]="newTimeline.title" name="title" placeholder="e.g ABC" />
+
+          <div class="row">
+            <div class="col">
+              <label>Next Hearing Date</label>
+              <input type="date" class="form-control" [(ngModel)]="newTimeline.date" name="date" />
+            </div>
+            <div class="col">
+              <label>Next Hearing Time</label>
+              <input type="time" class="form-control" [(ngModel)]="newTimeline.time" name="time" />
+            </div>
+          </div>
+
+          <label>Details</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="newTimeline.details" name="details"
+            placeholder="Enter event details..."></textarea>
+
+          <label>Notify</label>
+          <div class="notify-multiselect">
+            <div class="notify-input-container">
+              <div class="notify-selected-users">
+                <span *ngFor="let user of newTimeline.notify" class="notify-badge">
+                  {{ user }}
+                  <button type="button" class="remove-user-btn" (click)="removeNotifyUser(user)">×</button>
+                </span>
+              </div>
+              <input type="text" class="form-control notify-input" [(ngModel)]="notifySearchInput"
+                (input)="filterNotifyUsers(notifySearchInput)" (focus)="filterNotifyUsers(notifySearchInput)"
+                placeholder="Search and select users..." name="notifySearch" />
+            </div>
+            <div class="notify-dropdown" *ngIf="showNotifyDropdown">
+              <div *ngFor="let user of filteredNotifyUsers" class="notify-option" (click)="addNotifyUser(user)">
+                <img src="assets/images/icons/user.png" class="notify-option-icon" alt="User">
+                {{ user }}
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+
+        <div class="right-col">
+          <div class="upload-panel">
+            <h4>Upload Document</h4>
+            <div class="upload-area" (drop)="onDrop($event)" (dragover)="$event.preventDefault()">
+              <div class="upload-inner">
+                <div class="upload-icon">
+                  <img src="assets/images/icons/upload.png" alt="Upload">
+                </div>
+                <p class="text">Drag your file(s) to start uploading</p>
+                <p class="or"><span>OR</span></p>
+                <label class="browse-btn">
+                  Browse files
+                  <input type="file" (change)="handleFileInput($event)" multiple hidden />
+                </label>
+              </div>
+            </div>
+
+            <div class="uploaded-files" *ngIf="uploadedFiles.length > 0">
+              <div *ngFor="let f of uploadedFiles; let i = index" class="uploaded-file">
+                <div class="file-info">
+                  <span class="file-name">{{f.name}}</span>
+                  <span class="file-size">{{f.size}}</span>
+                </div>
+                <button type="button" class="remove-file" (click)="removeUploadedFile(i)">×</button>
+              </div>
+            </div>
+
+            <p class="help-text">Only support .jpg, .png, .pdf and .svg files</p>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Timeline Success Modal (independent) -->
+<div *ngIf="showTimelineSuccess" class="modal-overlay success-overlay">
+  <div class="modal-content success-content">
+    <div class="success-body">
+      <div class="success-icon">
+        <img src="assets/images/icons/icons8-spinner.gif" alt="Success">
+      </div>
+      <h3>Timeline Entry Added</h3>
+      <button class="btn btn-primary btn-continue" (click)="closeTimelineSuccess()">Continue</button>
+    </div>
+  </div>
+</div>

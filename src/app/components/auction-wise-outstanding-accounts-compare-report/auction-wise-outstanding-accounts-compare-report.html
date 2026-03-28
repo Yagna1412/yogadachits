@@ -1,0 +1,77 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Auction Wise Outstanding Accounts Compare Report</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Consolidation</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Auction Wise Outstanding Accounts Compare Report</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-filter">
+    <div class="form-group">
+      <label>Report Type</label>
+      <select class="form-control" [(ngModel)]="reportType">
+        <option value="">Select Type</option>
+        <option *ngFor="let t of reportTypes" [value]="t">{{t}}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Report Date *</label>
+      <input type="date" class="form-control" [(ngModel)]="reportDate" />
+    </div>
+
+    <div class="form-group">
+      <label>Group Name</label>
+      <select class="form-control" [(ngModel)]="groupName">
+        <option value="">Select Group</option>
+        <option *ngFor="let g of groups" [value]="g">{{g}}</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="align-self:flex-end;">
+      <button class="btn btn-primary" (click)="generate()">Generate</button>
+      <button class="btn btn-secondary" style="margin-left:8px;" (click)="reset()">Reset</button>
+    </div>
+  </div>
+
+  <div *ngIf="showReport">
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Auction</th>
+            <th>Outstanding</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngIf="groupName; else allGroups">
+            <tr *ngFor="let r of dataForGroup(groupName)">
+              <td>{{r.auction}}</td>
+              <td>{{r.outstanding}}</td>
+            </tr>
+          </ng-container>
+          <ng-template #allGroups>
+            <tr *ngFor="let g of groups">
+              <td colspan="2" style="font-weight:bold;">{{g}}</td>
+            </tr>
+            <tr *ngFor="let g of groups">
+              <td>
+                <table class="inner-table" style="width:100%;">
+                  <tr *ngFor="let r of dataForGroup(g)">
+                    <td style="width:70%">{{r.auction}}</td>
+                    <td style="width:30%">{{r.outstanding}}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </ng-template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

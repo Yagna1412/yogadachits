@@ -1,0 +1,9 @@
+.table-controls {
+    display: flex;
+    gap: 8px;
+    .btn {
+        padding: 4px 12px;
+        font-size: 14px;
+        font-weight: 300;
+    }
+}

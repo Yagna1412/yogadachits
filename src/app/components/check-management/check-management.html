@@ -1,0 +1,261 @@
+<!-- Page Header -->
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Cheque Management</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Members</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Cheque Management</span>
+    </nav>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-container">
+  <div class="stat-card pending-card">
+    <div class="stat-header">
+      <h3 class="stat-title">Pending Cheques</h3>
+      <span class="stat-icon pending-icon">
+        <img src="assets/images/icons/clock.png" alt="Pending Icon" />
+      </span>
+    </div>
+    <div class="stat-value">{{ pendingStats.count }}</div>
+    <div class="stat-amount">{{ formatCurrency(pendingStats.amount) }}</div>
+  </div>
+
+  <div class="stat-card cleared-card">
+    <div class="stat-header">
+      <h3 class="stat-title">Cleared Cheques</h3>
+      <span class="stat-icon cleared-icon">
+        <img src="assets/images/icons/check-check.png" alt="Cleared Icon" />
+      </span>
+    </div>
+    <div class="stat-value">{{ clearedStats.count }}</div>
+    <div class="stat-amount cleared-amount">{{ formatCurrency(clearedStats.amount) }}</div>
+  </div>
+
+  <div class="stat-card bounced-card">
+    <div class="stat-header">
+      <h3 class="stat-title">Bounced Cheques</h3>
+      <span class="stat-icon bounced-icon">
+        <img src="assets/images/icons/bounced.png" alt="Bounced Icon" />
+      </span>
+    </div>
+    <div class="stat-value">{{ bouncedStats.count }}</div>
+    <div class="stat-amount bounced-amount">{{ formatCurrency(bouncedStats.amount) }}</div>
+  </div>
+</div>
+
+<!-- Tabs & Controls Section -->
+<div class="tabs-and-controls">
+  <div class="tabs-container">
+    <button class="tab-button" [class.active]="activeTab === 'pending'" (click)="switchTab('pending')">
+      Pending
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'cleared'" (click)="switchTab('cleared')">
+      Cleared
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'bounced'" (click)="switchTab('bounced')">
+      Bounced
+    </button>
+  </div>
+
+  <div class="controls-section">
+    <div class="search-box">
+      <span class="search-icon">
+        <img src="assets/images/icons/Search.png" alt="Search" />
+      </span>
+      <input type="text" class="search-input" placeholder="Search" [(ngModel)]="searchTerm" (input)="filterCheques()" />
+      <span class="search-shortcut">Ctrl Shift K</span>
+    </div>
+    <select class="status-filter" [(ngModel)]="selectedStatus" (change)="filterCheques()">
+      <option value="">All Status</option>
+      <option>Pending</option>
+      <option>Cleared</option>
+      <option>Bounced</option>
+    </select>
+  </div>
+</div>
+
+<!-- Pending Cheques Table -->
+<div class="table-section" *ngIf="activeTab === 'pending'">
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th class="checkbox-col"><input type="checkbox" /></th>
+          <th>Cheque No</th>
+          <th>Bank</th>
+          <th>Member</th>
+          <th>Amount</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cheque of filteredPendingCheques">
+          <td class="checkbox-col"><input type="checkbox" /></td>
+          <td>{{ cheque.chequeNo }}</td>
+          <td>{{ cheque.bank }}</td>
+          <td>{{ cheque.member }}</td>
+          <td>{{ formatCurrency(cheque.amount) }}</td>
+          <td>{{ cheque.dueDate }}</td>
+          <td><span class="status-badge pending-badge">{{ cheque.status }}</span></td>
+          <td><button class="action-btn" (click)="openUpdateModal(cheque)">Update Status</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Cleared Cheques Table -->
+<div class="table-section" *ngIf="activeTab === 'cleared'">
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th class="checkbox-col"><input type="checkbox" /></th>
+          <th>Cheque No</th>
+          <th>Bank</th>
+          <th>Member</th>
+          <th>Amount</th>
+          <th>Cheque Date</th>
+          <th>Cleared Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cheque of filteredClearedCheques">
+          <td class="checkbox-col"><input type="checkbox" /></td>
+          <td>{{ cheque.chequeNo }}</td>
+          <td>{{ cheque.bank }}</td>
+          <td>{{ cheque.member }}</td>
+          <td>{{ formatCurrency(cheque.amount) }}</td>
+          <td>{{ cheque.chequeDate }}</td>
+          <td>{{ cheque.clearedDate }}</td>
+          <td><span class="status-badge cleared-badge">{{ cheque.status }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Bounced Cheques Table -->
+<div class="table-section" *ngIf="activeTab === 'bounced'">
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th class="checkbox-col"><input type="checkbox" /></th>
+          <th>Cheque No</th>
+          <th>Bank</th>
+          <th>Member</th>
+          <th>Amount</th>
+          <th>Bounced Date</th>
+          <th>Reason</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cheque of filteredBouncedCheques">
+          <td class="checkbox-col"><input type="checkbox" /></td>
+          <td>{{ cheque.chequeNo }}</td>
+          <td>{{ cheque.bank }}</td>
+          <td>{{ cheque.member }}</td>
+          <td>{{ formatCurrency(cheque.amount) }}</td>
+          <td>{{ cheque.bouncedDate }}</td>
+          <td>{{ cheque.reason }}</td>
+          <td><span class="status-badge bounced-badge">{{ cheque.status }}</span></td>
+          <td><button class="action-btn re-present">Re-Present</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal-overlay" *ngIf="showUpdateModal" (click)="closeUpdateModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">Update Status</h2>
+      <button class="modal-close" (click)="closeUpdateModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <form>
+        <!-- Cheque No (Disabled) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="chequeNo" class="form-label">Cheque No</label>
+            <input type="text" id="chequeNo" class="form-input disabled-input" [value]="selectedCheque?.chequeNo"
+              disabled />
+          </div>
+
+          <!-- Amount (Disabled) -->
+          <div class="form-group">
+            <label for="amount" class="form-label">Amount</label>
+            <input type="text" id="amount" class="form-input disabled-input"
+              [value]="formatCurrency(selectedCheque?.amount || 0)" disabled />
+          </div>
+        </div>
+
+        <!-- New Status Dropdown -->
+        <div class="form-group">
+          <label for="newStatus" class="form-label">New Status</label>
+          <select id="newStatus" class="form-input form-select" [(ngModel)]="updateFormData.newStatus" name="newStatus">
+            <option value="Cleared">Cleared</option>
+            <option value="Bounced">Bounced</option>
+          </select>
+        </div>
+
+        <!-- Date Picker -->
+        <div class="form-group">
+          <label for="updateDate" class="form-label">Date</label>
+          <input type="date" id="updateDate" class="form-input" [(ngModel)]="updateFormData.date" name="updateDate" />
+        </div>
+
+        <!-- Remarks Textarea -->
+        <div class="form-group">
+          <label for="remarks" class="form-label">Remarks</label>
+          <textarea id="remarks" class="form-textarea" [(ngModel)]="updateFormData.remarks"
+            (input)="updateRemarks(updateFormData.remarks)" name="remarks" placeholder="Enter remarks..."
+            maxlength="300"></textarea>
+          <div class="char-count">{{ remarkCharCount }}/{{ maxRemarkChars }}</div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <!-- <button class="btn-cancel" (click)="closeUpdateModal()">Cancel</button> -->
+      <button class="btn-save" (click)="submitStatusUpdate()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay success-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+  <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+    <div class="success-icon">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="30" cy="30" r="29" stroke="#4CAF50" stroke-width="2" />
+        <path d="M15 30L25 40L45 20" stroke="#4CAF50" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+
+    <h2 class="success-title">Updated Successfully</h2>
+
+    <div class="status-transition">
+      <div class="status-badge old-status pending-badge">{{ previousStatus }}</div>
+      <div class="transition-arrow">→</div>
+      <div class="status-badge new-status cleared-badge" [ngClass]="{'bounced-badge': newStatusValue === 'Bounced'}">
+        {{ newStatusValue }}
+      </div>
+    </div>
+
+    <button class="btn-continue" (click)="closeSuccessModal()">Continue</button>
+  </div>
+</div>

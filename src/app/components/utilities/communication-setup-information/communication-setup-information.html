@@ -1,0 +1,62 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Communication Setup Information</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Utilities</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Communication Setup Information</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-section">
+        <form [formGroup]="commForm" (ngSubmit)="onSave()">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="screenName">Screen Name *</label>
+                    <select id="screenName" class="form-control" formControlName="screenName">
+                        <option value="">Select Screen</option>
+                        <option value="Receipt">Receipt</option>
+                        <option value="Auction">Auction</option>
+                        <option value="Payment">Payment</option>
+                        <option value="Reminder">Reminder</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && commForm.get('screenName')?.invalid">
+                        Screen Name is required
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label for="message">Message (Text) *</label>
+                    <textarea id="message" class="form-control" formControlName="message" rows="4" placeholder="Enter message content"></textarea>
+                    <div class="error-message" *ngIf="submitted && commForm.get('message')?.invalid">
+                        Message is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" formControlName="whatsapp" />
+                        WhatsApp
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" formControlName="email" />
+                        Email
+                    </label>
+                </div>
+                <div class="form-group full-width" *ngIf="submitted && commForm.errors?.['atLeastOneRequired']">
+                    <div class="error-message">
+                        At least one communication mode (WhatsApp or Email) must be selected
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

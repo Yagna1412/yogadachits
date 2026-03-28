@@ -1,0 +1,427 @@
+<div class="dashboard-content">
+  <!-- Welcome Header with User Identity -->
+  <div class="dashboard-header">
+    <div>
+      <h1>Welcome Back, Rajesh Kumar!</h1>
+      <p>Member ID: <strong>#YCF-2026-001</strong> · Here's your consolidated chit overview.</p>
+    </div>
+  </div>
+
+  <!-- Upcoming Payment Alert Banner -->
+  <div class="upcoming-payment-container">
+    <div class="payment-alert-banner">
+      <div class="alert-content">
+        <div class="alert-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="alert-details">
+          <span class="alert-subtitle">Upcoming Payment Due</span>
+          <div class="alert-main">
+            <span class="group-info">Silver Chit 10L (#GRP-2025-014)</span>
+            <span class="amount">₹3,200</span>
+            <span class="due-date">Due on 10 Apr 2026</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary pay-btn" (click)="payNow('#RCP-2026-0290')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+        </svg>
+        Pay Now
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Overview Cards -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-label">Enrolled Chit Groups</div>
+        <div class="stat-value">3</div>
+        <div class="stat-trend positive">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+              clip-rule="evenodd" />
+          </svg>
+          <span>All Active</span>
+        </div>
+      </div>
+      <div class="stat-icon purple">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-label">Installments Paid</div>
+        <div class="stat-value">28 / 36</div>
+        <div class="stat-trend positive">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+              clip-rule="evenodd" />
+          </svg>
+          <span>77.8% Complete</span>
+        </div>
+      </div>
+      <div class="stat-icon orange">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-label">Total Paid Amount</div>
+        <div class="stat-value">₹2,80,000</div>
+        <div class="stat-trend positive">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+              clip-rule="evenodd" />
+          </svg>
+          <span>On Track</span>
+        </div>
+      </div>
+      <div class="stat-icon green">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-label">Bids Won</div>
+        <div class="stat-value">1</div>
+        <div class="stat-trend positive">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+              clip-rule="evenodd" />
+          </svg>
+          <span>Prize: ₹85,000</span>
+        </div>
+      </div>
+      <div class="stat-icon blue">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two Column Layout: Chit Groups + Notifications -->
+  <div class="dashboard-grid">
+    <!-- My Chit Groups -->
+    <div class="table-section">
+      <div class="section-header">
+        <h2>My Chit Groups</h2>
+        <div class="section-actions">
+          <button class="btn-secondary">View All</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Group Code</th>
+              <th>Chit Value</th>
+              <th>Installment</th>
+              <th>Next Due</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="client-cell">
+                  <div class="client-avatar">G</div>
+                  <div>
+                    <div class="client-name">Gold Chit 50L</div>
+                    <div class="client-meta">#GRP-2024-001</div>
+                  </div>
+                </div>
+              </td>
+              <td><strong>₹5,00,000</strong></td>
+              <td>
+                <div class="installment-progress">
+                  <div class="progress-text">12 / 25</div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 48%"></div>
+                  </div>
+                </div>
+              </td>
+              <td>05 Apr 2026</td>
+              <td><span class="status-badge shipped">Active</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="client-cell">
+                  <div class="client-avatar">S</div>
+                  <div>
+                    <div class="client-name">Silver Chit 10L</div>
+                    <div class="client-meta">#GRP-2025-014</div>
+                  </div>
+                </div>
+              </td>
+              <td><strong>₹1,00,000</strong></td>
+              <td>
+                <div class="installment-progress">
+                  <div class="progress-text">8 / 20</div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 40%"></div>
+                  </div>
+                </div>
+              </td>
+              <td>10 Apr 2026</td>
+              <td><span class="status-badge shipped">Active</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="client-cell">
+                  <div class="client-avatar">D</div>
+                  <div>
+                    <div class="client-name">Diamond Chit 1Cr</div>
+                    <div class="client-meta">#GRP-2025-022</div>
+                  </div>
+                </div>
+              </td>
+              <td><strong>₹10,00,000</strong></td>
+              <td>
+                <div class="installment-progress">
+                  <div class="progress-text">8 / 40</div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 20%"></div>
+                  </div>
+                </div>
+              </td>
+              <td>15 Apr 2026</td>
+              <td><span class="status-badge shipped">Active</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Notifications & Updates -->
+    <div class="table-section notifications-section">
+      <div class="section-header">
+        <h2>Notifications</h2>
+        <div class="section-actions">
+          <button class="btn-secondary">Mark All Read</button>
+        </div>
+      </div>
+
+      <div class="notification-list">
+        <div class="notification-item unread">
+          <div class="notification-dot"></div>
+          <div class="notification-content">
+            <div class="notification-icon payment">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="notification-body">
+              <p class="notification-text">Installment of <strong>₹10,000</strong> received for group <strong>#GRP-2024-001</strong></p>
+              <span class="notification-time">2 hours ago</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="notification-item unread">
+          <div class="notification-dot"></div>
+          <div class="notification-content">
+            <div class="notification-icon bid">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <div class="notification-body">
+              <p class="notification-text">Auction scheduled for <strong>Gold Chit 50L</strong> on <strong>05 Apr 2026</strong></p>
+              <span class="notification-time">5 hours ago</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="notification-item unread">
+          <div class="notification-dot"></div>
+          <div class="notification-content">
+            <div class="notification-icon alert">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="notification-body">
+              <p class="notification-text">Installment due reminder for <strong>Silver Chit 10L</strong> — due on <strong>10 Apr</strong></p>
+              <span class="notification-time">1 day ago</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-content">
+            <div class="notification-icon payment">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="notification-body">
+              <p class="notification-text">Dividend of <strong>₹4,200</strong> credited for <strong>#GRP-2025-014</strong></p>
+              <span class="notification-time">3 days ago</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-content">
+            <div class="notification-icon bid">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <div class="notification-body">
+              <p class="notification-text">You won the bid for <strong>Silver Chit 10L</strong> at ₹85,000</p>
+              <span class="notification-time">1 week ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Payment History -->
+  <div class="table-section">
+    <div class="section-header">
+      <h2>Recent Payment History</h2>
+      <div class="section-actions">
+        <button class="btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Export
+        </button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Receipt No.</th>
+            <th>Group</th>
+            <th>Month</th>
+            <th>Amount</th>
+            <th>Dividend</th>
+            <th>Net Payable</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-badge">#RCP-2026-0341</span></td>
+            <td>Gold Chit 50L</td>
+            <td>Mar 2026 (12th)</td>
+            <td><strong>₹10,000</strong></td>
+            <td class="dividend-cell">- ₹4,200</td>
+            <td><strong>₹5,800</strong></td>
+            <td>26 Mar 2026</td>
+            <td><span class="status-badge shipped">Paid</span></td>
+            <td>
+              <button class="btn-action-icon" title="Download Receipt" (click)="downloadReceipt('#RCP-2026-0341')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">#RCP-2026-0340</span></td>
+            <td>Silver Chit 10L</td>
+            <td>Mar 2026 (8th)</td>
+            <td><strong>₹5,000</strong></td>
+            <td class="dividend-cell">- ₹1,800</td>
+            <td><strong>₹3,200</strong></td>
+            <td>22 Mar 2026</td>
+            <td><span class="status-badge shipped">Paid</span></td>
+            <td>
+              <button class="btn-action-icon" title="Download Receipt" (click)="downloadReceipt('#RCP-2026-0340')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">#RCP-2026-0339</span></td>
+            <td>Diamond Chit 1Cr</td>
+            <td>Mar 2026 (8th)</td>
+            <td><strong>₹25,000</strong></td>
+            <td class="dividend-cell">- ₹8,400</td>
+            <td><strong>₹16,600</strong></td>
+            <td>20 Mar 2026</td>
+            <td><span class="status-badge shipped">Paid</span></td>
+            <td>
+              <button class="btn-action-icon" title="Download Receipt" (click)="downloadReceipt('#RCP-2026-0339')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">#RCP-2026-0312</span></td>
+            <td>Gold Chit 50L</td>
+            <td>Feb 2026 (11th)</td>
+            <td><strong>₹10,000</strong></td>
+            <td class="dividend-cell">- ₹3,900</td>
+            <td><strong>₹6,100</strong></td>
+            <td>25 Feb 2026</td>
+            <td><span class="status-badge shipped">Paid</span></td>
+            <td>
+              <button class="btn-action-icon" title="Download Receipt" (click)="downloadReceipt('#RCP-2026-0312')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="code-badge">#RCP-2026-0290</span></td>
+            <td>Silver Chit 10L</td>
+            <td>Feb 2026 (7th)</td>
+            <td><strong>₹5,000</strong></td>
+            <td class="dividend-cell">- ₹1,600</td>
+            <td><strong>₹3,400</strong></td>
+            <td>20 Feb 2026</td>
+            <td><span class="status-badge pending">Pending</span></td>
+            <td>
+              <button class="btn-action pay" title="Pay Now" (click)="payNow('#RCP-2026-0290')">
+                Pay Now
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,160 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Cash Receipts & Payments</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item">Accounts</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator"/></span>
+      <span class="breadcrumb-item active">Cash</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <!-- Tab Navigation -->
+  <div class="tabs-container">
+    <button class="tab-button" [class.active]="activeTab === 'receipts'" (click)="switchTab('receipts')">
+      <span>Cash Receipts</span>
+    </button>
+    <button class="tab-button" [class.active]="activeTab === 'payments'" (click)="switchTab('payments')">
+      <span>Cash Payments</span>
+    </button>
+  </div>
+
+  <!-- Cash Receipts Tab -->
+  <div *ngIf="activeTab === 'receipts'">
+    <div class="table-section" *ngIf="!showReceiptForm">
+      <div class="section-header">
+        <h3>Cash Receipts Entry</h3>
+        <div class="section-controls" style="display: flex; gap: 1rem; align-items: center;">
+          <div class="search-box">
+            <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search"/></span>
+            <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterReceipts()"/>
+            <span class="search-shortcut">Ctrl Shift K</span>
+          </div>
+          <button class="btn btn-primary btn-add" (click)="toggleReceiptForm()">+ Add Receipt</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="table" *ngIf="filteredReceipts.length">
+          <thead>
+            <tr>
+              <th>Transaction Type</th><th>Account</th><th>Transaction Date</th><th>Voucher Series</th><th>Voucher No</th><th>Particular Account</th><th>Amount</th><th>Grand Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of filteredReceipts">
+              <td>{{r.transactionType}}</td><td>{{r.account}}</td><td>{{r.transactionDate}}</td><td>{{r.voucherSeries}}</td><td>{{r.voucherNo}}</td><td>{{r.particularAccount}}</td><td>{{r.amount}}</td><td>{{r.grandTotal}}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty-state" *ngIf="!filteredReceipts.length">
+          <p>No cash receipts found. Click "Add Receipt" to record one.</p>
+        </div>
+      </div>
+    </div>
+    <div class="add-entry-form" *ngIf="showReceiptForm">
+      <div class="form-card">
+        <div class="form-header">
+          <h2>Record Cash Receipt</h2>
+          <button class="close-btn" (click)="toggleReceiptForm()">×</button>
+        </div>
+        <div class="form-body">
+          <div class="form-row">
+            <div class="form-group"><label>Transaction Type</label><input class="form-control" [(ngModel)]="newReceipt.transactionType" placeholder="Income, Asset Sale, etc."/></div>
+            <div class="form-group"><label>Account</label><input class="form-control" [(ngModel)]="newReceipt.account" placeholder="Cash Account"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Transaction Date</label><input class="form-control" type="date" [(ngModel)]="newReceipt.transactionDate"/></div>
+            <div class="form-group"><label>Voucher Series</label><input class="form-control" [(ngModel)]="newReceipt.voucherSeries" placeholder="CR"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Voucher No</label><input class="form-control" [(ngModel)]="newReceipt.voucherNo"/></div>
+            <div class="form-group"><label>Current Balance</label><input class="form-control" type="number" [(ngModel)]="newReceipt.currentBalance"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Particular Account</label><input class="form-control" [(ngModel)]="newReceipt.particularAccount" placeholder="Source of income"/></div>
+            <div class="form-group"><label>Narration</label><input class="form-control" [(ngModel)]="newReceipt.narration" placeholder="Description"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Amount</label><input class="form-control" type="number" [(ngModel)]="newReceipt.amount"/></div>
+            <div class="form-group"><label>Grand Total</label><input class="form-control" type="number" [(ngModel)]="newReceipt.grandTotal"/></div>
+          </div>
+          <div class="form-footer">
+            <button class="btn btn-secondary" (click)="toggleReceiptForm()">Cancel</button>
+            <button class="btn btn-primary" (click)="saveReceipt()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cash Payments Tab -->
+  <div *ngIf="activeTab === 'payments'">
+    <div class="table-section" *ngIf="!showPaymentForm">
+      <div class="section-header">
+        <h3>Cash Payments Entry</h3>
+        <div class="section-controls" style="display: flex; gap: 1rem; align-items: center;">
+          <div class="search-box">
+            <span class="search-icon"><img src="assets/images/icons/Search.png" alt="Search"/></span>
+            <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterPayments()"/>
+            <span class="search-shortcut">Ctrl Shift K</span>
+          </div>
+          <button class="btn btn-primary btn-add" (click)="togglePaymentForm()">+ Add Payment</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="table" *ngIf="filteredPayments.length">
+          <thead>
+            <tr>
+              <th>Transaction Type</th><th>Account</th><th>Transaction Date</th><th>Voucher Series</th><th>Voucher No</th><th>Particular Account</th><th>Amount</th><th>Grand Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of filteredPayments">
+              <td>{{p.transactionType}}</td><td>{{p.account}}</td><td>{{p.transactionDate}}</td><td>{{p.voucherSeries}}</td><td>{{p.voucherNo}}</td><td>{{p.particularAccount}}</td><td>{{p.amount}}</td><td>{{p.grandTotal}}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty-state" *ngIf="!filteredPayments.length">
+          <p>No cash payments found. Click "Add Payment" to record one.</p>
+        </div>
+      </div>
+    </div>
+    <div class="add-entry-form" *ngIf="showPaymentForm">
+      <div class="form-card">
+        <div class="form-header">
+          <h2>Record Cash Payment</h2>
+          <button class="close-btn" (click)="togglePaymentForm()">×</button>
+        </div>
+        <div class="form-body">
+          <div class="form-row">
+            <div class="form-group"><label>Transaction Type</label><input class="form-control" [(ngModel)]="newPayment.transactionType" placeholder="Expense, Purchase, etc."/></div>
+            <div class="form-group"><label>Account</label><input class="form-control" [(ngModel)]="newPayment.account" placeholder="Cash Account"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Transaction Date</label><input class="form-control" type="date" [(ngModel)]="newPayment.transactionDate"/></div>
+            <div class="form-group"><label>Voucher Series</label><input class="form-control" [(ngModel)]="newPayment.voucherSeries" placeholder="CP"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Voucher No</label><input class="form-control" [(ngModel)]="newPayment.voucherNo"/></div>
+            <div class="form-group"><label>Current Balance</label><input class="form-control" type="number" [(ngModel)]="newPayment.currentBalance"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Particular Account</label><input class="form-control" [(ngModel)]="newPayment.particularAccount" placeholder="Expense category"/></div>
+            <div class="form-group"><label>Narration</label><input class="form-control" [(ngModel)]="newPayment.narration" placeholder="Description"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Amount</label><input class="form-control" type="number" [(ngModel)]="newPayment.amount"/></div>
+            <div class="form-group"><label>Grand Total</label><input class="form-control" type="number" [(ngModel)]="newPayment.grandTotal"/></div>
+          </div>
+          <div class="form-footer">
+            <button class="btn btn-secondary" (click)="togglePaymentForm()">Cancel</button>
+            <button class="btn btn-primary" (click)="savePayment()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

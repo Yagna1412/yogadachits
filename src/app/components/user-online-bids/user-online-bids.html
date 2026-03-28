@@ -1,0 +1,152 @@
+<div class="dashboard-content">
+  <!-- Page Header -->
+  <div class="dashboard-header">
+    <div>
+      <h1>Online Bids</h1>
+      <p>Participate in live chit group auctions and place your bid online.</p>
+    </div>
+    <div class="header-actions">
+      <!-- Live Status Badge -->
+      <div class="live-indicator">
+        <span class="pulse-dot"></span>
+        <span class="live-text">Live Auction in Progress</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <!-- Active Auction Form Section -->
+    <div class="table-section auction-bid-panel">
+      <div class="section-header">
+        <h2>Enter Bid for {{activeAuction.chitName}}</h2>
+        <div class="section-actions">
+          <span class="code-badge">{{activeAuction.groupCode}}</span>
+        </div>
+      </div>
+
+      <!-- Live Auction Details & Timer -->
+      <div class="auction-timer-container">
+        <div class="timer-box" [ngClass]="{'time-running-out': timerMinutes < 2}">
+          <div class="timer-label">Time Remaining</div>
+          <div class="timer-value">
+            {{formatTime(timerMinutes)}}:{{formatTime(timerSeconds)}}
+          </div>
+        </div>
+      </div>
+
+      <div class="bid-form-container">
+        <div *ngIf="!bidSubmitted">
+          <div class="form-group">
+            <label class="input-label">Your Bid Amount (₹)</label>
+            <div class="input-wrapper">
+              <span class="currency-symbol">₹</span>
+              <input 
+                type="number" 
+                class="bid-input-large" 
+                [(ngModel)]="bidAmount" 
+                placeholder="Enter bid higher than High Bid"
+              />
+            </div>
+          </div>
+          
+          <!-- Validation Errors -->
+          <div class="error-alert" *ngIf="submissionError">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{submissionError}}</span>
+          </div>
+          
+          <div class="form-actions">
+            <!-- Submit Button (Disabled context based on form validity or timer) -->
+            <button 
+              class="btn-primary-large" 
+              (click)="submitBid()"
+              [disabled]="timerMinutes === 0 && timerSeconds === 0"
+              [class.btn-disabled]="timerMinutes === 0 && timerSeconds === 0">
+              Submit Bid
+            </button>
+            <div class="helper-text-container">
+              <p class="helper-text">Single bid allowed. Once submitted, it cannot be recalled.</p>
+              <p class="helper-text range">Max allowed bid: <strong>₹{{activeAuction.maxBidLimit | number}}</strong></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success View (Bid Submitted) -->
+        <div class="success-alert" *ngIf="bidSubmitted">
+          <div class="success-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="success-content">
+            <h3>Bid Submitted Successfully</h3>
+            <p>You have successfully submitted a bid of <strong>₹{{bidAmount | number}}</strong> for this auction.</p>
+            <div class="note-box">
+              <p>You may only place one bid per auction. Results will be announced once the timer ends.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auction Details Grid Section -->
+    <div class="table-section side-panel-details">
+      <div class="section-header">
+        <h2>Auction Details</h2>
+      </div>
+
+      <div class="stats-container-vertical">
+        <div class="stat-card transparent">
+          <div class="stat-info">
+            <div class="stat-label">Current High Bid</div>
+            <div class="stat-value highlight-orange">₹{{activeAuction.currentHighBid | number}}</div>
+            <div class="stat-trend positive">
+              <span>Updated live</span>
+            </div>
+          </div>
+          <div class="stat-icon orange">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="stat-card transparent">
+          <div class="stat-info">
+            <div class="stat-label">Chit Value</div>
+            <div class="stat-value">₹{{activeAuction.chitValue | number}}</div>
+            <div class="stat-trend positive">
+              <span>Total pot</span>
+            </div>
+          </div>
+          <div class="stat-icon blue">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-info-grid">
+        <div class="info-row">
+          <span class="info-label">Auction ID</span>
+          <span class="info-value">{{activeAuction.id}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Monthly Amount</span>
+          <span class="info-value">₹{{activeAuction.monthlyAmount | number}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Min Allowed Bid</span>
+          <span class="info-value">₹{{activeAuction.minBidLimit | number}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Max Allowed Bid</span>
+          <span class="info-value">₹{{activeAuction.maxBidLimit | number}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

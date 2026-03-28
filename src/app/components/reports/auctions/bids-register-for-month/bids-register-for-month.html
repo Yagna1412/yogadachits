@@ -1,0 +1,77 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Bids Register For Month</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Admin</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Reports</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Auctions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Bids Register For Month</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-section">
+    <form [formGroup]="bidsForm" (ngSubmit)="onGenerate()" class="report-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Report Order *</label>
+          <select formControlName="reportOrder" class="form-control">
+            <option value="" disabled>Select Report Order</option>
+            <option *ngFor="let o of reportOrders" [value]="o">{{ o }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Month *</label>
+          <select formControlName="month" class="form-control">
+            <option value="" disabled>Select Month</option>
+            <option *ngFor="let m of months" [value]="m">{{ m }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year *</label>
+          <select formControlName="year" class="form-control">
+            <option value="" disabled>Select Year</option>
+            <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Generate</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-section" *ngIf="showResults()">
+    <div class="section-header">
+      <h3>Bids Register For Month</h3>
+    </div>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Month</th>
+            <th>Year</th>
+            <th>Chit Group</th>
+            <th>Bid Amount</th>
+            <th>Bidder</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of bids()">
+            <td>{{ b.order }}</td>
+            <td>{{ b.month }}</td>
+            <td>{{ b.year }}</td>
+            <td>{{ b.chitGroup }}</td>
+            <td>{{ b.bidAmount | number }}</td>
+            <td>{{ b.bidder }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

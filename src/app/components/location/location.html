@@ -1,0 +1,286 @@
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Location</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Master</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Members</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Location</span>
+        </nav>
+    </div>
+    <button class="btn btn-primary add-group-btn" (click)="openAddModal()">
+        <span class="btn-icon">+</span>
+        <span>Add Location</span>
+    </button>
+</div>
+
+<!-- Location Hierarchy Page -->
+<div class="location-hierarchy-page">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+        <!-- Legends -->
+        <div class="legends-section">
+            <h3>Legends</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <span class="legend-icon city-icon">
+                        <img src="assets/images/icons/city.png" alt="City Icon" />
+                    </span>
+                    <span>City</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon area-icon">
+                        <img src="assets/images/icons/area.png" alt="Area Icon" />
+                    </span>
+                    <span>Area</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon route-icon">
+                        <img src="assets/images/icons/route.png" alt="Route Icon" />
+                    </span>
+                    <span>Route</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="filter-group">
+                <h4>Select Member</h4>
+                <div class="search-input">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" placeholder="Srikanth" [(ngModel)]="selectedMember" />
+                    <span class="shortcut">Ctrl Shift K</span>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Location Type</label>
+                <select [(ngModel)]="selectedLocationType" class="form-select">
+                    <option value="">Select Type</option>
+                    <option *ngFor="let type of locationTypes">{{ type }}</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Parent Location</label>
+                <select [(ngModel)]="selectedParentLocation" class="form-select">
+                    <option value="">Select Parent Location</option>
+                    <option *ngFor="let location of parentLocations">{{ location }}</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Location Name</label>
+                <select [(ngModel)]="selectedLocationName" class="form-select">
+                    <option value="">Select Location Name</option>
+                    <option *ngFor="let name of cities">{{ name }}</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>District</label>
+                <select [(ngModel)]="selectedDistrict" class="form-select">
+                    <option value="">Select District</option>
+                    <option *ngFor="let district of districts">{{ district }}</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>City</label>
+                <select [(ngModel)]="selectedCity" class="form-select">
+                    <option value="">Select City</option>
+                    <option *ngFor="let city of cities">{{ city }}</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Route</label>
+                <select [(ngModel)]="selectedRoute" class="form-select">
+                    <option value="">Select Route</option>
+                    <option *ngFor="let route of routes">{{ route }}</option>
+                </select>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="content-header">
+            <h2>Location Hierarchy</h2>
+            <div class="header-actions">
+                <div class="tabs-container">
+                    <button class="tab-button" [class.active]="activeView === 'tree'" (click)="switchView('tree')">
+                        Tree View
+                    </button>
+                    <button class="tab-button" [class.active]="activeView === 'map'" (click)="switchView('map')">
+                        Map View
+                    </button>
+                </div>
+                <button class="btn btn-secondary" (click)="addTimelineEntry()">
+                    <span>+</span>
+                    Add Timeline Entry
+                </button>
+            </div>
+        </div>
+
+        <!-- Tree View -->
+        <div class="view-container" *ngIf="activeView === 'tree'">
+            <div class="tree-view">
+                <div *ngFor="let node of locationHierarchy" class="tree-node">
+                    <div class="node-content">
+                        <button *ngIf="node.children && node.children.length > 0" class="expand-btn"
+                            (click)="toggleExpand(node)">
+                            <img *ngIf="node.expanded" src="assets/images/icons/arrow.png" alt="Collapse" />
+                            <img *ngIf="!node.expanded" src="assets/images/icons/arrow-right.png" alt="Expand" />
+                        </button>
+                        <span *ngIf="!node.children || node.children.length === 0" class="expand-placeholder"></span>
+                        <span class="node-name">{{ node.name }}</span>
+                    </div>
+
+                    <!-- City Level (Child Nodes) -->
+                    <div *ngIf="node.expanded && node.children" class="tree-children">
+                        <div *ngFor="let child of node.children" class="tree-node child-level-1">
+                            <div class="node-content">
+                                <button *ngIf="child.children && child.children.length > 0" class="expand-btn"
+                                    (click)="toggleExpand(child)">
+                                    <img *ngIf="child.expanded" src="assets/images/icons/arrow.png" alt="Collapse" />
+                                    <img *ngIf="!child.expanded" src="assets/images/icons/arrow-right.png"
+                                        alt="Expand" />
+                                </button>
+                                <span *ngIf="!child.children || child.children.length === 0"
+                                    class="expand-placeholder"></span>
+                                <span [ngClass]="getIconClass(child.type)" class="node-icon">
+                                    <img [src]="getIcon(child.type)" [alt]="child.type" width="16" height="16" />
+                                </span>
+                                <span class="node-name">{{ child.name }}</span>
+                            </div>
+
+                            <!-- Area Level (Grandchild Nodes) -->
+                            <div *ngIf="child.expanded && child.children" class="tree-children">
+                                <div *ngFor="let grandchild of child.children" class="tree-node child-level-2">
+                                    <div class="node-content">
+                                        <button *ngIf="grandchild.children && grandchild.children.length > 0"
+                                            class="expand-btn" (click)="toggleExpand(grandchild)">
+                                            <img *ngIf="grandchild.expanded" src="assets/images/icons/arrow.png"
+                                                alt="Collapse" />
+                                            <img *ngIf="!grandchild.expanded" src="assets/images/icons/arrow-right.png"
+                                                alt="Expand" />
+                                        </button>
+                                        <span *ngIf="!grandchild.children || grandchild.children.length === 0"
+                                            class="expand-placeholder"></span>
+                                        <span [ngClass]="getIconClass(grandchild.type)" class="node-icon">
+                                            <img [src]="getIcon(grandchild.type)" [alt]="grandchild.type" width="16"
+                                                height="16" />
+                                        </span>
+                                        <span class="node-name">{{ grandchild.name }}</span>
+                                    </div>
+
+                                    <!-- Route Level (Great-grandchild Nodes) -->
+                                    <div *ngIf="grandchild.expanded && grandchild.children" class="tree-children">
+                                        <div *ngFor="let greatGrandchild of grandchild.children"
+                                            class="tree-node child-level-3">
+                                            <div class="node-content">
+                                                <span class="expand-placeholder"></span>
+                                                <span [ngClass]="getIconClass(greatGrandchild.type)" class="node-icon">
+                                                    <img [src]="getIcon(greatGrandchild.type)"
+                                                        [alt]="greatGrandchild.type" width="16" height="16" />
+                                                </span>
+                                                <span class="node-name">{{ greatGrandchild.name }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map View -->
+        <div class="view-container" *ngIf="activeView === 'map'">
+            <div class="map-view">
+                <div class="map-placeholder">
+                    <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15224.999278678799!2d78.36621960541538!3d17.44775308519377!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb93dc8c5d69df%3A0x19688beb557fa0ee!2sHITEC%20City%2C%20Hyderabad%2C%20Telangana!5e0!3m2!1sen!2sin!4v1771663499195!5m2!1sen!2sin"
+                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Add Location Modal -->
+<div class="modal-backdrop" *ngIf="showAddModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Add Location</h3>
+            <button class="close-btn" (click)="closeAddModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form (ngSubmit)="saveLocation()">
+                <div class="row-form">
+                    <div class="form-row">
+                        <label>Location Type</label>
+                        <select [(ngModel)]="newLocation.type" name="type" class="form-select" required>
+                            <option value="">Select Type</option>
+                            <option *ngFor="let t of locationTypes">{{ t }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label>Parent Location</label>
+                        <select [(ngModel)]="newLocation.parent" name="parent" class="form-select">
+                            <option value="">Select Parent Location</option>
+                            <option *ngFor="let location of parentLocations">{{ location }}</option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="form-row">
+                    <label>Location Name</label>
+                    <input type="text" [(ngModel)]="newLocation.name" name="name" class="form-input" required />
+                </div>
+
+                <div class="form-row">
+                    <label>Pin Code</label>
+                    <input type="text" [(ngModel)]="newLocation.pincode" name="pincode" class="form-input" />
+                </div>
+
+                <div class="form-row map-preview">
+                    <label>Map Preview</label>
+                    <div class="map-iframe">
+                        <iframe width="100%" height="150" frameborder="0" [src]="getMapPreviewSafeUrl()"></iframe>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn" (click)="closeAddModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-backdrop success" *ngIf="showSuccessModal">
+    <div class="modal">
+        <div class="modal-body">
+            <img src="assets/images/icons/icons8-spinner.gif" width="50px" alt="Success">
+            <p>{{ successMessage }}</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" (click)="closeSuccessModal()">OK</button>
+            </div>
+        </div>
+    </div>
+</div>

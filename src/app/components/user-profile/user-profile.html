@@ -1,0 +1,181 @@
+<div class="dashboard-content">
+  <!-- Page Header -->
+  <div class="dashboard-header">
+    <div>
+      <h1>My Profile</h1>
+      <p>View your personal details and manage allowed profile settings.</p>
+    </div>
+    <div class="header-actions">
+      <!-- Edit/Save Buttons -->
+      <button class="btn-secondary" (click)="toggleEditMode()" *ngIf="!isEditing">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+        </svg>
+        Edit Profile
+      </button>
+
+      <button class="btn-secondary" (click)="toggleEditMode()" *ngIf="isEditing">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        Cancel
+      </button>
+
+      <button class="btn-primary" (click)="saveProfile()" *ngIf="isEditing">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="alert-container">
+    <div class="error-alert" *ngIf="validationError">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{validationError}}</span>
+    </div>
+
+    <div class="success-alert-banner" *ngIf="successMessage">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{successMessage}}</span>
+    </div>
+  </div>
+
+  <!-- Main Profile Card -->
+  <div class="profile-card">
+    <!-- Header Section -->
+    <div class="profile-hero">
+      <div class="avatar-wrapper">
+        <img [src]="profilePicture" alt="Profile Picture" class="profile-image">
+        <label class="edit-photo-overlay" *ngIf="isEditing">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <input type="file" (change)="onProfilePictureChange($event)" hidden accept="image/*">
+        </label>
+      </div>
+      <div class="hero-info">
+        <h3 class="member-name">{{profile.name}}</h3>
+        <p class="member-id">{{profile.memberId}}</p>
+        <div class="hero-meta">
+          <span class="status-badge shipped">{{profile.status}}</span>
+          <span class="join-date">Member Since: {{profile.joinDate}}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="info-alert" *ngIf="isEditing">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p><strong>Edit Mode:</strong> You can update your contact and banking details. Security related fields (Name, IDs) are restricted. Contact support for KYC updates.</p>
+    </div>
+
+    <div class="profile-sections-wrapper">
+      
+      <!-- Personal Information Section -->
+      <div class="profile-section">
+        <div class="section-title">
+          <h4>Personal Information</h4>
+        </div>
+
+        <div class="profile-info-grid">
+          <!-- Non-editable Read Only -->
+          <div class="info-group">
+            <span class="label">Full Name</span>
+            <div class="readonly-value">{{profile.name}} <svg title="Locked" class="lock-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>
+          </div>
+          
+          <div class="info-group">
+            <span class="label">Member ID</span>
+            <div class="readonly-value code">{{profile.memberId}} <svg title="Locked" class="lock-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>
+          </div>
+
+          <!-- Editable -->
+          <div class="info-group">
+            <span class="label">Mobile Number <span *ngIf="isEditing" class="req">*</span></span>
+            <div class="value-display" *ngIf="!isEditing">{{profile.mobile}}</div>
+            <div class="input-wrapper" *ngIf="isEditing">
+              <input type="text" class="form-input" [(ngModel)]="editProfile.mobile">
+            </div>
+          </div>
+          
+          <div class="info-group">
+            <span class="label">Email Address <span *ngIf="isEditing" class="req">*</span></span>
+            <div class="value-display" *ngIf="!isEditing">{{profile.email}}</div>
+            <div class="input-wrapper" *ngIf="isEditing">
+              <input type="email" class="form-input" [(ngModel)]="editProfile.email">
+            </div>
+          </div>
+        </div>
+
+        <!-- Address Spanning full width -->
+        <div class="info-group full-width" style="margin-top: 1.25rem;">
+          <span class="label">Residential Address <span *ngIf="isEditing" class="req">*</span></span>
+          <div class="value-display" *ngIf="!isEditing">{{profile.address}}</div>
+          <div class="input-wrapper" *ngIf="isEditing">
+            <textarea class="form-input" [(ngModel)]="editProfile.address" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- KYC & Banking Details -->
+      <div class="profile-section">
+        <div class="section-title">
+          <h4>KYC & Bank Details</h4>
+        </div>
+
+        <div class="profile-info-grid">
+          <!-- Non-editable Read Only -->
+          <div class="info-group">
+            <span class="label">Aadhar Number</span>
+            <div class="readonly-value">{{profile.aadharNumber}} <svg title="Locked" class="lock-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>
+          </div>
+          
+          <div class="info-group">
+            <span class="label">PAN Number</span>
+            <div class="readonly-value">{{profile.panNumber}} <svg title="Locked" class="lock-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>
+          </div>
+
+          <!-- Bank Editable -->
+          <div class="info-group">
+            <span class="label">Bank Name <span *ngIf="isEditing" class="req">*</span></span>
+            <div class="value-display" *ngIf="!isEditing">{{profile.bankName}}</div>
+            <div class="input-wrapper" *ngIf="isEditing">
+              <input type="text" class="form-input" [(ngModel)]="editProfile.bankName">
+            </div>
+          </div>
+          
+          <!-- Spacer in grid -->
+          <div class="info-group empty-group" *ngIf="!isEditing"></div>
+
+          <div class="info-group">
+            <span class="label">Account Number <span *ngIf="isEditing" class="req">*</span></span>
+            <div class="value-display" *ngIf="!isEditing">{{profile.accountNumber}}</div>
+            <div class="input-wrapper" *ngIf="isEditing">
+              <input type="text" class="form-input" [(ngModel)]="editProfile.accountNumber">
+            </div>
+          </div>
+
+          <div class="info-group">
+            <span class="label">IFSC Code <span *ngIf="isEditing" class="req">*</span></span>
+            <div class="value-display" *ngIf="!isEditing">{{profile.ifscCode}}</div>
+            <div class="input-wrapper" *ngIf="isEditing">
+              <input type="text" class="form-input" [(ngModel)]="editProfile.ifscCode">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

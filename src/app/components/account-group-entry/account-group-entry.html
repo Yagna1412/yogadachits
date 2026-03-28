@@ -1,0 +1,83 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Account Group Entry</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Master</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Accounts</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Account Group Entry</span>
+    </nav>
+  </div>
+  <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Group</button>
+</div>
+
+<div class="account-group-entry">
+  <div class="table-section" *ngIf="!showForm">
+    <div class="section-header">
+      <h3>Existing Groups</h3>
+      <div class="search-box">
+        <span class="search-icon">
+          <img src="assets/images/icons/Search.png" alt="Search" />
+        </span>
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterGroups()" />
+        <span class="search-shortcut">Ctrl Shift K</span>
+      </div>
+    </div>
+    <div *ngIf="filteredGroups.length > 0" class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Group Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let g of filteredGroups">
+            <td>{{g.name}}</td>
+            <td>{{g.type}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="filteredGroups.length === 0" class="empty-state">
+      <p>No account groups yet. Click "Add Group" to create one.</p>
+    </div>
+  </div>
+
+  <div class="add-entry-form" *ngIf="showForm">
+    <div class="form-container">
+      <div class="form-content">
+        <div class="form-header">
+          <h2>Add Account Group</h2>
+          <button class="close-btn" (click)="toggleForm()">×</button>
+        </div>
+        <div class="form-body">
+          <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+          <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="groupName">Group Name <span class="text-danger">*</span></label>
+              <input id="groupName" type="text" [(ngModel)]="newGroup.name" name="groupName" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label for="groupType">Group Type <span class="text-danger">*</span></label>
+              <select id="groupType" [(ngModel)]="newGroup.type" name="groupType" class="form-control">
+                <option value="">-- select type --</option>
+                <option>Assets</option>
+                <option>Liabilities</option>
+                <option>Income</option>
+                <option>Expenses</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveGroup()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

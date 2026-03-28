@@ -1,0 +1,128 @@
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Check Management</h1>
+    </div>
+</div>
+
+<div class="main-settings">
+    <!-- Tabs Navigation -->
+    <div class="settings-tabs-container">
+        <div class="tabs-container">
+            <button *ngFor="let tab of tabs" class="tab-button" [class.active]="activeTab === tab.id"
+                (click)="switchTab(tab.id)">
+                {{ tab.label }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Profile Tab Content -->
+    <div class="settings-content" *ngIf="activeTab === 'profile'">
+        <div class="profile-section">
+            <div class="header-section">
+                <div class="section-header">
+                    <h2>Profile Details</h2>
+                    <p>You can change your profile details here seamlessly.</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" (click)="exportData()">Export Data</button>
+                    <button class="btn btn-secondary" (click)="cancel()">Cancel</button>
+                    <button class="btn btn-primary" (click)="saveChanges()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Form Fields -->
+            <div class="form-container">
+                <!-- Public Profile Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <div class="info-name">
+                            <label>Public Profile</label>
+                            <svg class="info-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div class="helper-text">This is the main profile that will be visible for everyone</div>
+                        <a href="#" class="view-details-link">View Details</a>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <input id="fullName" type="text" class="form-input" [(ngModel)]="profileData.fullName"
+                                placeholder="Enter your full name" />
+                        </div>
+
+                        <div class="form-group">
+                            <input id="profileUrl" type="text" class="form-input" [(ngModel)]="profileData.profileUrl"
+                                placeholder="Enter profile URL" />
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <!-- Bio Description Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <label>Bio Description</label>
+                        <div class="helper-text">This will be your main story. Keep it very, very long</div>
+                    </div>
+
+                    <div class="form-group">
+                        <textarea class="form-textarea" [(ngModel)]="profileData.bioDescription"
+                            placeholder="Enter Description" maxlength="300"></textarea>
+                        <div class="char-count">{{ bioCharCount }}/{{ maxBioChars }}</div>
+                    </div>
+                </div>
+
+                <!-- Profile Picture Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <label>Profile Picture</label>
+                        <div class="helper-text">This is where people will see your actual face</div>
+                    </div>
+
+                    <div class="profile-picture-container">
+                        <div class="current-picture">
+                            <img [src]="profileData.profilePicture" alt="Profile" />
+                        </div>
+
+                        <div class="upload-area">
+                            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <p class="upload-text">Drag your file(s) to start uploading</p>
+                            <p class="upload-divider">OR</p>
+                            <button class="btn-browse" (click)="fileInput.click()">Browse Image</button>
+                            <input #fileInput type="file" hidden accept=".jpg,.png,.svg"
+                                (change)="onFileSelected($event)" />
+                            <p class="file-info">Only support .jpg, .png and .svg files</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Other Tabs Content (Placeholder) -->
+<div class="settings-content" *ngIf="activeTab !== 'profile'">
+    <div class="placeholder-section">
+        <h2>{{ activeTab | titlecase }} Settings</h2>
+        <p>Content for {{ activeTab | titlecase }} will be added here.</p>
+    </div>
+</div>

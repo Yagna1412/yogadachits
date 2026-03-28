@@ -1,0 +1,72 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Group Wise Outstanding Accounts Compare Report</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Consolidation</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item active">Group Wise Outstanding Accounts Compare Report</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="form-filter">
+    <div class="form-group">
+      <label>Report Type</label>
+      <select class="form-control" [(ngModel)]="reportType">
+        <option value="">Select Report Type</option>
+        <option *ngFor="let t of reportTypes" [value]="t">{{t}}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Report Date *</label>
+      <input type="date" class="form-control" [(ngModel)]="reportDate" />
+    </div>
+
+    <div class="form-group">
+      <label>Group Name</label>
+      <input class="form-control" [(ngModel)]="groupName" placeholder="Enter group name (optional)" />
+    </div>
+
+    <div class="form-group">
+      <label>Groups</label>
+      <select class="form-control" [(ngModel)]="status">
+        <option value="">Select Status</option>
+        <option *ngFor="let s of statuses" [value]="s">{{s}}</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="align-self:flex-end;">
+      <button class="btn btn-primary" (click)="generate()">Generate</button>
+      <button class="btn btn-secondary" style="margin-left:8px;" (click)="reset()">Reset</button>
+    </div>
+  </div>
+
+  <div *ngIf="showReport">
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Running Outstanding</th>
+            <th>Closed Outstanding</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of filteredData()">
+            <td>{{row.group}}</td>
+            <td>{{row.runningOutstanding}}</td>
+            <td>{{row.closedOutstanding}}</td>
+            <td>{{row.runningOutstanding + row.closedOutstanding}}</td>
+          </tr>
+          <tr *ngIf="filteredData().length === 0">
+            <td colspan="4" class="empty-state">No data available for selected criteria.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

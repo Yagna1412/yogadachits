@@ -1,0 +1,39 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Re-Adjust Credit Installments</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Utilities</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Re-Adjust Credit Installments</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-section">
+        <form [formGroup]="adjustForm" (ngSubmit)="onSubmit()">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="groupName">Group Name *</label>
+                    <input type="text" id="groupName" class="form-control" formControlName="groupName" placeholder="Enter group name" />
+                    <div class="error-message" *ngIf="submitted && adjustForm.get('groupName')?.invalid">
+                        Group Name is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="ticketNo">Ticket No *</label>
+                    <input type="text" id="ticketNo" class="form-control" formControlName="ticketNo" placeholder="Enter ticket number" />
+                    <div class="error-message" *ngIf="submitted && adjustForm.get('ticketNo')?.invalid">
+                        Ticket No is required
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Update</button>
+                <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>

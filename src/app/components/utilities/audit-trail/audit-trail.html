@@ -1,0 +1,113 @@
+<div class="page-header">
+    <div class="header-left">
+        <h1 class="page-title">Audit Trail</h1>
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item">Admin</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item">Utilities</span>
+            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+            <span class="breadcrumb-item active">Audit Trail</span>
+        </nav>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="form-section">
+        <form [formGroup]="auditForm" (ngSubmit)="onView()">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="transactionType">Transaction Type *</label>
+                    <select id="transactionType" class="form-control" formControlName="transactionType">
+                        <option value="">Select Transaction Type</option>
+                        <option value="Payment">Payment</option>
+                        <option value="Receipt">Receipt</option>
+                        <option value="Journal">Journal</option>
+                        <option value="Contra">Contra</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && auditForm.get('transactionType')?.invalid">
+                        Transaction Type is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="type">Type *</label>
+                    <select id="type" class="form-control" formControlName="type">
+                        <option value="">Select Type</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Bank">Bank</option>
+                        <option value="Credit">Credit</option>
+                    </select>
+                    <div class="error-message" *ngIf="submitted && auditForm.get('type')?.invalid">
+                        Type is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="voucherSeries">Voucher Series</label>
+                    <input type="text" id="voucherSeries" class="form-control" formControlName="voucherSeries"
+                        placeholder="Enter voucher series" />
+                </div>
+                <div class="form-group">
+                    <label for="voucherNumber">Voucher Number</label>
+                    <input type="text" id="voucherNumber" class="form-control" formControlName="voucherNumber"
+                        placeholder="Enter voucher number" />
+                    <div class="error-message" *ngIf="submitted && auditForm.get('voucherNumber')?.invalid">
+                        Voucher Number must be numeric
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="fromDate">From Date *</label>
+                    <input type="date" id="fromDate" class="form-control" formControlName="fromDate" />
+                    <div class="error-message" *ngIf="submitted && auditForm.get('fromDate')?.invalid">
+                        From Date is required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="toDate">To Date *</label>
+                    <input type="date" id="toDate" class="form-control" formControlName="toDate" />
+                    <div class="error-message" *ngIf="submitted && auditForm.get('toDate')?.invalid">
+                        To Date is required
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">View</button>
+                <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="transactions-section" *ngIf="showTransactions">
+        <div class="section-header">
+            <h3>Transaction Audit Trail ({{transactions.length}} records)</h3>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Transaction Type</th>
+                        <th>Type</th>
+                        <th>Voucher Series</th>
+                        <th>Voucher Number</th>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let transaction of transactions">
+                        <td>{{transaction.id}}</td>
+                        <td>{{transaction.transactionType}}</td>
+                        <td>{{transaction.type}}</td>
+                        <td>{{transaction.voucherSeries}}</td>
+                        <td>{{transaction.voucherNumber}}</td>
+                        <td>{{transaction.date}}</td>
+                        <td>{{transaction.user}}</td>
+                        <td>{{transaction.action}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
