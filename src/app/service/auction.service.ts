@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, shareReplay } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
 const BASE = 'http://localhost:8080/chitfunds/api/v1';
@@ -76,6 +76,18 @@ export class AuctionsService {
     private platformId = inject(PLATFORM_ID);
     constructor(private http: HttpClient) { }
 
+    // ── In-memory caches (singleton, survive route changes) ──────────────────
+    private _chitGroups$   : Observable<ApiResponse<ChitGroupDto[]>>   | null = null;
+    private _auctions$     : Observable<ApiResponse<AuctionResponse[]>> | null = null;
+    private _enrollments$  : Map<number, Observable<ApiResponse<EnrollmentResponse[]>>> = new Map();
+
+    clearAuctionsCache()  { this._auctions$    = null; }
+    clearChitGroupsCache(){ this._chitGroups$   = null; }
+    clearEnrollmentsCache(chitGroupId?: number) {
+        if (chitGroupId !== undefined) { this._enrollments$.delete(chitGroupId); }
+        else { this._enrollments$.clear(); }
+    }
+
     private getHeaders(): { headers: HttpHeaders } {
         let headers = new HttpHeaders({
             'Content-Type': 'application/json'
@@ -90,15 +102,27 @@ export class AuctionsService {
     }
 
     listChitGroups(): Observable<ApiResponse<ChitGroupDto[]>> {
-        return this.http.get<ApiResponse<ChitGroupDto[]>>(`${BASE}/chit-groups`, this.getHeaders()).pipe(
-            catchError(() => of({ success: false, message: 'error', data: [] } as ApiResponse<ChitGroupDto[]>))
-        );
+        if (!this._chitGroups$) {
+            this._chitGroups$ = this.http
+                .get<ApiResponse<ChitGroupDto[]>>(`${BASE}/chit-groups`, this.getHeaders())
+                .pipe(
+                    shareReplay(1),
+                    catchError(() => of({ success: false, message: 'error', data: [] } as ApiResponse<ChitGroupDto[]>))
+                );
+        }
+        return this._chitGroups$;
     }
 
     listAuctions(): Observable<ApiResponse<AuctionResponse[]>> {
-        return this.http.get<ApiResponse<AuctionResponse[]>>(`${BASE}/auctions`, this.getHeaders()).pipe(
-            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse[]>))
-        );
+        if (!this._auctions$) {
+            this._auctions$ = this.http
+                .get<ApiResponse<AuctionResponse[]>>(`${BASE}/auctions`, this.getHeaders())
+                .pipe(
+                    shareReplay(1),
+                    catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse[]>))
+                );
+        }
+        return this._auctions$;
     }
 
     listBids(auctionId: number): Observable<ApiResponse<AuctionBidResponse[]>> {
@@ -108,18 +132,27 @@ export class AuctionsService {
     }
 
     getEnrollments(chitGroupId: number): Observable<ApiResponse<EnrollmentResponse[]>> {
-        return this.http.get<ApiResponse<EnrollmentResponse[]>>(`${BASE}/enrollments/chit-group/${chitGroupId}`, this.getHeaders()).pipe(
-            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<EnrollmentResponse[]>))
-        );
+        if (!this._enrollments$.has(chitGroupId)) {
+            const req$ = this.http
+                .get<ApiResponse<EnrollmentResponse[]>>(`${BASE}/enrollments/chit-group/${chitGroupId}`, this.getHeaders())
+                .pipe(
+                    shareReplay(1),
+                    catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<EnrollmentResponse[]>))
+                );
+            this._enrollments$.set(chitGroupId, req$);
+        }
+        return this._enrollments$.get(chitGroupId)!;
     }
 
     createBid(req: CreateBidRequest): Observable<ApiResponse<AuctionBidResponse>> {
+        this.clearAuctionsCache(); // Bust so next load reflects new bid state
         return this.http.post<ApiResponse<AuctionBidResponse>>(`${BASE}/auctions/bids`, req, this.getHeaders()).pipe(
             catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionBidResponse>))
         );
     }
 
     selectWinner(auctionId: number, bidId: number): Observable<ApiResponse<AuctionResponse>> {
+        this.clearAuctionsCache(); // Bust so winner state is fresh on re-visit
         return this.http.put<ApiResponse<AuctionResponse>>(`${BASE}/auctions/${auctionId}/winner/${bidId}`, {}, this.getHeaders()).pipe(
             catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse>))
         );

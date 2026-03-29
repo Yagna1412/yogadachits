@@ -142,7 +142,7 @@
         </div>
 
         <div class="action-buttons">
-          <button class="btn btn-secondary">Download Detail</button>
+          <button class="btn btn-secondary" (click)="downloadDetails()">Download Detail</button>
           <button class="btn btn-primary"
             [disabled]="!highestBid || isConfirmingWinner || !!selected!.winningBidId"
             (click)="openConfirmModal()">
