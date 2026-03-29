@@ -67,6 +67,13 @@ export class MemberReceiptsComponent {
     this.filteredReceipts = this.allReceipts;
   }
 
+  // Bound properties for Bid Entry
+  newReceipt: any = {
+    member: '',
+    amount: '',
+    paymentMode: 'Cash'
+  };
+
   filterReceipts(): void {
     if (!this.searchTerm.trim()) {
       this.filteredReceipts = this.allReceipts;
@@ -81,5 +88,39 @@ export class MemberReceiptsComponent {
         receipt.group.toLowerCase().includes(search) ||
         receipt.paymentMode.toLowerCase().includes(search)
     );
+  }
+
+  saveReceipt() {
+    if(!this.newReceipt.member || !this.newReceipt.amount) {
+      alert("Please select a Member and enter an Amount.");
+      return;
+    }
+    const receipt: Receipt = {
+      id: "RE" + Math.floor(100 + Math.random() * 900),
+      member: this.newReceipt.member,
+      group: "General Collection",
+      amount: "₹ " + this.newReceipt.amount,
+      paymentMode: this.newReceipt.paymentMode,
+      date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    };
+    this.allReceipts.unshift(receipt);
+    this.filterReceipts();
+    this.newReceipt = { member: '', amount: '', paymentMode: 'Cash' };
+    alert("Receipt saved successfully!");
+  }
+
+  saveAndPrintReceipt() {
+    this.saveReceipt();
+    if(!this.newReceipt.member && !this.newReceipt.amount) {
+      alert("Initiating print sequence for the newly saved receipt...");
+    }
+  }
+
+  viewReceipt(id: string) {
+    alert(`Viewing receipt details for ID: ${id}`);
+  }
+
+  printReceipt(id: string) {
+    alert(`Printing receipt ID: ${id}...`);
   }
 }

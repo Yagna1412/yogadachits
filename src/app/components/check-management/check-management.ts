@@ -224,8 +224,13 @@ export class CheckManagementComponent {
     this.showSuccessModal = true;
 
     setTimeout(() => {
-      this.closeSuccessModal();
-    }, 3000);
+      this.showSuccessModal = false;
+      this.closeUpdateModal();
+    }, 2000);
+  }
+
+  rePresentCheque(cheque: Cheque): void {
+    alert(`Cheque ${cheque.chequeNo} has been queued for re-presentment!`);
   }
 
   closeSuccessModal(): void {

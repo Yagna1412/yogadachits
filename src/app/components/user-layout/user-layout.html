@@ -18,13 +18,15 @@
         <button class="menu-link" [class.expanded]="dashboardMenuExpanded" (click)="toggleDashboardMenu()">
           <img src="assets/images/icons/ouline-globe.png" alt="Dashboard Icon" class="menu-icon" />
           <span>Dashboard</span>
-          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon" [class.rotated]="dashboardMenuExpanded" />
+          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
+            [class.rotated]="dashboardMenuExpanded" />
         </button>
         <div class="submenu" *ngIf="dashboardMenuExpanded">
           <a routerLink="/user/dashboard" routerLinkActive="active" class="submenu-link" (click)="closeMobileMenu()">
             <span>User Dashboard</span>
           </a>
-          <a routerLink="/user/chit-calculator" routerLinkActive="active" class="submenu-link" (click)="closeMobileMenu()">
+          <a routerLink="/user/chit-calculator" routerLinkActive="active" class="submenu-link"
+            (click)="closeMobileMenu()">
             <span>Chit Calculator</span>
           </a>
         </div>
@@ -71,10 +73,13 @@
         <button class="menu-link" [class.expanded]="footerSettingsExpanded" (click)="toggleFooterSettings()">
           <img src="assets/images/icons/ouline-globe.png" alt="Settings Icon" class="menu-icon" />
           <span>Settings</span>
-          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon" [class.rotated]="footerSettingsExpanded" />
+          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
+            [class.rotated]="footerSettingsExpanded" />
         </button>
 
         <div class="footer-settings-submenu" *ngIf="footerSettingsExpanded">
+          <a routerLink="/user/profile" routerLinkActive="active" class="footer-submenu-link">Profile</a>
+          <a routerLink="/user/preferences" routerLinkActive="active" class="footer-submenu-link">Preferences</a>
           <button class="footer-submenu-link" (click)="logout()">Logout</button>
         </div>
       </div>
@@ -92,7 +97,7 @@
           <img src="https://i.pravatar.cc/150?img=12" alt="User Avatar" />
         </div>
         <div class="user-details">
-          <div class="user-name">Member User</div>
+          <div class="user-name">Rajesh Kumar</div>
           <div class="user-title">Chit Subscriber</div>
         </div>
       </div>
@@ -109,38 +114,46 @@
         </button>
         <div class="greeting">
           <img src="assets/images/icons/sun.png" alt="Greeting Icon" class="greeting-icon" />
-          <span>Good morning, Steve!</span>
+          <span class="greeting-text">Good morning, Rajesh Kumar!</span>
         </div>
       </div>
 
       <div class="header-center">
-        <div class="search-box">
-          <img src="assets/images/icons/Search.png" alt="Search" class="search-icon" />
-          <input type="text" placeholder="Search anything..." [(ngModel)]="searchQuery" (input)="onSearch()" (focus)="onSearch()" />
-          <div class="shortcut">Ctrl K</div>
+        <div class="search-container">
+          <div class="search-box">
+            <img src="assets/images/icons/Search.png" alt="Search" class="search-icon" />
+            <input type="text" placeholder="Search anything..." [(ngModel)]="searchQuery" (input)="onSearch()"
+              (focus)="onSearch()" (blur)="hideSearch()" />
+            <div class="shortcut">Ctrl K</div>
+          </div>
 
           <!-- Search Results Dropdown -->
           <div class="search-results-dropdown" *ngIf="searchQuery.length > 2">
             <div class="no-results" *ngIf="searchResults.length === 0">
-               No matches for "{{ searchQuery }}"
+              No matches for "{{ searchQuery }}"
             </div>
-            <a *ngFor="let result of searchResults" [routerLink]="result.link" class="search-item" (click)="searchQuery = ''; searchResults = []">
-                <div class="result-title">{{ result.title }}</div>
-                <div class="result-type">{{ result.type }}</div>
+            <a *ngFor="let result of searchResults" [routerLink]="result.link" class="search-item"
+              (click)="searchQuery = ''; searchResults = []">
+              <div class="result-title">{{ result.title }}</div>
+              <div class="result-type">{{ result.type }}</div>
             </a>
           </div>
         </div>
       </div>
 
       <div class="header-right">
+        <!-- Financial Year Badge -->
+        <div class="financial-year-badge">
+          <span class="fy-label">FY</span>
+          <span class="fy-value">2025-26</span>
+        </div>
+
         <button class="btn-icon">
           <img src="assets/images/icons/notification.png" alt="Notifications" />
           <span class="badge">3</span>
         </button>
-        <div class="user-menu">
-          <div class="user-avatar">
-            <img src="assets/images/icons/chitcloud-1.png" alt="User Avatar" />
-          </div>
+        <div class="brand-logo-container">
+          <img src="assets/images/icons/logo-main.png" alt="ChitCloud Logo" class="header-brand-logo" />
         </div>
       </div>
     </header>

@@ -170,7 +170,7 @@
           <td>{{ cheque.bouncedDate }}</td>
           <td>{{ cheque.reason }}</td>
           <td><span class="status-badge bounced-badge">{{ cheque.status }}</span></td>
-          <td><button class="action-btn re-present">Re-Present</button></td>
+          <td><button class="action-btn re-present" (click)="rePresentCheque(cheque)">Re-Present</button></td>
         </tr>
       </tbody>
     </table>

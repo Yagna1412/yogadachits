@@ -10,41 +10,106 @@
 </div>
 
 <div class="main-container">
-    <div class="form-row">
-        <div class="form-group">
-            <label>Enquiry Type</label>
-            <select class="form-control" [(ngModel)]="selectedType" (ngModelChange)="search()">
-                <option value="">All</option>
-                <option *ngFor="let t of enquiryTypes" [value]="t">{{t}}</option>
-            </select>
+    <!-- Enquiry Type Section -->
+    <div class="enquiry-section card mb-4">
+        <div class="section-title">
+            <span class="title-square"></span> Enquiry Type
         </div>
-        <div class="form-group">
-            <label>Name</label>
-            <input class="form-control" [(ngModel)]="nameQuery" (ngModelChange)="search()" placeholder="Enter name" />
+        <div class="form-row mt-3">
+            <div class="form-group col-md-4">
+                <label>Enquiry Type</label>
+                <select class="form-control" [(ngModel)]="selectedType" (ngModelChange)="search()">
+                    <option *ngFor="let t of enquiryTypes" [value]="t">{{t}}</option>
+                </select>
+            </div>
+            <div class="form-group col-md-8">
+                <label>Name</label>
+                <input class="form-control" [(ngModel)]="nameQuery" (ngModelChange)="search()" placeholder="Enter name" />
+            </div>
         </div>
     </div>
 
-    <div class="table-wrapper" *ngIf="results.length">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Name</th>
-                    <th>Contact</th>
-                    <th>ID</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let r of results">
-                    <td>{{r.type}}</td>
-                    <td>{{r.name}}</td>
-                    <td>{{r.contact}}</td>
-                    <td>{{r.memberId || r.subscriberId || r.agentId}}</td>
-                </tr>
-            </tbody>
-        </table>
+    <!-- Person Information Card (Always visible if a person is found) -->
+    <div class="person-info-section card mb-4" *ngIf="selectedPerson">
+        <div class="section-title">
+            <span class="title-square"></span> PERSON INFORMATION
+        </div>
+        
+        <div class="person-layout mt-3">
+            <div class="info-details">
+                <div class="detail-row">
+                    <span class="label">Name</span>
+                    <span class="separator">:</span>
+                    <span class="value">{{selectedPerson.name}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Mobile No</span>
+                    <span class="separator">:</span>
+                    <span class="value">{{selectedPerson.contact}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Email</span>
+                    <span class="separator">:</span>
+                    <span class="value">{{selectedPerson.email}}</span>
+                </div>
+            </div>
+
+            <div class="address-section">
+                <div class="address-tabs">
+                    <button *ngFor="let t of addressTabs" 
+                            [class.active]="activeAddressTab === t.key"
+                            (click)="setAddressTab(t.key)"
+                            class="addr-tab-btn">
+                        {{t.label}}
+                    </button>
+                </div>
+                <div class="address-content">
+                    <p>{{selectedPerson.address}}</p>
+                </div>
+            </div>
+
+            <div class="photo-sig-section">
+                <div class="photo-box">
+                    <img src="assets/images/icons/user-round.png" alt="Photo Placeholder" />
+                </div>
+                <div class="sig-box">
+                    <img src="assets/images/icons/Search.png" alt="Sig Placeholder" style="width: 20px; opacity: 0.5;" />
+                    <span>Upload Signature</span>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="empty-state" *ngIf="!results.length">
-        <p>Use the form above to search for a person.</p>
+
+    <!-- Detail Tabs Section (Always visible if a person is found) -->
+    <div class="detail-section card" *ngIf="selectedPerson">
+        <div class="section-title mb-3">
+            <span class="title-square"></span> As A Member Informatio
+        </div>
+
+        <div class="folder-tabs-container">
+            <div class="folder-tabs">
+                <button *ngFor="let tab of detailTabs" 
+                        class="folder-tab"
+                        [class.active]="activeTab === tab.key"
+                        (click)="setTab(tab.key)">
+                    {{tab.label}}
+                </button>
+            </div>
+            <div class="tab-body">
+                <div class="empty-tab-state p-4 text-center">
+                    <p>Details for <strong>{{activeTab}}</strong> will be displayed here.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cancel-footer mt-4 d-flex justify-content-end">
+            <button class="btn btn-danger btn-cancel" (click)="cancelMember(selectedPerson)">
+                Cancel Member Option
+            </button>
+        </div>
+    </div>
+
+    <div class="empty-state card p-5 text-center" *ngIf="!selectedPerson">
+        <p class="text-muted">No person found matching your search criteria.</p>
     </div>
 </div>

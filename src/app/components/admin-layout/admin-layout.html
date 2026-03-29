@@ -88,21 +88,6 @@
               </a>
             </div>
           </div>
-          <div class="submenu-item">
-            <button class="submenu-link" [class.expanded]="setupSubmenuExpanded" (click)="toggleSetupSubmenu()">
-              <span>Members</span>
-              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                [class.rotated]="setupSubmenuExpanded" />
-            </button>
-            <div class="nested-submenu" *ngIf="setupSubmenuExpanded">
-              <a routerLink="/admin/company-setup" routerLinkActive="active" class="nested-submenu-link">
-                <span>Company Setup</span>
-              </a>
-              <a routerLink="/" routerLinkActive="active" class="nested-submenu-link">
-                <span>SMS Setup</span>
-              </a>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -544,15 +529,33 @@
 
       <!-- Center: Search -->
       <div class="header-center">
-        <div class="search-box">
-          <img src="assets/images/icons/Search.png" alt="Search" class="search-icon" />
-          <input type="text" placeholder="Search anything..." />
-          <div class="shortcut">Ctrl K</div>
+        <div class="search-container">
+          <div class="search-box">
+            <img src="assets/images/icons/Search.png" alt="Search" class="search-icon" />
+            <input type="text" placeholder="Search anything..." [(ngModel)]="searchQuery" (input)="onSearch()" (focus)="onSearch()" (blur)="hideSearch()" />
+            <div class="shortcut">Ctrl K</div>
+          </div>
+          <!-- Search Results Dropdown -->
+          <div class="search-results-dropdown" *ngIf="searchQuery.length > 2">
+            <div class="no-results" *ngIf="searchResults.length === 0">
+              No matches for "{{ searchQuery }}"
+            </div>
+            <a *ngFor="let result of searchResults" [routerLink]="result.link" class="search-item" (click)="searchQuery = ''; searchResults = []">
+              <div class="result-title">{{ result.title }}</div>
+              <div class="result-type">{{ result.type }}</div>
+            </a>
+          </div>
         </div>
       </div>
 
       <!-- Right side -->
       <div class="header-right">
+        <!-- Financial Year Badge -->
+        <div class="financial-year-badge">
+          <span class="fy-label">FY</span>
+          <span class="fy-value">2025-26</span>
+        </div>
+
         <button class="btn-icon">
           <img src="assets/images/icons/notification.png" alt="Notifications" />
           <span class="badge">3</span>

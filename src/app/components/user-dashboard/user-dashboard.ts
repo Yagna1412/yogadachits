@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-user-dashboard',
@@ -9,6 +10,25 @@ import { CommonModule } from '@angular/common';
   styleUrl: './user-dashboard.scss'
 })
 export class UserDashboardComponent {
+  constructor(private router: Router) {}
+
+  onSearchIconClick() {
+    const searchInput = document.querySelector('.search-box input') as HTMLElement;
+    if (searchInput) searchInput.focus();
+    else alert("Search activated!");
+  }
+
+  onNotificationClick() {
+    alert("You have 3 unread notifications. Opening alerts panel...");
+  }
+
+  onSettingsClick() {
+    this.router.navigate(['/user/preferences']);
+  }
+
+  onAvatarClick() {
+    this.router.navigate(['/user/profile']);
+  }
   downloadReceipt(receiptNo: string) {
     const fileName = `Yogada_Receipt_${receiptNo.replace('#', '')}.pdf`;
     

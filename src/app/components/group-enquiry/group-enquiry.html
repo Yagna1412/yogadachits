@@ -10,43 +10,317 @@
 </div>
 
 <div class="main-container">
-    <div class="section-header">
-        <h3>Group Enquiry</h3>
-        <div class="search-box">
-            <span class="search-icon">
-                <img src="assets/images/icons/Search.png" alt="Search" />
-            </span>
-            <input type="text" placeholder="Search by group name" [(ngModel)]="nameQuery" (ngModelChange)="search()"
-                class="search-input" />
-            <span class="search-shortcut">Ctrl Shift K</span>
+    <!-- Group Search Section -->
+    <div class="search-section card mb-4">
+        <div class="form-row">
+            <div class="form-group col-md-3">
+                <label>Group Name</label>
+                <div class="input-with-icon">
+                    <input type="text" class="form-control" [(ngModel)]="nameQuery" (ngModelChange)="search()" placeholder="Search by name" />
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="table-wrapper" *ngIf="results.length">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Members</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let g of results">
-                    <td>{{g.name}}</td>
-                    <td>{{g.status}}</td>
-                    <td>{{g.members}}</td>
-                    <td>{{g.startDate}}</td>
-                    <td>{{g.endDate}}</td>
-                    <td>{{g.amount}}</td>
-                </tr>
-            </tbody>
-        </table>
+    <!-- Group Information Card -->
+    <div class="group-info-section card mb-4" *ngIf="selectedGroup">
+        <div class="section-title">
+            <span class="title-square"></span> Group Information
+        </div>
+        
+        <div class="group-info-grid mt-3">
+            <div class="info-item">
+                <span class="label">GroupName</span>
+                <span class="value">{{selectedGroup.groupName}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Group Series</span>
+                <span class="value">{{selectedGroup.groupSeries}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Installment Amount</span>
+                <span class="value">{{selectedGroup.installmentAmount | number}}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Chit Amount</span>
+                <span class="value">{{selectedGroup.chitAmount | number}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">No Of Installments</span>
+                <span class="value">{{selectedGroup.noOfInstallments}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Company Chit</span>
+                <span class="value">{{selectedGroup.companyChit}}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">AuctionType</span>
+                <span class="value">{{selectedGroup.auctionType}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Auctions Per Month</span>
+                <span class="value">{{selectedGroup.auctionsPerMonth}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">No Auct. Inst.</span>
+                <span class="value">{{selectedGroup.noAuctInst}}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Commencement Date</span>
+                <span class="value">{{selectedGroup.commencementDate}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Termination Date</span>
+                <span class="value">{{selectedGroup.terminationDate}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Auction Day</span>
+                <span class="value">{{selectedGroup.auctionDay}}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">PSO Number</span>
+                <span class="value">{{selectedGroup.psoNumber}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">PSO Date</span>
+                <span class="value">{{selectedGroup.psoDate}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Auction Time</span>
+                <span class="value">{{selectedGroup.auctionTime}}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">CA Number</span>
+                <span class="value">{{selectedGroup.caNumber}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">CA Date</span>
+                <span class="value">{{selectedGroup.caDate}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Dividend</span>
+                <span class="value">{{selectedGroup.dividend}}</span>
+            </div>
+        </div>
     </div>
-    <div class="empty-state" *ngIf="!results.length">
-        <p>Use the form above to search for a group.</p>
+
+    <!-- Detail Tabs Section -->
+    <div class="detail-section card" *ngIf="selectedGroup">
+        <div class="folder-tabs-container">
+            <div class="folder-tabs">
+                <button *ngFor="let tab of detailTabs" 
+                        class="folder-tab"
+                        [class.active]="activeTab === tab.key"
+                        (click)="setTab(tab.key)">
+                    {{tab.label}}
+                </button>
+            </div>
+            <div class="tab-body">
+                <!-- Subscribers Information Table -->
+                <div class="table-container p-0" *ngIf="activeTab === 'subscribers'">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Chit No</th>
+                                <th>Sub.Name</th>
+                                <th>Enrol Date</th>
+                                <th>Position</th>
+                                <th>PaidUpTo</th>
+                                <th>Payable</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let s of subscribers">
+                                <td>{{s.chitNo}}</td>
+                                <td>{{s.subName}}</td>
+                                <td>{{s.enrolDate}}</td>
+                                <td>{{s.position}}</td>
+                                <td>{{s.paidUpTo}}</td>
+                                <td>{{s.payable | number}}</td>
+                                <td>{{s.paid | number}}</td>
+                                <td>{{s.balance | number}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- General Information Table -->
+                <div class="table-container p-0" *ngIf="activeTab === 'general'">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th>No.Of Members</th>
+                                <th>Default</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let g of generalInfo">
+                                <td>{{g.description}}</td>
+                                <td>{{g.noOfMembers}}</td>
+                                <td>{{g.default}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bidders List Table -->
+                <div class="table-container p-0" *ngIf="activeTab === 'bidders'">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>A.No</th>
+                                <th>Auction Date</th>
+                                <th>Tkt.No</th>
+                                <th>Bidder Name</th>
+                                <th>Bid Amount</th>
+                                <th>Payable</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let b of biddersList">
+                                <td>{{b.aNo}}</td>
+                                <td>{{b.auctionDate}}</td>
+                                <td>{{b.tktNo}}</td>
+                                <td>{{b.bidderName}}</td>
+                                <td>{{b.bidAmount | number}}</td>
+                                <td>{{b.payable | number}}</td>
+                                <td>{{b.paid | number}}</td>
+                                <td>{{b.balance | number}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Dividend List Table -->
+                <div class="table-container p-0" *ngIf="activeTab === 'dividend'">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Installment No</th>
+                                <th>Month & Year</th>
+                                <th>Dividend</th>
+                                <th>Subscription</th>
+                                <th>Cumm. Dividend</th>
+                                <th>Cumm.Subscription</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let d of dividendList">
+                                <td>{{d.instNo}}</td>
+                                <td>{{d.monthYear}}</td>
+                                <td>{{d.dividend | number}}</td>
+                                <td>{{d.subscription | number}}</td>
+                                <td>{{d.cumDividend | number}}</td>
+                                <td>{{d.cumSubscription | number}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Due List Table -->
+                <div class="table-container p-0" *ngIf="activeTab === 'due'">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tkt.No</th>
+                                <th>Sub.Name</th>
+                                <th>Paid Up To</th>
+                                <th>Position</th>
+                                <th>Due</th>
+                                <th>Penality</th>
+                                <th>Total Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let d of dueList">
+                                <td>{{d.tktNo}}</td>
+                                <td>{{d.subName}}</td>
+                                <td>{{d.paidUpTo}}</td>
+                                <td>{{d.position}}</td>
+                                <td>{{d.due | number}}</td>
+                                <td>{{d.penality | number}}</td>
+                                <td>{{d.totalDue | number}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Auction Details Table -->
+                <div class="table-container p-0" *ngIf="activeTab === 'auction'">
+                    <table class="table mb-0 split-header-table">
+                        <thead>
+                            <tr>
+                                <th colspan="4" class="text-center group-header">Previous Bidder Information</th>
+                                <th colspan="4" class="text-center group-header">Present Bidder Information</th>
+                            </tr>
+                            <tr>
+                                <th>Tkt No</th>
+                                <th>Name</th>
+                                <th>Bid Amount</th>
+                                <th>Date</th>
+                                <th>Tkt No</th>
+                                <th>Name</th>
+                                <th>Bid Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{auctionDetails.previousBidder.tktNo}}</td>
+                                <td>{{auctionDetails.previousBidder.name}}</td>
+                                <td>{{auctionDetails.previousBidder.bidAmount | number}}</td>
+                                <td>{{auctionDetails.previousBidder.date}}</td>
+                                <td>{{auctionDetails.presentBidder.tktNo}}</td>
+                                <td>{{auctionDetails.presentBidder.name}}</td>
+                                <td>{{auctionDetails.presentBidder.bidAmount | number}}</td>
+                                <td>{{auctionDetails.presentBidder.date}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Other Info (Investment & BidPayment Details) -->
+                <div class="table-container p-0" *ngIf="activeTab === 'other'">
+                    <table class="table info-split-table mb-0">
+                        <thead>
+                            <tr>
+                                <th colspan="2" class="group-header">Investment Details</th>
+                                <th colspan="2" class="group-header">BidPayment Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="label-cell">Subscription Amount</td>
+                                <td class="value-cell text-right">{{otherInfo.investment.subscriptionAmount | number}}</td>
+                                <td class="label-cell">Bid Payable Amount</td>
+                                <td class="value-cell text-right">{{otherInfo.bidPayment.bidPayableAmount | number}}</td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell">Dividend Earned</td>
+                                <td class="value-cell text-right">{{otherInfo.investment.dividendEarned | number}}</td>
+                                <td class="label-cell">Bid Paid Amount</td>
+                                <td class="value-cell text-right">{{otherInfo.bidPayment.bidPaidAmount | number}}</td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell font-weight-bold">Net Subscription</td>
+                                <td class="value-cell text-right font-weight-bold">{{otherInfo.investment.netSubscription | number}}</td>
+                                <td class="label-cell font-weight-bold">Balance Amount</td>
+                                <td class="value-cell text-right font-weight-bold">{{otherInfo.bidPayment.balanceAmount | number}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

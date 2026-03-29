@@ -15,20 +15,34 @@ export class LoginComponent {
   password: string = '';
   rememberMe: boolean = false;
 
+  errorMessage: string = '';
+
   constructor(private router: Router) { }
 
   setRole(role: 'Admin' | 'User') {
     this.selectedRole = role;
+    this.errorMessage = ''; // Clear error when switching roles
   }
 
   onSubmit() {
-    // For demo purposes, accept any credentials
-    if (this.email && this.password) {
-      // In production, you would validate against a backend
-      if (this.selectedRole === 'Admin') {
+    this.errorMessage = ''; // Reset error
+
+    if (!this.email || !this.password) {
+      this.errorMessage = 'Please enter both email and password';
+      return;
+    }
+
+    if (this.selectedRole === 'Admin') {
+      if (this.email === 'YogadaChits@Admin.com' && this.password === 'Admin123') {
         this.router.navigate(['/admin/dashboard']);
       } else {
+        this.errorMessage = 'Invalid Admin credentials';
+      }
+    } else if (this.selectedRole === 'User') {
+      if (this.email === 'YogadaChits@User.com' && this.password === 'User123') {
         this.router.navigate(['/user/dashboard']);
+      } else {
+        this.errorMessage = 'Invalid User credentials';
       }
     }
   }

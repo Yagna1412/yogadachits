@@ -61,12 +61,12 @@
       <div class="form-body">
         <div class="form-row">
           <div class="form-group">
-            <label>Group Name</label>
-            <input class="form-control" [(ngModel)]="newPayment.groupName" />
+            <label>Group Name <span class="text-danger">*</span></label>
+            <input class="form-control" [(ngModel)]="newPayment.groupName" [class.is-invalid]="validationErrors['groupName']" />
           </div>
           <div class="form-group">
-            <label>Ticket No</label>
-            <input class="form-control" [(ngModel)]="newPayment.ticketNo" />
+            <label>Ticket No <span class="text-danger">*</span></label>
+            <input class="form-control" [(ngModel)]="newPayment.ticketNo" [class.is-invalid]="validationErrors['ticketNo']" />
           </div>
         </div>
         <div class="form-row">
@@ -95,8 +95,8 @@
             <input class="form-control" [(ngModel)]="newPayment.account" />
           </div>
           <div class="form-group">
-            <label>Amount</label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.amount" />
+            <label>Amount <span class="text-danger">*</span></label>
+            <input class="form-control" type="number" [(ngModel)]="newPayment.amount" [class.is-invalid]="validationErrors['amount']" />
           </div>
         </div>
         <div class="form-row">

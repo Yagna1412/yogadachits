@@ -49,18 +49,29 @@ export class BidPaymentsComponent {
     });
   }
 
+  validationErrors: { [key: string]: boolean } = {};
+
   savePayment() {
-    const amt = parseFloat(this.newPayment.amount) || 0;
-    if (!amt || isNaN(amt)) {
-      alert('Amount numeric');
+    this.validationErrors = {};
+    let isValid = true;
+
+    if (!this.newPayment.groupName?.trim()) { this.validationErrors['groupName'] = true; isValid = false; }
+    if (!this.newPayment.ticketNo?.trim()) { this.validationErrors['ticketNo'] = true; isValid = false; }
+    if (!this.newPayment.amount || isNaN(parseFloat(this.newPayment.amount))) { this.validationErrors['amount'] = true; isValid = false; }
+
+    if (!isValid) {
+      alert("Please fill in the highlighted required fields.");
       return;
     }
+
+    const amt = parseFloat(this.newPayment.amount) || 0;
+    
     // parse other numeric fields if present
     ['chitAmount','companyCommission','bidAmount','bidPayable','bpAdjustment','advanceAdjustment','paidAmount','netPayable'].forEach(f=>{
       if(this.newPayment[f]!==undefined) this.newPayment[f]=parseFloat(this.newPayment[f])||0;
     });
     const entry = { ...this.newPayment, id: Date.now(), amount: amt, paidAmount: amt, netPayable: amt };
-    this.payments.push(entry);
+    this.payments.unshift(entry);
     this.newPayment = {};
     this.showForm = false;
     this.filterPayments();

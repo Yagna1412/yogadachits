@@ -26,13 +26,15 @@ export class UserLayout {
 
   onSearch() {
     if (this.searchQuery.length > 2) {
-      // Mock search results
       const allResults = [
-        { title: 'Gold Chit 50L', type: 'Chit Group', link: '/user/chits' },
-        { title: 'Payment Receipt #RCP-0341', type: 'Payment', link: '/user/dashboard' },
+        { title: 'Dashboard', type: 'Dashboard', link: '/user/dashboard' },
+        { title: 'Chit Calculator', type: 'Tool', link: '/user/chit-calculator' },
+        { title: 'My Chits', type: 'Chits', link: '/user/chits' },
         { title: 'Bids History', type: 'Bids', link: '/user/bids-history' },
         { title: 'Online Bidding', type: 'Live Auction', link: '/user/online-bids' },
-        { title: 'Support Help Desk', type: 'Help', link: '/user/support' }
+        { title: 'My Profile', type: 'User Settings', link: '/user/profile' },
+        { title: 'Preferences', type: 'User Settings', link: '/user/preferences' },
+        { title: 'Help & Support', type: 'Support', link: '/user/support' }
       ];
       
       this.searchResults = allResults.filter(r => 
@@ -42,6 +44,12 @@ export class UserLayout {
     } else {
       this.searchResults = [];
     }
+  }
+
+  hideSearch() {
+    setTimeout(() => {
+      this.searchResults = [];
+    }, 200);
   }
 
   toggleSidebar() {
