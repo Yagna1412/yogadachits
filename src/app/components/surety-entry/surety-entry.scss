@@ -1,0 +1,42 @@
+/* Validation */
+.required { color: #dc2626; margin-left: 2px; }
+
+.field-error {
+  display: block;
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.form-control.is-invalid {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+
+  .error-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #b91c1c;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+  }
+}
+
+.form-group.full-width {
+  width: 100%;
+  flex: 1 1 100%;
+}

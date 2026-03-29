@@ -1,11 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChitGroupsService } from '../../service/chit-groups.service';
+import { EnrollmentsService } from '../../service/enrollments.service';
 
-interface ChitGroup {
-  id: string;
+export interface ChitGroup {
+  id: number;
   name: string;
   chitAmount: number;
+  calculatedChitAmount: number;
+  commissionValue: number;
+  netPrizeAmount: number;
   chitSeries: string;
   auctionType: string;
   noOfInstallments: number;
@@ -47,255 +52,97 @@ interface ChitGroup {
   auctionSchedule: string;
   auctionTime: string;
   startDate: string;
-  status: 'Active' | 'Upcoming' | 'Completed' | 'Inactive';
+  status: string;
 }
 
 @Component({
   selector: 'app-chit-groups',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './chit-groups.html',
   styleUrl: './chit-groups.scss',
 })
-export class ChitGroupsComponent {
+export class ChitGroupsComponent implements OnInit, AfterViewInit {
   showAddGroupForm = false;
   viewMode: 'grid' | 'list' = 'grid';
   searchTerm = '';
   statusFilter = '';
 
-  newGroup: Partial<ChitGroup> = {
-    name: '',
-    chitAmount: 0,
-    chitSeries: '',
-    auctionType: '',
-    noOfInstallments: 0,
-    psoDate: '',
-    psoNumber: '',
-    commencementDate: '',
-    termDate: '',
-    caNumber: '',
-    caDate: '',
-    enrollmentFee: 0,
-    companyChitNumber: '',
-    noOfAuctionInstallments: 0,
-    companyCommission: 0,
-    maxCeiling: 0,
-    penaltyNps: 0,
-    penaltyPs: 0,
-    auctionsPerMonth: 0,
-    installmentAmount: 0,
-    auctionDate: '',
-    auctionDay: '',
-    auctionTimeFrom: '',
-    auctionTimeTo: '',
-    dividendMonth: '',
-    sendSms: false,
-    fdrNumber: '',
-    fdrType: '',
-    fdrAmount: 0,
-    fdrDate: '',
-    numberOfMonths: 0,
-    maturityDate: '',
-    roiPerYear: 0,
-    fdrMaturityAmount: 0,
-    bankNameBranch: '',
-    tenure: 0,
-    maxMembers: 0,
-    commission: 0,
-    auctionTime: '',
-    startDate: '',
-    status: undefined,
-  } as Partial<ChitGroup>;
+  // Pagination & Sorting state
+  currentPage = 1;
+  pageSize = 10;
+  sortColumn: keyof ChitGroup = 'id';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
-  chitGroups: ChitGroup[] = [
-    {
-      id: '123456',
-      name: 'Golden Circle 2024',
-      chitAmount: 500000,
-      chitSeries: '',
-      auctionType: '',
-      noOfInstallments: 0,
-      psoDate: '',
-      psoNumber: '',
-      commencementDate: '',
-      termDate: '',
-      caNumber: '',
-      caDate: '',
-      enrollmentFee: 0,
-      companyChitNumber: '',
-      noOfAuctionInstallments: 0,
-      companyCommission: 0,
-      maxCeiling: 0,
-      penaltyNps: 0,
-      penaltyPs: 0,
-      auctionsPerMonth: 0,
-      installmentAmount: 0,
-      auctionDate: '',
-      auctionDay: 'Sunday',
-      auctionTimeFrom: '',
-      auctionTimeTo: '',
-      dividendMonth: '',
-      sendSms: false,
-      fdrNumber: '',
-      fdrType: '',
-      fdrAmount: 0,
-      fdrDate: '',
-      numberOfMonths: 0,
-      maturityDate: '',
-      roiPerYear: 0,
-      fdrMaturityAmount: 0,
-      bankNameBranch: '',
-      tenure: 20,
-      monthlyAmount: 25000,
-      commission: 4,
-      currentMembers: 20,
-      maxMembers: 20,
-      auctionSchedule: '1st Sunday',
-      auctionTime: '10:00',
-      startDate: '2024-01-01',
-      status: 'Active',
-    },
-    {
-      id: '456789',
-      name: 'Diamond ELite',
-      chitAmount: 2500000,
-      chitSeries: '',
-      auctionType: '',
-      noOfInstallments: 0,
-      psoDate: '',
-      psoNumber: '',
-      commencementDate: '',
-      termDate: '',
-      caNumber: '',
-      caDate: '',
-      enrollmentFee: 0,
-      companyChitNumber: '',
-      noOfAuctionInstallments: 0,
-      companyCommission: 0,
-      maxCeiling: 0,
-      penaltyNps: 0,
-      penaltyPs: 0,
-      auctionsPerMonth: 0,
-      installmentAmount: 0,
-      auctionDate: '',
-      auctionDay: 'Sunday',
-      auctionTimeFrom: '',
-      auctionTimeTo: '',
-      dividendMonth: '',
-      sendSms: false,
-      fdrNumber: '',
-      fdrType: '',
-      fdrAmount: 0,
-      fdrDate: '',
-      numberOfMonths: 0,
-      maturityDate: '',
-      roiPerYear: 0,
-      fdrMaturityAmount: 0,
-      bankNameBranch: '',
-      tenure: 20,
-      monthlyAmount: 125000,
-      commission: 4,
-      currentMembers: 20,
-      maxMembers: 20,
-      auctionSchedule: '1st Sunday',
-      auctionTime: '11:00',
-      startDate: '2024-01-01',
-      status: 'Active',
-    },
-    {
-      id: '789012',
-      name: 'Silver Star 50',
-      chitAmount: 100000,
-      chitSeries: '',
-      auctionType: '',
-      noOfInstallments: 0,
-      psoDate: '',
-      psoNumber: '',
-      commencementDate: '',
-      termDate: '',
-      caNumber: '',
-      caDate: '',
-      enrollmentFee: 0,
-      companyChitNumber: '',
-      noOfAuctionInstallments: 0,
-      companyCommission: 0,
-      maxCeiling: 0,
-      penaltyNps: 0,
-      penaltyPs: 0,
-      auctionsPerMonth: 0,
-      installmentAmount: 0,
-      auctionDate: '',
-      auctionDay: 'Saturday',
-      auctionTimeFrom: '',
-      auctionTimeTo: '',
-      dividendMonth: '',
-      sendSms: false,
-      fdrNumber: '',
-      fdrType: '',
-      fdrAmount: 0,
-      fdrDate: '',
-      numberOfMonths: 0,
-      maturityDate: '',
-      roiPerYear: 0,
-      fdrMaturityAmount: 0,
-      bankNameBranch: '',
-      tenure: 10,
-      monthlyAmount: 10000,
-      commission: 4,
-      currentMembers: 15,
-      maxMembers: 20,
-      auctionSchedule: '2nd Saturday',
-      auctionTime: '14:00',
-      startDate: '2024-02-01',
-      status: 'Active',
-    },
-    {
-      id: '345678',
-      name: 'Premium Plus 2025',
-      chitAmount: 1000000,
-      chitSeries: '',
-      auctionType: '',
-      noOfInstallments: 0,
-      psoDate: '',
-      psoNumber: '',
-      commencementDate: '',
-      termDate: '',
-      caNumber: '',
-      caDate: '',
-      enrollmentFee: 0,
-      companyChitNumber: '',
-      noOfAuctionInstallments: 0,
-      companyCommission: 0,
-      maxCeiling: 0,
-      penaltyNps: 0,
-      penaltyPs: 0,
-      auctionsPerMonth: 0,
-      installmentAmount: 0,
-      auctionDate: '',
-      auctionDay: 'Sunday',
-      auctionTimeFrom: '',
-      auctionTimeTo: '',
-      dividendMonth: '',
-      sendSms: false,
-      fdrNumber: '',
-      fdrType: '',
-      fdrAmount: 0,
-      fdrDate: '',
-      numberOfMonths: 0,
-      maturityDate: '',
-      roiPerYear: 0,
-      fdrMaturityAmount: 0,
-      bankNameBranch: '',
-      tenure: 25,
-      monthlyAmount: 40000,
-      commission: 5,
-      currentMembers: 18,
-      maxMembers: 25,
-      auctionSchedule: 'Last Sunday',
-      auctionTime: '15:00',
-      startDate: '2025-01-01',
-      status: 'Upcoming',
-    },
-  ];
+  newGroup: Partial<ChitGroup> = this.getEmptyForm();
+  chitGroups: ChitGroup[] = [];
+
+  constructor(
+    private chitGroupService: ChitGroupsService,
+    private enrollmentsService: EnrollmentsService,
+    private cdr: ChangeDetectorRef
+  ) { }
+
+  ngOnInit(): void {
+    this.loadGroupsFromDatabase();
+  }
+
+  ngAfterViewInit(): void {
+    // UI bindings can be explicitly loaded here
+  }
+
+  loadGroupsFromDatabase(): void {
+    // 1. Fetch all Chit Groups
+    this.chitGroupService.getChitGroups().subscribe((response: any) => {
+      if (response && response.data) {
+
+        // 2. Fetch all Enrollments to calculate current members dynamically
+        this.enrollmentsService.getEnrollments().subscribe((enrollRes: any) => {
+          const allEnrollments = enrollRes?.data || [];
+
+          this.chitGroups = response.data.map((item: any) => {
+            // Count how many active enrollments belong to this specific group
+            const activeMembersCount = allEnrollments.filter((e: any) =>
+              e.chitGroupId === item.id &&
+              e.status?.toLowerCase() === 'active'
+            ).length;
+
+            const maxMem = item.maxMembers || item.noOfInstallments || 0;
+            const monthly = item.installmentAmount || 0;
+            const commPct = item.companyCommissionPct || 0;
+            const calculatedChitAmount = maxMem * monthly;
+            const commissionValue = (calculatedChitAmount * commPct) / 100;
+            const netPrizeAmount = calculatedChitAmount - commissionValue;
+
+            return {
+              ...item,
+              id: item.id,
+              name: item.groupName || 'Unnamed Group',
+              chitAmount: item.chitAmount || 0,
+              calculatedChitAmount,
+              commissionValue,
+              netPrizeAmount,
+              status: item.status || 'Active',
+              tenure: item.noOfInstallments || 0,
+              monthlyAmount: monthly,
+              commission: commPct,
+              maxMembers: maxMem,
+
+              // This fulfills your requirement! It automatically updates based on enrollments.
+              currentMembers: activeMembersCount,
+
+              auctionDay: item.auctionDay || 'N/A',
+              auctionSchedule: item.auctionDay ? `Day ${item.auctionDay}` : 'N/A'
+            };
+          });
+          
+          this.cdr.detectChanges(); // Synchronize DOM strictly after nested subscriptions compute
+        });
+      } else {
+         this.cdr.detectChanges();
+      }
+    });
+  }
 
   get filteredGroups(): ChitGroup[] {
     let filtered = this.chitGroups;
@@ -303,22 +150,93 @@ export class ChitGroupsComponent {
     if (this.searchTerm) {
       filtered = filtered.filter(
         (group) =>
-          group.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-          group.id.includes(this.searchTerm),
+          (group.name && group.name.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
+          (group.id && group.id.toString().includes(this.searchTerm))
       );
     }
 
     if (this.statusFilter) {
-      filtered = filtered.filter((group) => group.status === this.statusFilter);
+      filtered = filtered.filter(
+        (group) => group.status && group.status.toLowerCase() === this.statusFilter.toLowerCase()
+      );
     }
 
     return filtered;
   }
 
+  get paginatedGroups(): ChitGroup[] {
+    // 1. Sort the filtered data
+    const sorted = [...this.filteredGroups].sort((a, b) => {
+      let valA = a[this.sortColumn];
+      let valB = b[this.sortColumn];
+      
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        valA = valA.toLowerCase();
+        valB = valB.toLowerCase();
+      }
+
+      if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    // 2. Paginate the sorted data
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return sorted.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredGroups.length / this.pageSize);
+  }
+
+  sortBy(column: keyof ChitGroup): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.currentPage = 1; // Reset to first page after sorting
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
+  getVisiblePages(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 3;
+    let start = Math.max(1, this.currentPage - 1);
+    let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - (maxVisible - 1));
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
   toggleAddGroupForm(): void {
     this.showAddGroupForm = !this.showAddGroupForm;
     if (!this.showAddGroupForm) {
-      this.resetForm();
+      this.newGroup = this.getEmptyForm();
     }
   }
 
@@ -330,133 +248,145 @@ export class ChitGroupsComponent {
     if (this.isFormValid()) {
       const monthlyAmount =
         this.newGroup.installmentAmount ||
-        Math.round((this.newGroup.chitAmount ?? 0) / (this.newGroup.tenure ?? 1));
+        Math.round((this.newGroup.chitAmount ?? 0) / (this.newGroup.noOfInstallments ?? 1));
 
-      const newChitGroup: ChitGroup = {
-        id: this.generateId(),
-        monthlyAmount,
-        currentMembers: 0,
-        auctionSchedule: this.getAuctionSchedule(this.newGroup.auctionDay as string),
-        status: this.newGroup.status as 'Active' | 'Upcoming' | 'Completed' | 'Inactive',
-        ...(this.newGroup as any),
+      const formattedTime = this.newGroup.auctionTimeFrom ? `${this.newGroup.auctionTimeFrom}:00` : null;
+
+      const membersToSave = (this.newGroup.maxMembers && this.newGroup.maxMembers > 0)
+        ? this.newGroup.maxMembers
+        : this.newGroup.noOfInstallments;
+
+      const payload = {
+        groupName: this.newGroup.name,
+        companyChitNumber: this.newGroup.companyChitNumber || null,
+        chitAmount: this.newGroup.chitAmount,
+        noOfInstallments: this.newGroup.noOfInstallments,
+        installmentAmount: monthlyAmount,
+        commencementDate: this.newGroup.commencementDate,
+        maxMembers: membersToSave,
+        auctionsPerMonth: this.newGroup.auctionsPerMonth || 1,
+        auctionDay: this.getAuctionDayNumber(this.newGroup.auctionDay as string),
+        startDate: this.newGroup.startDate || this.newGroup.commencementDate,
+        auctionTime: formattedTime,
+        auctionType: this.newGroup.auctionType || 'Fixed',
+        companyCommissionPct: this.newGroup.companyCommission || 5,
+        penaltyNpsPct: this.newGroup.penaltyNps || 0,
+        penaltyPsPct: this.newGroup.penaltyPs || 0,
+        status: this.newGroup.status || 'Active',
+        fdr: this.newGroup.fdrNumber ? {
+          fdrNumber: this.newGroup.fdrNumber,
+          fdrType: this.newGroup.fdrType,
+          fdrAmount: this.newGroup.fdrAmount || 0
+        } : null
       };
 
-      this.chitGroups.unshift(newChitGroup);
-      this.toggleAddGroupForm();
+      this.chitGroupService.createChitGroup(payload).subscribe((response: any) => {
+        if (response && response.success) {
+          // Optimistically refresh the array and close the modal instantly without blocking alert wrappers
+          const newId = response.data?.id || Date.now();
+          const optimisticChitGroup: ChitGroup = {
+            id: newId,
+            name: this.newGroup.name || 'Unnamed',
+            chitAmount: this.newGroup.chitAmount || 0,
+            calculatedChitAmount: (this.newGroup.chitAmount || 0),
+            commissionValue: 0,
+            netPrizeAmount: (this.newGroup.chitAmount || 0),
+            chitSeries: '',
+            auctionType: this.newGroup.auctionType || 'Fixed',
+            noOfInstallments: this.newGroup.noOfInstallments || 1,
+            psoDate: '',
+            psoNumber: '',
+            commencementDate: this.newGroup.commencementDate || '',
+            termDate: '',
+            caNumber: '',
+            caDate: '',
+            enrollmentFee: 0,
+            companyChitNumber: this.newGroup.companyChitNumber || '',
+            noOfAuctionInstallments: 0,
+            companyCommission: this.newGroup.companyCommission || 5,
+            maxCeiling: 0,
+            penaltyNps: this.newGroup.penaltyNps || 0,
+            penaltyPs: this.newGroup.penaltyPs || 0,
+            auctionsPerMonth: this.newGroup.auctionsPerMonth || 1,
+            installmentAmount: monthlyAmount,
+            auctionDate: '',
+            auctionDay: this.newGroup.auctionDay?.toString() || '1',
+            auctionTimeFrom: '',
+            auctionTimeTo: '',
+            dividendMonth: '',
+            sendSms: false,
+            fdrNumber: this.newGroup.fdrNumber || '',
+            fdrType: this.newGroup.fdrType || '',
+            fdrAmount: this.newGroup.fdrAmount || 0,
+            fdrDate: '',
+            numberOfMonths: 0,
+            maturityDate: '',
+            roiPerYear: 0,
+            fdrMaturityAmount: 0,
+            bankNameBranch: '',
+            tenure: this.newGroup.noOfInstallments || 1,
+            monthlyAmount: monthlyAmount,
+            commission: this.newGroup.companyCommission || 5,
+            currentMembers: 0, // Freshly created group obviously has 0
+            maxMembers: membersToSave || 0,
+            auctionSchedule: `Day ${this.newGroup.auctionDay || '1'}`,
+            auctionTime: formattedTime || '',
+            startDate: this.newGroup.startDate || this.newGroup.commencementDate || '',
+            status: this.newGroup.status || 'Active'
+          };
+          
+          this.chitGroups.unshift(optimisticChitGroup);
+
+          this.currentPage = 1;
+          this.sortColumn = 'id';
+          this.sortDirection = 'desc';
+          this.toggleAddGroupForm();
+          this.loadGroupsFromDatabase(); // Background fetch syncs quietly securely
+        } else {
+          // Provide silent fallback or fail-soft logging rather than breaking UI flow
+          console.error(response?.message || 'Failed to create group. Check inputs.');
+        }
+      });
     }
   }
 
-  private isFormValid(): boolean {
+  private getAuctionDayNumber(day: string): number {
+    const days: { [key: string]: number } = {
+      'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4,
+      'Friday': 5, 'Saturday': 6, 'Sunday': 7
+    };
+    return days[day] || 1;
+  }
+
+  isFormValid(): boolean {
     return !!(
       this.newGroup.name &&
       this.newGroup.chitAmount &&
-      this.newGroup.chitSeries &&
-      this.newGroup.auctionType &&
       this.newGroup.noOfInstallments &&
-      this.newGroup.psoDate &&
-      this.newGroup.psoNumber &&
-      this.newGroup.commencementDate &&
-      this.newGroup.termDate &&
-      this.newGroup.caNumber &&
-      this.newGroup.caDate &&
-      this.newGroup.enrollmentFee &&
-      this.newGroup.companyChitNumber &&
-      this.newGroup.noOfAuctionInstallments &&
-      this.newGroup.companyCommission &&
-      this.newGroup.maxCeiling &&
-      this.newGroup.penaltyNps &&
-      this.newGroup.penaltyPs &&
-      this.newGroup.auctionsPerMonth &&
-      this.newGroup.installmentAmount &&
-      this.newGroup.auctionDate &&
-      this.newGroup.auctionDay &&
-      this.newGroup.auctionTimeFrom &&
-      this.newGroup.auctionTimeTo &&
-      this.newGroup.dividendMonth &&
-      typeof this.newGroup.sendSms === 'boolean' &&
-      this.newGroup.fdrNumber &&
-      this.newGroup.fdrType &&
-      this.newGroup.fdrAmount &&
-      this.newGroup.fdrDate &&
-      this.newGroup.numberOfMonths &&
-      this.newGroup.maturityDate &&
-      this.newGroup.roiPerYear &&
-      this.newGroup.fdrMaturityAmount &&
-      this.newGroup.bankNameBranch &&
-      this.newGroup.tenure &&
-      this.newGroup.maxMembers &&
-      this.newGroup.commission &&
-      this.newGroup.auctionDay &&
-      this.newGroup.auctionTime &&
-      this.newGroup.startDate &&
-      this.newGroup.status
+      this.newGroup.commencementDate
     );
   }
 
-  private resetForm(): void {
-    this.newGroup = {
+  private getEmptyForm(): Partial<ChitGroup> {
+    return {
       name: '',
       chitAmount: 0,
-      chitSeries: '',
-      auctionType: '',
       noOfInstallments: 0,
-      psoDate: '',
-      psoNumber: '',
       commencementDate: '',
-      termDate: '',
-      caNumber: '',
-      caDate: '',
-      enrollmentFee: 0,
-      companyChitNumber: '',
-      noOfAuctionInstallments: 0,
-      companyCommission: 0,
-      maxCeiling: 0,
-      penaltyNps: 0,
-      penaltyPs: 0,
-      auctionsPerMonth: 0,
-      installmentAmount: 0,
-      auctionDate: '',
       auctionDay: '',
-      auctionTimeFrom: '',
-      auctionTimeTo: '',
-      dividendMonth: '',
-      sendSms: false,
-      fdrNumber: '',
-      fdrType: '',
-      fdrAmount: 0,
-      fdrDate: '',
-      numberOfMonths: 0,
-      maturityDate: '',
-      roiPerYear: 0,
-      fdrMaturityAmount: 0,
-      bankNameBranch: '',
-      tenure: 0,
+      companyCommission: 5,
       maxMembers: 0,
-      commission: 0,
-      auctionTime: '',
-      startDate: '',
-      status: undefined,
+      auctionsPerMonth: 1,
+      status: 'Active',
     };
   }
 
-  private generateId(): string {
-    return Math.random().toString().substr(2, 6);
-  }
-
-  private getAuctionSchedule(day: string): string {
-    const schedules = {
-      Sunday: '1st Sunday',
-      Monday: '1st Monday',
-      Tuesday: '1st Tuesday',
-      Wednesday: '1st Wednesday',
-      Thursday: '1st Thursday',
-      Friday: '1st Friday',
-      Saturday: '1st Saturday',
-    };
-    return schedules[day as keyof typeof schedules] || day;
-  }
-
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-IN').format(amount);
+  formatCurrency(amount: number | undefined | null): string {
+    if (amount === undefined || amount === null) return '0';
+    try {
+      return new Intl.NumberFormat('en-IN').format(amount);
+    } catch (e) {
+      return '0';
+    }
   }
 }

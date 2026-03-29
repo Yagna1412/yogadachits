@@ -1,6 +1,3 @@
-<!-- Members Page - Exact UX Match -->
-
-<!-- Header Section -->
 <div class="page-header">
   <div class="header-left">
     <h1 class="page-title">Member Registration</h1>
@@ -17,17 +14,15 @@
     Add New Member
   </button>
 </div>
+
 <div class="members-container">
-
-
-  <!-- Statistics Cards - Hidden when adding member -->
   <div class="stats-grid" *ngIf="!showAddMemberModal">
     <div class="stat-card">
       <div class="stat-content">
         <div class="stat-label">Total Members</div>
-        <div class="stat-value">{{ memberStats.total }}</div>
-        <div class="stat-change positive">
-          ↗ {{ memberStats.totalChange }}% more than last month
+        <div class="stat-value">{{ memberStats.totalMembers.count }}</div>
+        <div class="stat-change positive" *ngIf="memberStats.totalMembers.changePercent">
+          ↗ {{ memberStats.totalMembers.changePercent }}% more than last month
         </div>
       </div>
       <div class="stat-icon">
@@ -38,9 +33,9 @@
     <div class="stat-card">
       <div class="stat-content">
         <div class="stat-label">Active Members</div>
-        <div class="stat-value">{{ memberStats.active }}</div>
-        <div class="stat-change negative">
-          ↘ {{ memberStats.activeChange }}% less than last month
+        <div class="stat-value">{{ memberStats.activeMembers.count }}</div>
+        <div class="stat-change negative" *ngIf="memberStats.activeMembers.changePercent">
+          ↘ {{ memberStats.activeMembers.changePercent }}% less than last month
         </div>
       </div>
       <div class="stat-icon">
@@ -51,7 +46,7 @@
     <div class="stat-card">
       <div class="stat-content">
         <div class="stat-label">Enrolled Members</div>
-        <div class="stat-value">{{ memberStats.enrolled }}</div>
+        <div class="stat-value">{{ memberStats.enrolledMembers.count }}</div>
       </div>
       <div class="stat-icon">
         <img src="assets/images/icons/user-pen.png" alt="Enrolled Users" />
@@ -61,7 +56,7 @@
     <div class="stat-card">
       <div class="stat-content">
         <div class="stat-label">Pending Enrollment</div>
-        <div class="stat-value">{{ memberStats.pending }}</div>
+        <div class="stat-value">{{ memberStats.pendingEnrollment.count }}</div>
       </div>
       <div class="stat-icon">
         <img src="assets/images/icons/hero-outline-exclamation-circle.png" alt="Pending Users" />
@@ -69,16 +64,14 @@
     </div>
   </div>
 
-  <!-- Members Table Section - Hidden when adding member -->
-  <div class="table-header">
+  <div class="table-header" *ngIf="!showAddMemberModal">
     <h2 class="table-title">All Members</h2>
     <div class="table-controls">
       <div class="search-box">
         <span class="search-icon">
           <img src="assets/images/icons/Search.png" alt="Search" />
         </span>
-        <input type="text" placeholder="Search" [(ngModel)]="searchTerm" (input)="filterMembers()"
-          class="search-input" />
+        <input type="text" placeholder="Search" [(ngModel)]="searchTerm" (input)="filterMembers()" class="search-input" />
         <span class="search-shortcut">Ctrl Shift K</span>
       </div>
       <select class="status-filter" [(ngModel)]="statusFilter" (change)="filterMembers()">
@@ -91,7 +84,6 @@
   </div>
 
   <div class="table-wrapper" *ngIf="!showAddMemberModal">
-    <!-- Data Table -->
     <div>
       <table class="table">
         <thead>
@@ -99,48 +91,53 @@
             <th>
               <input type="checkbox" (change)="toggleSelectAll($event)" [checked]="allSelected" />
             </th>
-            <th>Member ID</th>
-            <th>Name</th>
+            <th (click)="toggleSort('id')" class="sortable">
+              Member ID 
+              <span class="sort-icon" *ngIf="sortColumn === 'id'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="toggleSort('name')" class="sortable">
+              Name
+              <span class="sort-icon" *ngIf="sortColumn === 'name'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
             <th>Mobile</th>
             <th>Chits</th>
             <th>Location</th>
-            <th>Status</th>
+            <th (click)="toggleSort('status')" class="sortable">
+              Status
+              <span class="sort-icon" *ngIf="sortColumn === 'status'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let member of filteredMembers" class="table-row">
+          <tr *ngFor="let member of paginatedMembers" class="table-row">
             <td>
-              <input type="checkbox" [checked]="selectedMembers.includes(member.id)"
-                (change)="toggleMemberSelection(member.id)" />
+              <input type="checkbox" [checked]="selectedMembers.includes(member.id)" (change)="toggleMemberSelection(member.id)" />
             </td>
             <td class="member-id">{{ member.id }}</td>
             <td class="member-name">{{ member.name }}</td>
-            <td class="member-mobile">{{ member.mobile }}</td>
-            <td class="member-chits">{{ member.chits }}</td>
-            <td class="member-location">{{ member.location }}</td>
+            <td class="member-mobile">{{ member.mobileNumber }}</td>
+            <td class="member-chits"></td>
+            <td class="member-location">{{ member.city }}</td>
             <td class="member-status">
-              <span class="status-badge" [ngClass]="'status-' + member.status.toLowerCase()">
+              <span class="status-badge" [ngClass]="'status-' + (member.status ? member.status.toLowerCase() : '')">
                 {{ member.status }}
               </span>
             </td>
             <td class="member-actions">
               <button class="action-btn view-btn" (click)="viewMember(member.id)" title="View">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </button>
               <button class="action-btn edit" (click)="editMember(member.id)" title="Edit">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </button>
               <button class="action-btn delete" (click)="deleteMember(member.id)" title="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
             </td>
@@ -148,26 +145,42 @@
         </tbody>
       </table>
 
-      <!-- Empty State -->
       <div *ngIf="filteredMembers.length === 0" class="empty-state">
         <div class="empty-icon">👤</div>
         <h3>No Members Found</h3>
-        <p>
-          {{
-          searchTerm ? 'Try adjusting your search criteria' : 'Start by adding your first member'
-          }}
-        </p>
+        <p>{{ searchTerm ? 'Try adjusting your search criteria' : 'Start by adding your first member' }}</p>
+      </div>
+
+      <!-- Pagination Section -->
+      <div class="pagination-container" *ngIf="filteredMembers.length > 0">
+        <div class="pagination-info">
+          Showing {{ (currentPage-1)*pageSize + 1 }} to {{ currentPage*pageSize > filteredMembers.length ? filteredMembers.length : currentPage*pageSize }} of {{ filteredMembers.length }} results
+        </div>
+        <div class="pagination-controls">
+          <button class="page-btn first" *ngIf="currentPage > 2" (click)="goToPage(1)">
+            First
+          </button>
+          <button class="page-btn prev" [disabled]="currentPage === 1" (click)="prevPage()">
+            <span>&lt;</span> Previous
+          </button>
+          <div class="page-numbers">
+            <button class="page-number" *ngFor="let p of getVisiblePages()" 
+                    [class.active]="currentPage === p" (click)="goToPage(p)">
+              {{ p }}
+            </button>
+          </div>
+          <button class="page-btn next" [disabled]="currentPage === totalPages" (click)="nextPage()">
+            Next <span>&gt;</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Step-wise Add Member Form -->
   <div class="add-member-form" *ngIf="showAddMemberModal">
     <div class="form-container">
-      <!-- Step Navigation Sidebar -->
       <div class="step-sidebar">
-        <div class="step-item" *ngFor="let step of steps" [class.active]="step.number === currentStep"
-          [class.completed]="step.completed">
+        <div class="step-item" *ngFor="let step of steps" [class.active]="step.number === currentStep" [class.completed]="step.completed">
           <div class="step-circle" (click)="goToStep(step.number)">
             <span *ngIf="!step.completed">{{ step.number }}</span>
             <span *ngIf="step.completed" class="checkmark">✓</span>
@@ -179,15 +192,13 @@
         </div>
       </div>
 
-      <!-- Form Content -->
       <div class="form-content">
         <div class="form-header">
-          <h2>Add New Member</h2>
+          <h2>{{ isEditMode ? 'Edit Member' : 'Add New Member' }}</h2>
           <button class="close-btn" (click)="closeAddMemberModal()">×</button>
         </div>
 
         <div class="form-body">
-          <!-- Step 1: Basic Info-->
           <div class="step-form" *ngIf="currentStep === 1">
             <div class="form-row">
               <div class="form-group">
@@ -218,14 +229,13 @@
               </div>
               <div class="form-group">
                 <label>S/O (Father’s / Spouse’s Name) <span class="text-danger">*</span></label>
-                <input type="text" placeholder="e.g John Grisham" [(ngModel)]="newMember.spouseOrFatherName"
-                  class="form-control">
+                <input type="text" placeholder="e.g John Grisham" [(ngModel)]="newMember.spouseOrFatherName" class="form-control">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label>Date of Birth</label>
-                <input type="date" [(ngModel)]="newMember.dateOfBirth" class="form-control">
+                <input type="date" [(ngModel)]="newMember.dateOfBirth" (change)="calculateAge()" class="form-control">
               </div>
               <div class="form-group">
                 <label>Age</label>
@@ -233,25 +243,22 @@
               </div>
             </div>
             <div class="form-group">
-              <label>Registration Date</label>
+              <label>Registration Date <span class="text-danger">*</span></label>
               <input type="date" [(ngModel)]="newMember.registrationDate" class="form-control">
             </div>
-
             <div class="form-row">
               <div class="form-group">
                 <label>Email Address</label>
-                <input type="email" placeholder="e.g joshn@gmail.com" [(ngModel)]="newMember.emailAddress"
-                  class="form-control">
+                <input type="email" placeholder="e.g joshn@gmail.com" [(ngModel)]="newMember.emailAddress" class="form-control">
               </div>
               <div class="form-group">
-                <label>Mobile Number</label>
+                <label>Mobile Number <span class="text-danger">*</span></label>
                 <input type="tel" placeholder="e.g 123456789" [(ngModel)]="newMember.mobileNumber" class="form-control">
               </div>
             </div>
             <div class="form-group">
               <label>Aadhar Number</label>
-              <input type="text" placeholder="e.g 123456789012" [(ngModel)]="newMember.aadharNumber"
-                class="form-control">
+              <input type="text" placeholder="e.g 123456789012" [(ngModel)]="newMember.aadharNumber" class="form-control">
             </div>
             <div class="form-group">
               <label>Address</label>
@@ -259,7 +266,6 @@
             </div>
           </div>
 
-          <!-- Step 2: Personal Info-->
           <div class="step-form" *ngIf="currentStep === 2">
             <div class="form-group">
               <label>Marital Status</label>
@@ -273,69 +279,65 @@
             </div>
             <div class="form-group">
               <label>Introduced As</label>
-              <input type="text" placeholder="e.g John Grisham" [(ngModel)]="newMember.spouseName" class="form-control">
+              <select [(ngModel)]="newMember.spouseName" class="form-control">
+                <option value="">Select Option</option>
+                <option value="Member">Member</option>
+                <option value="Collection Agent">Collection Agent</option>
+                <option value="Business Agent">Business Agent</option>
+                <option value="Guarantor">Guarantor</option>
+              </select>
             </div>
           </div>
 
-          <!-- Step 3: Documents -->
           <div class="step-form" *ngIf="currentStep === 3">
             <div class="form-group">
               <label>Photo</label>
-              <input type="file" [(ngModel)]="newMember.photo" class="form-control">
+              <input type="file" (change)="onFileSelected($event, 'photo')" class="form-control">
             </div>
             <div class="form-group">
               <label>Signature</label>
-              <input type="file" [(ngModel)]="newMember.signature" class="form-control">
+              <input type="file" (change)="onFileSelected($event, 'signature')" class="form-control">
             </div>
             <div class="form-group">
               <label>Passbook</label>
-              <input type="file" [(ngModel)]="newMember.passbook" class="form-control">
+              <input type="file" (change)="onFileSelected($event, 'passbook')" class="form-control">
             </div>
           </div>
 
-          <!-- Step 4: Bank Details -->
           <div class="step-form" *ngIf="currentStep === 4">
             <div class="form-row">
               <div class="form-group">
                 <label>Account Number</label>
-                <input type="text" placeholder="Bank Account Number" [(ngModel)]="newMember.accountNumber"
-                  class="form-control">
+                <input type="text" placeholder="Bank Account Number" [(ngModel)]="newMember.accountNumber" class="form-control">
               </div>
-
               <div class="form-group">
                 <label>Account Holder Name</label>
-                <input type="text" placeholder="e.g John Doe" [(ngModel)]="newMember.accountHolderName"
-                  class="form-control">
+                <input type="text" placeholder="e.g John Doe" [(ngModel)]="newMember.accountHolderName" class="form-control">
               </div>
             </div>
             <div class="form-group">
               <label>Bank Name</label>
-              <input type="text" placeholder="e.g State Bank of India" [(ngModel)]="newMember.bankName"
-                class="form-control">
+              <input type="text" placeholder="e.g State Bank of India" [(ngModel)]="newMember.bankName" class="form-control">
             </div>
             <div class="form-group">
               <label>Branch Name</label>
               <input type="text" placeholder="Bank Branch Name" [(ngModel)]="newMember.branchName" class="form-control">
             </div>
-
             <div class="form-group">
               <label>IFSC Code</label>
               <input type="text" placeholder="e.g SBIN0001234" [(ngModel)]="newMember.ifscCode" class="form-control">
             </div>
           </div>
 
-          <!-- Step 5: Occupation -->
           <div class="step-form" *ngIf="currentStep === 5">
             <div class="form-row">
               <div class="form-group">
                 <label>Occupation</label>
-                <input type="text" placeholder="e.g Software Engineer" [(ngModel)]="newMember.occupation"
-                  class="form-control">
+                <input type="text" placeholder="e.g Software Engineer" [(ngModel)]="newMember.occupation" class="form-control">
               </div>
               <div class="form-group">
                 <label>Employee Type</label>
-                <input type="text" placeholder="e.g Permanent, Contract" [(ngModel)]="newMember.employeeType"
-                  class="form-control">
+                <input type="text" placeholder="e.g Permanent, Contract" [(ngModel)]="newMember.employeeType" class="form-control">
               </div>
             </div>
             <div class="form-row">
@@ -345,18 +347,15 @@
               </div>
               <div class="form-group">
                 <label>Designation</label>
-                <input type="text" placeholder="e.g Software Engineer" [(ngModel)]="newMember.designation"
-                  class="form-control">
+                <input type="text" placeholder="e.g Software Engineer" [(ngModel)]="newMember.designation" class="form-control">
               </div>
             </div>
             <div class="form-group">
               <label>Date of Joining</label>
-              <input type="date" placeholder="e.g 01-01-2020" [(ngModel)]="newMember.dateOfJoining"
-                class="form-control">
+              <input type="date" placeholder="e.g 01-01-2020" [(ngModel)]="newMember.dateOfJoining" class="form-control">
             </div>
           </div>
 
-          <!-- Step 6: Address -->
           <div class="step-form" *ngIf="currentStep === 6">
             <div class="form-row">
               <div class="form-group">
@@ -365,8 +364,7 @@
               </div>
               <div class="form-group">
                 <label>Street Name</label>
-                <input type="text" placeholder="e.g Main Street" [(ngModel)]="newMember.streetName"
-                  class="form-control">
+                <input type="text" placeholder="e.g Main Street" [(ngModel)]="newMember.streetName" class="form-control">
               </div>
             </div>
             <div class="form-group">
@@ -383,13 +381,11 @@
             </div>
           </div>
 
-          <!-- Step 7: Nominee Details -->
           <div class="step-form" *ngIf="currentStep === 7">
             <div class="form-row">
               <div class="form-group">
                 <label>Nominee Name</label>
-                <input type="text" placeholder="e.g John Grisham" [(ngModel)]="newMember.nomineeName"
-                  class="form-control">
+                <input type="text" placeholder="e.g John Grisham" [(ngModel)]="newMember.nomineeName" class="form-control">
               </div>
               <div class="form-group">
                 <label>Age</label>
@@ -415,20 +411,17 @@
               </div>
               <div class="form-group">
                 <label>Street Name</label>
-                <input type="text" placeholder="e.g Main Street" [(ngModel)]="newMember.nomineeStreetName"
-                  class="form-control">
+                <input type="text" placeholder="e.g Main Street" [(ngModel)]="newMember.nomineeStreetName" class="form-control">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label>City</label>
-                <input type="text" placeholder="e.g Main Street" [(ngModel)]="newMember.nomineeCity"
-                  class="form-control">
+                <input type="text" placeholder="e.g Main Street" [(ngModel)]="newMember.nomineeCity" class="form-control">
               </div>
               <div class="form-group">
                 <label>Address</label>
-                <input type="text" placeholder="e.g Main Street" [(ngModel)]="newMember.nomineeAddress"
-                  class="form-control">
+                <input type="text" placeholder="e.g Main Street" [(ngModel)]="newMember.nomineeAddress" class="form-control">
               </div>
             </div>
             <div class="form-row">
@@ -438,8 +431,7 @@
               </div>
               <div class="form-group">
                 <label>Mobile Number</label>
-                <input type="text" placeholder="e.g 123456" [(ngModel)]="newMember.nomineeMobileNumber"
-                  class="form-control">
+                <input type="text" placeholder="e.g 123456" [(ngModel)]="newMember.nomineeMobileNumber" class="form-control">
               </div>
             </div>
             <div class="form-group">
@@ -452,7 +444,6 @@
             </div>
           </div>
 
-          <!-- Step 8: Route -->
           <div class="step-form" *ngIf="currentStep === 8">
             <div class="form-group">
               <label>Route</label>
@@ -461,19 +452,10 @@
           </div>
         </div>
 
-        <!-- Form Navigation -->
         <div class="form-footer">
-          <button class="btn btn-secondary" (click)="previousStep()" *ngIf="currentStep > 1">
-            Undo
-          </button>
-
-          <button class="btn btn-primary" (click)="nextStep()" *ngIf="currentStep < totalSteps">
-            Save & Continue
-          </button>
-
-          <button class="btn btn-success" (click)="submitForm()" *ngIf="currentStep === totalSteps">
-            Save Member
-          </button>
+          <button class="btn btn-secondary" (click)="previousStep()" *ngIf="currentStep > 1">Undo</button>
+          <button class="btn btn-primary" (click)="nextStep()" *ngIf="currentStep < totalSteps">Save & Continue</button>
+          <button class="btn btn-success" (click)="submitForm()" *ngIf="currentStep === totalSteps">Save Member</button>
         </div>
       </div>
     </div>

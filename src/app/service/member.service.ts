@@ -43,13 +43,18 @@ export class MemberService {
     constructor(private http: HttpClient) { }
 
     private getAuthHeaders(): { headers: HttpHeaders } {
-        const token = localStorage.getItem('token') || 'PASTE_YOUR_VALID_JWT_TOKEN_HERE';
-        return {
-            headers: new HttpHeaders({
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            })
-        };
+        let headers = new HttpHeaders({
+            'Content-Type': 'application/json'
+        });
+
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const token = localStorage.getItem('token');
+            if (token) {
+                headers = headers.set('Authorization', `Bearer ${token}`);
+            }
+        }
+
+        return { headers };
     }
 
     getKpiSummary(): Observable<MemberKpiSummary> {
@@ -71,5 +76,10 @@ export class MemberService {
     deleteMember(id: number): Observable<string> {
         return this.http.delete<ApiResponse<string>>(`${this.apiUrl}/${id}`, this.getAuthHeaders())
             .pipe(map(response => response.message));
+    }
+
+    updateMember(id: number, payload: any): Observable<MemberResponse> {
+        return this.http.put<ApiResponse<MemberResponse>>(`${this.apiUrl}/${id}`, payload, this.getAuthHeaders())
+            .pipe(map(response => response.data));
     }
 }

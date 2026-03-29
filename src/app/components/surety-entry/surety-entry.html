@@ -61,45 +61,72 @@
       </div>
 
       <div class="form-body">
-        <!-- Validation Error Message -->
-        <div class="error-banner" *ngIf="validationError" style="background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.875rem; border: 1px solid #fecaca;">
-          {{validationError}}
+
+        <!-- Validation Banner -->
+        <div class="error-banner" *ngIf="validationError">
+          <span>⚠ {{ validationError }}</span>
+          <button class="error-close" (click)="validationError = ''">×</button>
         </div>
 
-        <!-- Success Message -->
-        <div class="success-banner" *ngIf="successMessage" style="background: #dcfce7; color: #15803d; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.875rem; border: 1px solid #bbf7d0;">
-          {{successMessage}}
-        </div>
+        <!-- Enrollment -->
         <div class="form-row">
-          <div class="form-group">
-            <label>Group Name</label>
-            <input class="form-control" [(ngModel)]="newSurety.groupName" placeholder="Group Name" />
-          </div>
-          <div class="form-group">
-            <label>Ticket Number</label>
-            <input class="form-control" [(ngModel)]="newSurety.ticketNo" placeholder="Ticket Number" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Subscriber Name</label>
-            <input class="form-control" [(ngModel)]="newSurety.subscriberName" placeholder="Subscriber Name" />
-          </div>
-          <div class="form-group">
-            <label>Surety Entry Date</label>
-            <input class="form-control" type="date" [(ngModel)]="newSurety.suretyDate" />
+          <div class="form-group full-width">
+            <label>Select Enrollment (Group – Ticket – Subscriber) <span class="required">*</span></label>
+            <select class="form-control" [(ngModel)]="newSurety.enrollmentId"
+              [class.is-invalid]="submitted && !newSurety.enrollmentId">
+              <option value="" disabled selected>-- Select an active enrollment --</option>
+              <option *ngFor="let e of enrollmentOptions" [value]="e.id">
+                {{ e.chitGroupName }} | Ticket: {{ e.ticketNo }} | {{ e.memberName }}
+              </option>
+            </select>
+            <span class="field-error" *ngIf="submitted && !newSurety.enrollmentId">Please select an enrollment.</span>
           </div>
         </div>
 
+        <!-- Guarantor + Relationship -->
         <div class="form-row">
           <div class="form-group">
-            <label>Surety Name</label>
-            <input class="form-control" [(ngModel)]="newSurety.suretyName" placeholder="Surety Name" />
+            <label>Select Surety (Guarantor) <span class="required">*</span></label>
+            <select class="form-control" [(ngModel)]="newSurety.guarantorId"
+              [class.is-invalid]="submitted && !newSurety.guarantorId">
+              <option value="" disabled selected>-- Select a member --</option>
+              <option *ngFor="let m of members" [value]="m.id">
+                {{ m.name }} ({{ m.mobileNumber }})
+              </option>
+            </select>
+            <span class="field-error" *ngIf="submitted && !newSurety.guarantorId">Please select a guarantor.</span>
           </div>
+
           <div class="form-group">
-            <label>Relationship</label>
-            <input class="form-control" [(ngModel)]="newSurety.suretyRelation" placeholder="Relationship" />
+            <label>Relationship to Subscriber <span class="required">*</span></label>
+            <select class="form-control" [(ngModel)]="newSurety.suretyRelation"
+              [class.is-invalid]="submitted && !newSurety.suretyRelation">
+              <option value="" disabled selected>-- Select relationship --</option>
+              <option value="Father">Father</option>
+              <option value="Mother">Mother</option>
+              <option value="Husband">Husband</option>
+              <option value="Wife">Wife</option>
+              <option value="Son">Son</option>
+              <option value="Daughter">Daughter</option>
+              <option value="Brother">Brother</option>
+              <option value="Sister">Sister</option>
+              <option value="Friend">Friend</option>
+              <option value="Colleague">Colleague</option>
+              <option value="Neighbor">Neighbor</option>
+              <option value="Relative">Relative</option>
+              <option value="Other">Other</option>
+            </select>
+            <span class="field-error" *ngIf="submitted && !newSurety.suretyRelation">Please select a relationship.</span>
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Surety Entry Date <span class="required">*</span></label>
+            <input class="form-control" type="date" [(ngModel)]="newSurety.suretyDate"
+              [class.is-invalid]="submitted && !newSurety.suretyDate" />
+            <span class="field-error" *ngIf="submitted && !newSurety.suretyDate">Please select a date.</span>
           </div>
         </div>
 

@@ -1,4 +1,3 @@
-<!-- Page Header -->
 <div class="page-header" *ngIf="!showAddGroupForm">
   <div class="header-left">
     <h1 class="page-title">Chit Groups</h1>
@@ -18,7 +17,6 @@
 <div class="chit-groups-container">
 
 
-  <!-- Add New Group Form -->
   <div class="add-group-form" *ngIf="showAddGroupForm">
     <div class="form-header">
       <h2>Add New Group</h2>
@@ -32,12 +30,12 @@
         <h3>General Information</h3>
         <div class="form-row">
           <div class="form-group">
-            <label for="groupName">Group Name</label>
+            <label for="groupName">Group Name <span class="text-danger">*</span></label>
             <input id="groupName" type="text" [(ngModel)]="newGroup.name" name="groupName" placeholder="e.g XYZ"
               class="form-control" />
           </div>
           <div class="form-group">
-            <label for="chitAmount">Chit Amount (₹)</label>
+            <label for="chitAmount">Chit Amount (₹) <span class="text-danger">*</span></label>
             <input id="chitAmount" type="number" [(ngModel)]="newGroup.chitAmount" name="chitAmount"
               placeholder="e.g 123456789" class="form-control" />
           </div>
@@ -47,6 +45,11 @@
               class="form-control" />
           </div>
         </div>
+        <div class="form-group">
+          <label for="maxMembers">Max Members (Auto-fills if 0)</label>
+          <input id="maxMembers" type="number" [(ngModel)]="newGroup.maxMembers" name="maxMembers" class="form-control"
+            placeholder="Optional" />
+        </div>
         <div class="form-row">
           <div class="form-group">
             <label for="auctionType">Auction Type</label>
@@ -54,7 +57,7 @@
               class="form-control" />
           </div>
           <div class="form-group">
-            <label for="noOfInstallments">No. of Installments</label>
+            <label for="noOfInstallments">No. of Installments <span class="text-danger">*</span></label>
             <input id="noOfInstallments" type="number" [(ngModel)]="newGroup.noOfInstallments" name="noOfInstallments"
               class="form-control" />
           </div>
@@ -69,7 +72,7 @@
             <input id="psoNumber" type="text" [(ngModel)]="newGroup.psoNumber" name="psoNumber" class="form-control" />
           </div>
           <div class="form-group">
-            <label for="commencementDate">Commencement Date</label>
+            <label for="commencementDate">Commencement Date <span class="text-danger">*</span></label>
             <input id="commencementDate" type="date" [(ngModel)]="newGroup.commencementDate" name="commencementDate"
               class="form-control" />
           </div>
@@ -195,7 +198,7 @@
       </div>
 
       <div class="sub-form">
-        <h3>Auction Information</h3>
+        <h3>FDR Information</h3>
         <div class="form-row">
           <div class="form-group">
             <label for="fdrNumber">FDR Number</label>
@@ -246,15 +249,12 @@
         </div>
       </div>
 
-
-
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Create Group</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!isFormValid()" [style.opacity]="!isFormValid() ? 0.6 : 1" [style.cursor]="!isFormValid() ? 'not-allowed' : 'pointer'">Create Group</button>
       </div>
     </form>
   </div>
 
-  <!-- Controls -->
   <div class="groups-controls" *ngIf="!showAddGroupForm">
     <div class="controls-left">
       <h3>All Groups</h3>
@@ -284,22 +284,26 @@
       </select>
     </div>
   </div>
-  <!-- Groups List/Grid View -->
   <div class="groups-content" *ngIf="!showAddGroupForm">
 
 
-    <!-- Grid View -->
     <div class="groups-grid" *ngIf="viewMode === 'grid'">
-      <div class="group-card" *ngFor="let group of filteredGroups">
+      <div class="group-card" *ngFor="let group of paginatedGroups">
         <div class="card-header">
           <h4 class="group-name">{{ group.name }}</h4>
           <button class="card-menu-btn">
             <img src="assets/images/icons/Group.png" alt="menu" />
           </button>
         </div>
-        <div class="card-amount">
-          <span class="currency">₹</span>
-          <span class="amount">{{ formatCurrency(group.chitAmount) }}</span>
+        <div class="card-amount" style="flex-direction: column; align-items: flex-start;">
+          <div>
+            <span class="currency" style="padding-left: 16px;">₹</span>
+            <span class="amount">{{ formatCurrency(group.calculatedChitAmount) }}</span>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; padding: 0 16px 12px 16px; margin-top: -6px; display: flex; gap: 12px; font-weight: normal;">
+            <span title="Net Prize: Total - {{group.commission}}% Comm">Net: ₹{{ formatCurrency(group.netPrizeAmount) }}</span>
+            <span title="Commission">{{group.commission}}% (₹{{ formatCurrency(group.commissionValue) }})</span>
+          </div>
         </div>
         <div class="card-details">
           <div class="detail-item">
@@ -316,70 +320,76 @@
           </div>
           <div class="detail-item">
             <img src="assets/images/icons/user-round-check.png" alt="members" class="detail-icon" />
-            <span>{{ group.currentMembers }} Members</span>
+            <span>{{ group.currentMembers }} / {{ group.maxMembers }} Members</span>
           </div>
         </div>
         <div class="card-footer">
           <div class="auction-info">
             <span>Auction: {{ group.auctionSchedule }}</span>
           </div>
-          <div class="status-badge" [ngClass]="'status-' + group.status.toLowerCase()">
-            {{ group.status }}
+          <div class="status-badge" [ngClass]="'status-' + (group.status ? group.status.toLowerCase() : 'active')">
+            {{ group.status | titlecase }}
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Table View -->
     <div class="table-wrapper" *ngIf="viewMode === 'list'">
       <table class="table">
         <thead>
           <tr>
             <th><input type="checkbox" /></th>
-            <th>Group ID</th>
-            <th>Name</th>
+            <th (click)="sortBy('id')" style="cursor: pointer" class="sortable">Group ID <span *ngIf="sortColumn === 'id'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></th>
+            <th (click)="sortBy('name')" style="cursor: pointer" class="sortable">Name <span *ngIf="sortColumn === 'name'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></th>
             <th>Chit Amount</th>
             <th>Tenure</th>
             <th>Monthly</th>
             <th>Commission</th>
+            <th>Members</th>
             <th>Auction Day</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let group of filteredGroups" class="table-row">
+          <tr *ngFor="let group of paginatedGroups" class="table-row">
             <td><input type="checkbox" /></td>
             <td class="group-id">{{ group.id }}</td>
             <td class="group-name">{{ group.name }}</td>
-            <td class="chit-amount">₹{{ formatCurrency(group.chitAmount) }}</td>
+            <td class="chit-amount">₹{{ formatCurrency(group.calculatedChitAmount) }}</td>
             <td>{{ group.tenure }} months</td>
             <td>₹{{ formatCurrency(group.monthlyAmount) }}</td>
             <td>{{ group.commission }}%</td>
+            <td>{{ group.currentMembers }} / {{ group.maxMembers }}</td>
             <td>{{ group.auctionDay }}</td>
             <td>
-              <span class="status-badge" [ngClass]="'status-' + group.status.toLowerCase()">
-                {{ group.status }}
+              <span class="status-badge" [ngClass]="'status-' + (group.status ? group.status.toLowerCase() : 'active')">
+                {{ group.status | titlecase }}
               </span>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <!-- Pagination -->
-      <div class="table-pagination">
+    <div class="table-pagination" *ngIf="filteredGroups.length > 0">
         <div class="pagination-info">
-          <span>Showing 1 to 9 of 9 entries</span>
+          <span>Showing {{ (currentPage-1)*pageSize + 1 }} to {{ currentPage*pageSize > filteredGroups.length ? filteredGroups.length : currentPage*pageSize }} of {{ filteredGroups.length }} entries</span>
         </div>
         <div class="pagination-controls">
-          <button class="pagination-btn" disabled>
-            <i class="pi pi-angle-left"></i>
+          <button class="pagination-btn" *ngIf="currentPage > 2" (click)="goToPage(1)">
+            First
           </button>
-          <span class="page-number active">1</span>
-          <button class="pagination-btn" disabled>
-            <i class="pi pi-angle-right"></i>
+          <button class="pagination-btn" [disabled]="currentPage === 1" (click)="prevPage()">
+            <span>&lt;</span>
+          </button>
+          <button class="page-number" *ngFor="let p of getVisiblePages()" 
+                 [class.active]="currentPage === p" (click)="goToPage(p)">
+            {{ p }}
+          </button>
+          <button class="pagination-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+            <span>&gt;</span>
           </button>
         </div>
       </div>
-    </div>
   </div>
 </div>

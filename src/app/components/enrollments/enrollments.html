@@ -3,121 +3,221 @@
     <h1 class="page-title">Enrollments</h1>
     <nav class="breadcrumb">
       <span class="breadcrumb-item">Master</span>
-      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
-      <span class="breadcrumb-item">Members</span>
-      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
-      <span class="breadcrumb-item active">Enrollments</span>
+      <span class="breadcrumb-separator">
+        <img src="assets/images/icons/bredcrum.png" alt=">" />
+      </span>
+      <span class="breadcrumb-item">Enrollments</span>
+      <span class="breadcrumb-separator">
+        <img src="assets/images/icons/bredcrum.png" alt=">" />
+      </span>
+      <span class="breadcrumb-item active">Enrollment List</span>
     </nav>
   </div>
-  <button class="btn btn-primary btn-add" (click)="toggleForm()">
-    + Add Enrollment
+  <button class="btn btn-primary add-member-btn" (click)="openAddModal()">
+    <span class="btn-icon">+</span> Add Enrollment
   </button>
 </div>
 
-<div class="main-container">
-  <!-- Table Section -->
-  <div class="table-section" *ngIf="!showForm">
-    <div class="section-header">
-      <h3>Enrollments</h3>
-      <div class="search-box">
-        <span class="search-icon">
-          <img src="assets/images/icons/Search.png" alt="Search" />
-        </span>
-        <input type="text" placeholder="Search" class="search-input" />
-        <span class="search-shortcut">Ctrl Shift K</span>
+<div class="error-banner" *ngIf="errorMessage">
+  <span>{{ errorMessage }}</span>
+  <button class="error-close" (click)="errorMessage = ''">×</button>
+</div>
+
+<div class="members-container">
+
+  <div class="stats-grid" *ngIf="!isLoading">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <img src="assets/images/icons/user-pen.png" alt="Total" />
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Enrollments</div>
+        <div class="stat-value">{{ totalEnrollments }}</div>
       </div>
     </div>
-
-    <div *ngIf="enrollments.length > 0" class="table-wrapper">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Member</th>
-            <th>Group</th>
-            <th>Ticket No</th>
-            <th>Business Agent</th>
-            <th>Collection Agent</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let e of enrollments">
-            <td>{{ memberName(e.memberId) }}</td>
-            <td>{{ groupName(e.chitGroupId) }}</td>
-            <td>{{ e.ticketNo }}</td>
-            <td>{{ e.businessAgent }}</td>
-            <td>{{ e.collectionAgent }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="stat-card">
+      <div class="stat-icon">
+        <img src="assets/images/icons/user-round-check.png" alt="Active" />
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Active Enrollments</div>
+        <div class="stat-value">{{ activeEnrollments }}</div>
+      </div>
     </div>
-    <div *ngIf="enrollments.length === 0" class="empty-state">
-      <p>No enrollments yet. Click "Add Enrollment" to get started.</p>
+    <div class="stat-card">
+      <div class="stat-icon">
+        <img src="assets/images/icons/users-round.png" alt="Groups" />
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Chit Groups</div>
+        <div class="stat-value">{{ totalGroups }}</div>
+      </div>
     </div>
   </div>
 
-  <!-- Form Section -->
-  <div class="add-enrollment-form" *ngIf="showForm">
+  <div *ngIf="!showAddModal">
+
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <span>Loading enrollments...</span>
+    </div>
+
+    <div *ngIf="!isLoading">
+      <div class="table-header">
+        <h2 class="table-title">All Enrollments</h2>
+        <div class="table-controls">
+          <div class="search-box">
+            <span class="search-icon">
+              <img src="assets/images/icons/Search.png" alt="Search" />
+            </span>
+            <input type="text" placeholder="Search by member, group, ticket..." [(ngModel)]="searchTerm"
+              (input)="filterEnrollments()" class="search-input" />
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>
+                <input type="checkbox" (change)="toggleSelectAll($event)" [checked]="allSelected" />
+              </th>
+              <th (click)="sort('id')" style="cursor: pointer; user-select: none;">
+                ID
+              </th>
+              <th (click)="sort('memberName')" style="cursor: pointer; user-select: none;">
+                Member
+              </th>
+              <th (click)="sort('chitGroupName')" style="cursor: pointer; user-select: none;">
+                Chit Group
+              </th>
+              <th>Ticket No</th>
+              <th>Business Agent</th>
+              <th>Collection Agent</th>
+              <th>Enrolled On</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of paginatedEnrollments" class="table-row">
+              <td>
+                <input type="checkbox" [checked]="selectedEnrollments.includes(e.id)"
+                  (change)="toggleSelection(e.id)" />
+              </td>
+              <td class="member-id">{{ e.id }}</td>
+              <td class="member-name">{{ e.memberName || '-' }}</td>
+              <td class="member-location">{{ e.chitGroupName || '-' }}</td>
+              <td class="member-mobile">#{{ e.ticketNo }}</td>
+              <td class="member-location">{{ e.businessAgentName || '-' }}</td>
+              <td class="member-location">{{ e.collectionAgentName || '-' }}</td>
+              <td class="member-location">{{ formatDate(e.createdAt || '') }}</td>
+              <td class="member-status">
+                <span class="status-badge" [ngClass]="'status-' + (e.status ? e.status.toLowerCase() : 'active')">
+                  {{ e.status ? e.status : 'active' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="filteredEnrollments.length === 0 && !isLoading" class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>No Enrollments Found</h3>
+          <p>{{ searchTerm ? 'Try adjusting your search'
+            : 'Start by adding your first enrollment' }}</p>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div class="pagination-footer" *ngIf="filteredEnrollments.length > itemsPerPage">
+          <div class="pagination-info">
+            Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }} to 
+            {{ (currentPage * itemsPerPage) > filteredEnrollments.length ? filteredEnrollments.length : (currentPage * itemsPerPage) }} 
+            of {{ filteredEnrollments.length }} entries
+          </div>
+          <div class="pagination-controls">
+            <button class="btn-page" [disabled]="currentPage === 1" (click)="goToFirstPage()" *ngIf="totalPages > 2">First</button>
+            <button class="btn-page" [disabled]="currentPage === 1" (click)="previousPage()">Previous</button>
+            
+            <button class="btn-page" *ngFor="let page of pages" [class.active]="currentPage === page" (click)="goToPage(page)">
+              {{ page }}
+            </button>
+            
+            <button class="btn-page" [disabled]="currentPage === totalPages" (click)="nextPage()">Next</button>
+            <button class="btn-page" [disabled]="currentPage === totalPages" (click)="goToLastPage()" *ngIf="totalPages > 2">Last</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="add-member-form" *ngIf="showAddModal">
     <div class="form-container">
-      <!-- Form Content -->
       <div class="form-content">
+
         <div class="form-header">
-          <h2>Enroll a Member</h2>
-          <button class="close-btn" (click)="toggleForm()">×</button>
+          <h2>Add Enrollment</h2>
+          <button class="close-btn" (click)="closeAddModal()">×</button>
+        </div>
+
+        <div class="error-message" *ngIf="saveError">
+          ⚠️ {{ saveError }}
+        </div>
+        <div class="success-message" *ngIf="saveSuccess">
+          ✅ {{ saveSuccess }}
         </div>
 
         <div class="form-body">
-          <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
-          <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
-
           <div class="form-row">
             <div class="form-group">
-              <label for="member">Member <span class="text-danger">*</span></label>
-              <select id="member" [(ngModel)]="selectedMemberId" class="form-control">
-                <option value="">-- select member --</option>
-                <option *ngFor="let m of members" [value]="m.id">{{ m.name }} ({{ m.id }})</option>
+              <label>Select Member <span class="text-danger">*</span></label>
+              <select [(ngModel)]="memberId" class="form-control" [disabled]="membersLoading">
+                <option [ngValue]="null" disabled>
+                  {{ membersLoading ? 'Loading members...' : '-- Choose a Member --' }}
+                </option>
+                <option *ngFor="let member of membersList" [value]="member.id">
+                  {{ member.name }} (Mob: {{ member.mobileNumber }})
+                </option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="group">Chit Group <span class="text-danger">*</span></label>
-              <select id="group" [(ngModel)]="selectedGroupId" class="form-control">
-                <option value="">-- select group --</option>
-                <option *ngFor="let g of chitGroups" [value]="g.id">{{ g.name }}</option>
+              <label>Chit Group <span class="text-danger">*</span></label>
+              <select [(ngModel)]="selectedGroupId" class="form-control" [disabled]="groupsLoading">
+                <option [ngValue]="null" disabled>
+                  {{ groupsLoading ? 'Loading chit groups...' : 'Select Chit Group' }}
+                </option>
+                <option *ngFor="let g of chitGroups" [ngValue]="g.id">
+                  {{ g.groupName }}
+                </option>
               </select>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="ticket">Ticket No. <span class="text-danger">*</span></label>
-              <input id="ticket" type="text" placeholder="Enter ticket number" [(ngModel)]="ticketNo"
-                class="form-control" />
+              <label>Business Agent ID (optional)</label>
+              <input type="number" placeholder="Optional" [(ngModel)]="businessAgentId" class="form-control">
             </div>
-
             <div class="form-group">
-              <label for="businessAgent">Business Agent Name</label>
-              <input id="businessAgent" type="text" placeholder="e.g John Smith" [(ngModel)]="businessAgent"
-                class="form-control" />
+              <label>Collection Agent ID (optional)</label>
+              <input type="number" placeholder="Optional" [(ngModel)]="collectionAgentId" class="form-control">
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="collectionAgent">Collection Agent Name</label>
-            <input id="collectionAgent" type="text" placeholder="e.g Robert Johnson" [(ngModel)]="collectionAgent"
-              class="form-control" />
-          </div>
         </div>
 
-        <!-- Form Footer -->
-        <div class="form-footer">
-          <button class="btn btn-secondary" (click)="toggleForm()">
+        <div class="form-footer mt-4">
+          <button class="btn btn-secondary" (click)="closeAddModal()">
             Cancel
           </button>
-          <button class="btn btn-primary" (click)="saveEnrollment()">
-            Save Enrollment
+          <button class="btn btn-success" (click)="saveEnrollment()" [disabled]="!isFormValid() || saving" [style.opacity]="!isFormValid() ? 0.6 : 1" [style.cursor]="(!isFormValid() || saving) ? 'not-allowed' : 'pointer'">
+            {{ saving ? 'Saving...' : 'Save Enrollment' }}
           </button>
         </div>
+
       </div>
     </div>
   </div>
+
 </div>

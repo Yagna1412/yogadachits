@@ -1,114 +1,40 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-// Data models for easy backend integration
-export interface MemberStats {
-  total: number;
-  totalChange: number;
-  active: number;
-  activeChange: number;
-  enrolled: number;
-  pending: number;
-}
-
-export interface Member {
-  id: string;
-  name: string;
-  mobile: string;
-  chits: string;
-  location: string;
-  status: 'Active' | 'Upcoming' | 'Inactive';
-  email?: string;
-  address?: string;
-  joinDate?: Date;
-  lastActivity?: Date;
-}
-
-// JSON structure for backend developers
-export interface MemberApiResponse {
-  success: boolean;
-  data: {
-    members: Member[];
-    stats: MemberStats;
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-    };
-  };
-  message: string;
-}
+import { MemberService, MemberResponse, MemberKpiSummary } from '../../service/member.service'; 
 
 @Component({
   selector: 'app-members',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './members.html',
   styleUrl: './members.scss',
 })
 export class MembersComponent implements OnInit {
-  // UI State
   searchTerm: string = '';
   statusFilter: string = '';
   showAddMemberModal: boolean = false;
-  selectedMembers: string[] = [];
+  selectedMembers: number[] = [];
   allSelected: boolean = false;
+  isLoading = false;
 
-  // Step-wise form state
+  // Pagination
+  currentPage: number = 1;
+  pageSize: number = 10;
+  totalPages: number = 1;
+  paginatedMembers: MemberResponse[] = [];
+
+  // Sorting
+  sortColumn: string = 'id';
+  sortDirection: 'asc' | 'desc' = 'desc'; // Default to desc to show newest first if ID is sequential
+
   currentStep: number = 1;
   totalSteps: number = 8;
-  newMember: any = {
-    // Step 1 - Basic
-    title: '',
-    fullName: '',
-    gender: '',
-    spouseOrFatherName: '',
-    dateOfBirth: '',
-    age: '',
-    registrationDate: '',
-    emailAddress: '',
-    mobileNumber: '',
-    aadharNumber: '',
-    address: '',
-    // Step 2 - Personal
-    maritalStatus: '',
-    spouseName: '', // "Introduced As"
-    // Step 3 - Documents
-    photo: '',
-    signature: '',
-    passbook: '',
-    // Step 4 - Bank Details
-    accountNumber: '',
-    accountHolderName: '',
-    bankName: '',
-    branchName: '',
-    ifscCode: '',
-    // Step 5 - Occupation
-    occupation: '',
-    employeeType: '',
-    organization: '',
-    designation: '',
-    dateOfJoining: '',
-    // Step 6 - Address Details
-    doorNo: '',
-    streetName: '',
-    city: '',
-    pincode: '',
-    // reusing address field for step 6
-    // Step 7 - Nominee Details
-    nomineeName: '',
-    nomineeAge: '',
-    nomineeRelation: '',
-    nomineeDoorNo: '',
-    nomineeStreetName: '',
-    nomineeCity: '',
-    nomineeAddress: '',
-    nomineePincode: '',
-    nomineeMobileNumber: '',
-    fillSubscriberAddress: '',
-    // Step 8 - Location Details
-    route: ''
-  };
+  newMember: any = {}; 
+  selectedFiles: { [key: string]: File } = {}; 
+  isEditMode: boolean = false;
+  editingMemberId: number | null = null;
 
   steps = [
     { number: 1, title: 'Basic Info', completed: false },
@@ -121,108 +47,155 @@ export class MembersComponent implements OnInit {
     { number: 8, title: 'Location', completed: false },
   ];
 
-  // Data properties
-  memberStats: MemberStats = {
-    total: 124,
-    totalChange: 2.5,
-    active: 112,
-    activeChange: 8.3,
-    enrolled: 27,
-    pending: 23
+  memberStats: MemberKpiSummary = {
+    totalMembers: { count: 104, label: 'Total Members', changePercent: 5 },
+    activeMembers: { count: 85, label: 'Active Members', changePercent: -2 },
+    enrolledMembers: { count: 18, label: 'Enrolled Members' },
+    pendingEnrollment: { count: 1, label: 'Pending Enrollment' }
   };
 
-  // Mock data matching the UX screenshot
-  allMembers: Member[] = [
-    {
-      id: 'MEM001',
-      name: 'Rajesh Kumar',
-      mobile: '9876543210',
-      chits: '9876543210',
-      location: 'Chennai',
-      status: 'Active'
-    },
-    {
-      id: 'MEM002',
-      name: 'Priya Sharma',
-      mobile: '9876543210',
-      chits: '9876543210',
-      location: 'Bangalore',
-      status: 'Active'
-    },
-    {
-      id: 'MEM003',
-      name: 'Amit Patel',
-      mobile: '9876543210',
-      chits: '9876543210',
-      location: 'Mumbai',
-      status: 'Upcoming'
-    },
-    {
-      id: 'MEM004',
-      name: 'Sunita Devi',
-      mobile: '9876543210',
-      chits: '9876543210',
-      location: 'Hyderabad',
-      status: 'Active'
-    },
-    {
-      id: 'MEM001',
-      name: 'Rajesh Kumar',
-      mobile: '9876543210',
-      chits: '9876543210',
-      location: 'Chennai',
-      status: 'Active'
-    },
-    {
-      id: 'MEM002',
-      name: 'Priya Sharma',
-      mobile: '9876543210',
-      chits: '9876543210',
-      location: 'Bangalore',
-      status: 'Active'
-    },
-    {
-      id: 'MEM003',
-      name: 'Amit Patel',
-      mobile: '9876543210',
-      chits: '9876543210',
-      location: 'Mumbai',
-      status: 'Upcoming'
-    },
-    {
-      id: 'MEM004',
-      name: 'Sunita Devi',
-      mobile: '9876543210',
-      chits: '9876543210',
-      location: 'Hyderabad',
-      status: 'Active'
-    }
+  allMembers: MemberResponse[] = [
+    { id: 101, title: 'Mr.', name: 'Rajesh Kumar', mobileNumber: '9876543210', city: 'Chennai', status: 'Active' },
+    { id: 102, title: 'Ms.', name: 'Priya Sharma', mobileNumber: '9876543211', city: 'Bangalore', status: 'Active' },
+    { id: 103, title: 'Mr.', name: 'Amit Patel', mobileNumber: '9876543212', city: 'Mumbai', status: 'Upcoming' },
+    { id: 104, title: 'Mrs.', name: 'Sunita Devi', mobileNumber: '9876543213', city: 'Hyderabad', status: 'Inactive' }
   ];
+  filteredMembers: MemberResponse[] = [];
 
-  filteredMembers: Member[] = [...this.allMembers];
-
-  constructor() { }
-
-  ngOnInit(): void {
+  constructor(
+    private memberService: MemberService,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.resetForm();
     this.filterMembers();
   }
 
-  // Filter functionality
-  filterMembers(): void {
-    this.filteredMembers = this.allMembers.filter(member => {
-      const matchesSearch = !this.searchTerm ||
-        member.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        member.id.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        member.location.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        member.mobile.includes(this.searchTerm);
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadKpis();
+      this.loadMembers();
+    }
+  }
 
-      const matchesStatus = !this.statusFilter || member.status === this.statusFilter;
-
-      return matchesSearch && matchesStatus;
+  loadKpis(): void {
+    this.memberService.getKpiSummary().subscribe({
+      next: (data) => {
+        if(data) this.memberStats = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error loading KPIs', err)
     });
   }
 
-  // Selection functionality
+  loadMembers(): void {
+    this.isLoading = true;
+    this.memberService.getMembers().subscribe({
+      next: (data) => {
+        // Merge API data with mock data, or fallback if API is empty
+        if (data && data.length > 0) {
+           this.allMembers = data;
+        }
+        this.filterMembers();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading members', err);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  filterMembers(): void {
+    const searchStr = (this.searchTerm || '').trim().toLowerCase();
+    const statusStr = (this.statusFilter || '').trim().toLowerCase();
+
+    // 1. Filter
+    let result = this.allMembers.filter(member => {
+      const memberName = (member.name || '').toString().toLowerCase();
+      const memberId = member.id?.toString() || '';
+      const memberCity = (member.city || '').toString().toLowerCase();
+      const memberMobile = (member.mobileNumber || '').toString().toLowerCase();
+      const memberStatus = (member.status || '').toString().toLowerCase();
+
+      const matchesSearch = !searchStr ||
+        memberName.includes(searchStr) ||
+        memberId.includes(searchStr) ||
+        memberCity.includes(searchStr) ||
+        memberMobile.includes(searchStr);
+
+      const matchesStatus = !statusStr || memberStatus === statusStr;
+      return matchesSearch && matchesStatus;
+    });
+
+    // 2. Sort
+    result.sort((a: any, b: any) => {
+      let valA = a[this.sortColumn];
+      let valB = b[this.sortColumn];
+
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    this.filteredMembers = result;
+    this.updatePagination();
+  }
+
+  updatePagination(): void {
+    this.totalPages = Math.ceil(this.filteredMembers.length / this.pageSize) || 1;
+    if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
+    
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    this.paginatedMembers = this.filteredMembers.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  toggleSort(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.filterMembers();
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  prevPage(): void {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  getVisiblePages(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 3;
+    let start = Math.max(1, this.currentPage - 1);
+    let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - (maxVisible - 1));
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
   toggleSelectAll(event: any): void {
     this.allSelected = event.target.checked;
     if (this.allSelected) {
@@ -232,202 +205,202 @@ export class MembersComponent implements OnInit {
     }
   }
 
-  toggleMemberSelection(memberId: string): void {
-    const index = this.selectedMembers.indexOf(memberId);
+  toggleMemberSelection(id: number): void {
+    const index = this.selectedMembers.indexOf(id);
     if (index > -1) {
       this.selectedMembers.splice(index, 1);
     } else {
-      this.selectedMembers.push(memberId);
+      this.selectedMembers.push(id);
     }
-    this.allSelected = this.selectedMembers.length === this.filteredMembers.length;
+    this.allSelected = this.selectedMembers.length === this.filteredMembers.length && this.filteredMembers.length > 0;
   }
 
-  // Modal functionality
-  openAddMemberModal(): void {
-    this.showAddMemberModal = true;
-    this.currentStep = 1;
-    this.resetForm();
-  }
-
-  closeAddMemberModal(): void {
-    this.showAddMemberModal = false;
-    this.currentStep = 1;
-    this.resetForm();
-  }
-
-  resetForm(): void {
-    this.newMember = {
-      title: '',
-      fullName: '',
-      gender: '',
-      spouseOrFatherName: '',
-      dateOfBirth: '',
-      age: '',
-      registrationDate: '',
-      emailAddress: '',
-      mobileNumber: '',
-      aadharNumber: '',
-      address: '',
-
-      maritalStatus: '',
-      spouseName: '',
-
-      photo: '',
-      signature: '',
-      passbook: '',
-
-      accountNumber: '',
-      accountHolderName: '',
-      bankName: '',
-      branchName: '',
-      ifscCode: '',
-
-      occupation: '',
-      employeeType: '',
-      organization: '',
-      designation: '',
-      dateOfJoining: '',
-
-      doorNo: '',
-      streetName: '',
-      city: '',
-      pincode: '',
-
-      nomineeName: '',
-      nomineeAge: '',
-      nomineeRelation: '',
-      nomineeDoorNo: '',
-      nomineeStreetName: '',
-      nomineeCity: '',
-      nomineeAddress: '',
-      nomineePincode: '',
-      nomineeMobileNumber: '',
-      fillSubscriberAddress: '',
-
-      route: ''
-    };
-    this.steps.forEach(step => step.completed = false);
-  }
-
-  nextStep(): void {
-    if (this.currentStep < this.totalSteps) {
-      this.steps[this.currentStep - 1].completed = true;
-      this.currentStep++;
+  viewMember(id: number): void {
+    const member = this.allMembers.find(m => m.id === id);
+    if (member) {
+      alert(`Member Details:\nID: ${member.id}\nName: ${member.name}\nCity: ${member.city}\nStatus: ${member.status}`);
     }
   }
 
-  previousStep(): void {
-    if (this.currentStep > 1) {
-      this.steps[this.currentStep - 1].completed = false;
-      this.currentStep--;
+  editMember(id: number): void {
+    const member = this.allMembers.find(m => m.id === id);
+    if (member) {
+      this.isEditMode = true;
+      this.editingMemberId = id;
+      
+      // Map the member response back to the form structure (newMember)
+      this.newMember = {
+        fullName: member.name,
+        mobileNumber: member.mobileNumber,
+        city: member.city,
+        status: member.status,
+        // Since MemberResponse is simplified, we might only have these fields
+        // In a real app, you'd fetch the full details from the API first
+      };
+      
+      this.showAddMemberModal = true;
+      this.currentStep = 1;
     }
   }
 
-  goToStep(step: number): void {
-    this.currentStep = step;
+  onFileSelected(event: any, fieldName: string): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFiles[fieldName] = file;
+    }
   }
 
   submitForm(): void {
-    // Mark final step as completed
-    this.steps[this.currentStep - 1].completed = true;
-
-    // Generate new member ID
-    const newId = `MEM${String(this.allMembers.length + 1).padStart(3, '0')}`;
-
-    // Add to members array
-    const memberData: Member = {
-      id: newId,
-      name: this.newMember.fullName,
-      mobile: this.newMember.mobileNumber,
-      chits: this.newMember.mobileNumber, // Using mobile as chits for now
-      location: this.newMember.address,
-      status: 'Active' as const,
-      email: this.newMember.emailAddress
+    const payload = {
+      title: this.newMember.title || null,
+      name: this.newMember.fullName, // Mandatory
+      guardianName: this.newMember.spouseOrFatherName || null,
+      dob: this.newMember.dateOfBirth || null,
+      age: this.newMember.age ? Number(this.newMember.age) : null,
+      registrationDate: this.newMember.registrationDate || null, // Mandatory
+      gender: this.newMember.gender ? this.newMember.gender.toLowerCase() : null,
+      mobileNumber: this.newMember.mobileNumber, // Mandatory
+      email: this.newMember.emailAddress || null,
+      aadharNumber: this.newMember.aadharNumber || null,
+      address: this.newMember.address || null,
+      maritalStatus: this.newMember.maritalStatus || null,
+      introducedAs: this.newMember.spouseName || null,
+      
+      // Temporarily null until file upload API is built
+      photoUrl: null, 
+      signatureUrl: null,
+      passbookUrl: null,
+      
+      bankAccountNumber: this.newMember.accountNumber || null,
+      bankAccountHolderName: this.newMember.accountHolderName || null,
+      bankName: this.newMember.bankName || null,
+      bankBranch: this.newMember.branchName || null,
+      bankIfsc: this.newMember.ifscCode || null,
+      occupation: this.newMember.occupation || null,
+      employeeType: this.newMember.employeeType || null,
+      organization: this.newMember.organization || null,
+      designation: this.newMember.designation || null,
+      dateOfJoining: this.newMember.dateOfJoining || null,
+      doorNo: this.newMember.doorNo || null,
+      streetName: this.newMember.streetName || null,
+      city: this.newMember.city || null,
+      pincode: this.newMember.pincode || null,
+      nomineeName: this.newMember.nomineeName || null,
+      nomineeAge: this.newMember.nomineeAge ? Number(this.newMember.nomineeAge) : null,
+      nomineeRelation: this.newMember.nomineeRelation || null,
+      nomineeDoorNo: this.newMember.nomineeDoorNo || null,
+      nomineeStreetName: this.newMember.nomineeStreetName || null,
+      nomineeCity: this.newMember.nomineeCity || null,
+      nomineeAddress: this.newMember.nomineeAddress || null,
+      nomineePincode: this.newMember.nomineePincode || null,
+      nomineeMobileNumber: this.newMember.nomineeMobileNumber || null,
+      fillSubscriberAddress: this.newMember.fillSubscriberAddress || null,
+      route: this.newMember.route || null
     };
 
-    this.allMembers.unshift(memberData);
-    this.filterMembers();
+    // // Pre-flight check to ensure mandatory fields are filled
+    // if (!payload.name || !payload.mobileNumber || !payload.registrationDate) {
+    //   alert("Please fill in the mandatory fields: Name, Mobile Number, and Registration Date.");
+    //   return;
+    // }
 
-    console.log('New member added:', memberData);
-    this.closeAddMemberModal();
+    const saveObservable = this.isEditMode && this.editingMemberId
+      ? this.memberService.updateMember(this.editingMemberId, payload)
+      : this.memberService.createMember(payload);
+
+    saveObservable.subscribe({
+      next: () => {
+        alert(this.isEditMode ? 'Member updated successfully!' : 'Member added successfully!');
+        this.loadMembers(); 
+        this.loadKpis();
+        this.closeAddMemberModal();
+      },
+      error: (err: any) => {
+        console.error('Save failed:', err);
+        const msg = err.error?.message || 'Check console for details.';
+        alert(`Failed to ${this.isEditMode ? 'update' : 'save'} member: ${msg}`);
+      }
+    });
   }
 
-  // Member actions (ready for backend integration)
-  viewMember(memberId: string): void {
-    console.log('View member:', memberId);
-    // TODO: Navigate to member details page or open view modal
-    // this.router.navigate(['/admin/members', memberId]);
+  resetForm(): void {
+    this.newMember = {};
+    this.selectedFiles = {}; 
+    this.isEditMode = false;
+    this.editingMemberId = null;
+    this.steps.forEach(step => step.completed = false);
   }
 
-  editMember(memberId: string): void {
-    console.log('Edit member:', memberId);
-    // TODO: Open edit form or navigate to edit page
-    // this.router.navigate(['/admin/members/edit', memberId]);
-  }
-
-  deleteMember(memberId: string): void {
-    if (confirm('Are you sure you want to delete this member?')) {
-      console.log('Delete member:', memberId);
-      // TODO: Call delete API
-      // this.memberService.deleteMember(memberId).subscribe(...)
+  nextStep(): void { 
+    if (!this.validateCurrentStep()) {
+      return;
     }
-  }
 
-  // Future API integration methods (ready to implement)
-  /*
+    if (this.currentStep < this.totalSteps) { 
+      this.steps[this.currentStep - 1].completed = true; 
+      this.currentStep++; 
+    } 
+  }
   
-  // When backend is ready, these methods can be implemented:
+  validateCurrentStep(): boolean {
+    if (this.currentStep === 1) {
+      if (!this.newMember.fullName || !this.newMember.spouseOrFatherName || !this.newMember.registrationDate || !this.newMember.mobileNumber) {
+        alert("Please fill in all mandatory fields: Name, Father/Spouse Name, Registration Date, and Mobile Number.");
+        return false;
+      }
+    }
+    
+    // Add more step validations as needed
+    // if (this.currentStep === 2) { ... }
+
+    return true;
+  }
   
-  async loadMembers(): Promise<void> {
-    try {
-      const response = await this.memberService.getMembers({
-        page: 1,
-        limit: 50,
-        search: this.searchTerm,
-        status: this.statusFilter
-      }).toPromise();
-      
-      this.allMembers = response.data.members;
-      this.memberStats = response.data.stats;
-      this.filterMembers();
-    } catch (error) {
-      console.error('Error loading members:', error);
+  previousStep(): void { 
+    if (this.currentStep > 1) { 
+      this.steps[this.currentStep - 1].completed = false; 
+      this.currentStep--; 
+    } 
+  }
+  
+  goToStep(step: number): void { 
+    this.currentStep = step; 
+  }
+  
+  closeAddMemberModal(): void { 
+    this.showAddMemberModal = false; 
+    this.resetForm(); 
+  }
+  
+  openAddMemberModal(): void { 
+    this.showAddMemberModal = true; 
+    this.currentStep = 1; 
+    this.resetForm(); 
+  }
+  
+  deleteMember(id: number): void {
+    if (confirm('Delete member?')) {
+      this.memberService.deleteMember(id).subscribe({
+        next: () => { 
+          this.loadMembers(); 
+          this.loadKpis(); 
+        }
+      });
     }
   }
 
-  async createMember(memberData: Partial<Member>): Promise<void> {
-    try {
-      const response = await this.memberService.createMember(memberData).toPromise();
-      this.allMembers.unshift(response.data);
-      this.filterMembers();
-      this.closeAddMemberModal();
-    } catch (error) {
-      console.error('Error creating member:', error);
+  calculateAge(): void {
+    if (this.newMember.dateOfBirth) {
+      const birthDate = new Date(this.newMember.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      this.newMember.age = age;
+    } else {
+      this.newMember.age = null;
     }
   }
-
-  */
 }
-
-// Export data structures for backend team
-export const MEMBER_API_ENDPOINTS = {
-  GET_MEMBERS: '/api/members',
-  GET_MEMBER_BY_ID: '/api/members/:id',
-  CREATE_MEMBER: '/api/members',
-  UPDATE_MEMBER: '/api/members/:id',
-  DELETE_MEMBER: '/api/members/:id',
-  GET_MEMBER_STATS: '/api/members/stats'
-};
-
-export const SAMPLE_MEMBER_JSON = {
-  "id": "MEM001",
-  "name": "Rajesh Kumar",
-  "mobile": "9876543210",
-  "email": "rajesh@example.com",
-  "chits": "9876543210",
-  "location": "Chennai",
-  "address": "123 Main Street, Chennai, Tamil Nadu 600001",
-  "status": "Active",
-  "joinDate": "2024-01-15T00:00:00Z",
-  "lastActivity": "2024-02-08T10:30:00Z"
-};

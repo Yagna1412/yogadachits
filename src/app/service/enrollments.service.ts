@@ -2,7 +2,7 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 export interface ApiResponse<T> {
@@ -39,32 +39,35 @@ export class EnrollmentsService {
 
     private getHeaders(): { headers: HttpHeaders } {
         let headers = new HttpHeaders({
-            'Content-Type': 'application/json',
-            'X-Tenant-Id': '1'
+            'Content-Type': 'application/json'
         });
         if (isPlatformBrowser(this.platformId)) {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             if (token) {
-                try {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    const isExpired = payload.exp * 1000 < Date.now();
-                    if (!isExpired) {
-                        headers = headers.set('Authorization', `Bearer ${token}`);
-                    } else {
-                        localStorage.removeItem('authToken');
-                    }
-                } catch {
-                    localStorage.removeItem('authToken');
-                }
+                headers = headers.set('Authorization', `Bearer ${token}`);
             }
         }
         return { headers };
     }
 
-    getEnrollments(): Observable<ApiResponse<EnrollmentResponse[]>> {
+    private cachedEnrollments: EnrollmentResponse[] | null = null;
+
+    getEnrollments(forceRefresh = false): Observable<ApiResponse<EnrollmentResponse[]>> {
+        if (!forceRefresh && this.cachedEnrollments) {
+            return of({
+                success: true,
+                message: 'Loaded from cache',
+                data: this.cachedEnrollments
+            });
+        }
         return this.http.get<ApiResponse<EnrollmentResponse[]>>(
             this.apiUrl, this.getHeaders()
         ).pipe(
+            tap((res: any) => {
+                if (res && res.data && Array.isArray(res.data)) {
+                    this.cachedEnrollments = res.data;
+                }
+            }),
             catchError(() => of({
                 success: false,
                 message: 'Failed to load enrollments',
@@ -77,6 +80,11 @@ export class EnrollmentsService {
         return this.http.post<ApiResponse<EnrollmentResponse>>(
             this.apiUrl, payload, this.getHeaders()
         ).pipe(
+            tap((res: any) => {
+                if (res && res.success) {
+                    this.cachedEnrollments = null; // Invalidate cache so the next background fetch actually queries
+                }
+            }),
             catchError(() => of({
                 success: false,
                 message: 'Failed to create enrollment',

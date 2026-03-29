@@ -1,584 +1,245 @@
 @use '../../../styles/colors.scss' as *;
-/* ===== AUCTION HEADER SECTION ===== */
-.auction-main {
-    background: #f7fbfe;
-    padding: 16px;
+
+.page-header   { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 1px solid #f3f4f6; }
+.header-left   { display: flex; flex-direction: column; gap: 4px; }
+.header-right  { display: flex; align-items: center; }
+
+.page-title    { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0; }
+.breadcrumb    { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: #6b7280; }
+.breadcrumb-item { &.active { color: #111827; font-weight: 500; } }
+.breadcrumb-separator img { width: 12px; opacity: .5; }
+
+.auction-timer-controls {
+  display: flex; align-items: center; gap: 16px;
+  background: white; padding: 8px 16px; border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.04); border: 1px solid #f3f4f6;
 }
 
+.timer-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; background: #f3f4f6; border-radius: 30px;
+  color: #111827; font-weight: 700; font-size: 1.1rem; font-family: 'Courier New', Courier, monospace;
+  &.timer-alert { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; animation: pulse 1s infinite alternate; }
+}
+
+@keyframes pulse { to { opacity: 0.6; } }
+
+.start-btn { min-width: 140px; height: 38px; border-radius: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* selector */
+.auction-selector-bar {
+  display: flex; align-items: center; gap: 12px; padding: 12px 0; margin-bottom: 8px;
+  .selector-label { font-size: .875rem; font-weight: 600; color: #374151; white-space: nowrap; }
+  .auction-select {
+    flex: 1; max-width: 420px; padding: 8px 12px;
+    border: 1px solid #d1d5db; border-radius: 6px; font-size: .875rem;
+    color: #111827; background: white; cursor: pointer; outline: none;
+    &:focus { border-color: #003366; box-shadow: 0 0 0 3px rgba(0,51,102,.1); }
+  }
+}
+
+/* error */
+.error-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; margin-bottom: 16px; border-radius: 8px;
+  background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-size: .875rem;
+  .error-close { background: none; border: none; font-size: 1.25rem; color: #b91c1c; cursor: pointer; }
+}
+
+/* loading */
+.loading-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px; color: #6b7280; gap: 12px; font-size: .9rem;
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid #e5e7eb;
+    border-top-color: #003366; border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state { padding: 40px; text-align: center; color: #6b7280; }
+
+/* main */
+.auction-main { background: #f7fbfe; padding: 16px; border-radius: 12px; }
+
+/* header section */
 .auction-header-section {
-    background: white;
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    margin-bottom: 16px;
-
-    @media (max-width: 768px) {
-        padding: 16px;
-        gap: 16px;
-        flex-direction: column;
-    }
+  background: white; display: flex; gap: 0; align-items: stretch;
+  margin-bottom: 16px; border-radius: 8px; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
 }
-
 .auction-number-badge {
-    width: 100px;
-    height: 100px;
-    background: #E1E5ED;
-    border-radius: 8px 0 0 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-
-    @media (max-width: 768px) {
-        width: 80px;
-        height: 80px;
-    }
-
-    .badge-number {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #0A2962;
-
-        @media (max-width: 768px) {
-            font-size: 2rem;
-        }
-    }
+  width: 100px; min-height: 100px; background: #E1E5ED; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  .badge-number { font-size: 2rem; font-weight: 700; color: #0A2962; }
 }
-
 .auction-header-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    flex: 1;
-
-    @media (max-width: 1024px) {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-    }
-
-    @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 0; flex: 1; padding: 16px 24px;
+  @media (max-width: 1024px) { grid-template-columns: repeat(2,1fr); row-gap: 16px; }
 }
-
 .header-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-
-    .header-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #000000;
-        text-transform: capitalize;
-        letter-spacing: 0.5px;
-    }
-
-    .header-value {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #000000;
-    }
-
-    .header-value-with-total {
-        display: flex;
-        align-items: baseline;
-        gap: 6px;
-
-        .current {
-            font-size: 1.125rem;
-            font-weight: 700;
-            color: #111827;
-        }
-
-        .total {
-            font-size: 1.125rem;
-            font-weight: 500;
-            color: #9ca3af;
-        }
-    }
+  display: flex; flex-direction: column; gap: 6px; padding: 0 16px;
+  border-right: 1px solid #f3f4f6; &:last-child { border-right: none; }
+  .header-label { font-size: .75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; }
+  .header-value { font-size: 1.1rem; font-weight: 600; color: #111827; }
+  .header-value-with-total {
+    display: flex; align-items: baseline; gap: 6px;
+    .current { font-size: 1.1rem; font-weight: 700; color: #111827; }
+    .total   { font-size: 1rem; color: #9ca3af; }
+  }
 }
 
-/* ===== AUCTION CONTENT SECTION ===== */
-.auction-content-section {
-    @media (max-width: 768px) {
-        padding: 16px;
-    }
-}
-
+/* content grid */
 .auction-content-wrapper {
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 16px;
-
-    @media (max-width: 1280px) {
-        grid-template-columns: 320px 1fr;
-        gap: 16px;
-    }
-
-    @media (max-width: 1024px) {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
+  display: grid; grid-template-columns: 340px 1fr; gap: 16px;
+  @media (max-width: 1280px) { grid-template-columns: 300px 1fr; }
+  @media (max-width: 1024px) { grid-template-columns: 1fr; }
 }
 
-/* ===== LEFT PANEL ===== */
-.auction-left-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-
-    @media (max-width: 1024px) {
-        gap: 16px;
-    }
-}
+/* left panel */
+.auction-left-panel { display: flex; flex-direction: column; gap: 16px; }
 
 .highest-bid-card {
-    background: linear-gradient(135deg, #001f3f 0%, #003366 100%);
-    border-radius: 12px;
-    padding: 16px;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-shadow: 0 4px 12px rgba(0, 31, 63, 0.15);
-
-    .card-title {
-        font-size: 1rem;
-        font-weight: 400;
-        margin: 0;
-        color: white;
-    }
-
-    .bidder-info {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 6px;
-        background: #3B5481;
-        border-radius: 20px;
-        width: fit-content;
-
-        .bidder-icon {           
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .bidder-name {
-            font-size: 0.850rem;
-            font-weight: 400;
-        }
-    }
-
-    .bid-divider {
-        border: dashed 1px rgb(255 255 255 / 58%);
-    }
-
-    .winning-bid-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        .winning-label {
-            font-size: 0.875rem;
-            opacity: 0.9;
-        }
-
-        .winning-amount {
-            font-size: 1.50rem;
-            font-weight: 700;
-        }
-    }
+  background: linear-gradient(135deg, #001f3f, #003366);
+  border-radius: 12px; padding: 16px; color: white;
+  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 4px 12px rgba(0,31,63,.18);
+  .card-title  { font-size: 1rem; margin: 0; opacity: .9; }
+  .bidder-info {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.12); border-radius: 20px;
+    padding: 5px 10px; width: fit-content;
+    .bidder-name { font-size: .875rem; }
+  }
+  .bid-divider { border: none; border-top: 1px dashed rgba(255,255,255,.35); }
+  .winning-bid-section {
+    display: flex; justify-content: space-between; align-items: center;
+    .winning-label  { font-size: .875rem; opacity: .85; }
+    .winning-amount { font-size: 1.5rem; font-weight: 700; }
+  }
 }
 
 .calculation-card {
-    background: white;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    .card-title {
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0 0 16px 0;
-        color: #111827;
-        text-align: center;
-    }
-
-    .calc-icon {
-        background: #bae2d1;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 16px;
-
-        span {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #23A26D;
-        }
-    }
-
-    .calculation-items {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-    }
+  background: white; border-radius: 12px; padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  .calc-icon {
+    background: #d1fae5; width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
+    span { font-size: 1.4rem; font-weight: 700; color: #059669; }
+  }
+  .card-title { font-size: 1rem; font-weight: 600; text-align: center; margin: 0 0 14px; color: #111827; }
+  .calculation-items { display: flex; flex-direction: column; }
 }
-
 .calc-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    font-size: 0.875rem;
-
-    &:last-child {
-        border-bottom: none;
-    }
-
-    .calc-label {
-        color: #6b7280;
-        font-weight: 500;
-    }
-
-    .calc-value {
-        color: #111827;
-        font-weight: 600;
-    }
-
-    &.total-item {
-        background: #f3f4f6;
-        margin: 8px -20px -20px -20px;
-        padding: 12px 20px;
-        border-radius: 0 0 12px 12px;
-
-        .calc-value {
-            font-weight: 700;
-            color: #003366;
-        }
-    }
+  display: flex; justify-content: space-between; padding: 7px 0;
+  font-size: .875rem; border-bottom: 1px solid #f3f4f6;
+  &:last-child { border: none; }
+  .calc-label { color: #6b7280; }
+  .calc-value { font-weight: 600; color: #111827; }
+  &.total-item {
+    margin: 8px -20px -20px; padding: 12px 20px;
+    background: #f3f4f6; border-radius: 0 0 12px 12px;
+    .calc-value { font-weight: 700; color: #003366; }
+  }
 }
 
-.action-buttons {
-    display: flex;
-    gap: 12px;
-}
+.action-buttons { display: flex; gap: 12px; }
 
+/* buttons */
 .btn {
-    width: 100%;
-    padding: 8px 16px;
-    font-size: 0.85rem;
-    font-weight: 500;
-
-    &.btn-secondary {
-        background: white;
-    }
-
-    &.btn-primary {
-        background: #003366;
-        color: white;
-
-        &:hover {
-            background: #002947;
-            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
-        }
-    }
+  width: 100%; padding: 8px 16px; font-size: .85rem; font-weight: 500;
+  border: none; border-radius: 6px; cursor: pointer; transition: all .2s;
+  &:disabled { opacity: .5; cursor: not-allowed; }
+  &.btn-secondary { background: white; border: 1px solid #d1d5db; color: #374151; &:hover:not(:disabled) { background: #f9fafb; } }
+  &.btn-primary   { background: #003366; color: white; &:hover:not(:disabled) { background: #002244; } }
+  &.btn-sm    { width: auto; padding: 5px 12px; font-size: .78rem; }
+  &.btn-large { width: 100%; padding: 12px 24px; }
 }
 
-/* ===== RIGHT PANEL ===== */
+/* right panel */
 .auction-right-panel {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: white; border-radius: 12px; padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+}
+.section-title { font-size: 1.1rem; font-weight: 600; color: #111827; margin: 0 0 12px; }
+.table-wrapper { overflow-x: auto; }
 
-    @media (max-width: 1024px) {
-        padding: 16px;
-    }
+.table {
+  width: 100%; border-collapse: collapse; font-size: .875rem;
+  th {
+    background: #f9fafb; padding: 10px 12px; text-align: left;
+    font-size: .75rem; font-weight: 600; color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; color: #111827; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr.highest-bid-row td { background: #f0fdf4; }
 }
 
-.bid-table-section {
-    .section-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #25282D;
-        margin: 0 0 12px 0;
-    }
-}
+.no-data { text-align: center; color: #9ca3af; padding: 32px; }
+.submitted-mark { color: #16a34a; font-weight: 700; }
 
 .status-badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius:5px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    background: #fee2e2;
-    color: #991b1b;
-
-    &.bid-paid {
-        background: #dbeafe;
-        color: #0c4a6e;
-    }
-
-    &.highest-bid {
-        background: #a7f3d0;
-        color: #065f46;
-    }
+  display: inline-block; padding: 3px 8px; border-radius: 4px;
+  font-size: .75rem; font-weight: 600; background: #f3f4f6; color: #374151;
+  &.bid-paid    { background: #dbeafe; color: #1e40af; }
+  &.highest-bid { background: #dcfce7; color: #166534; }
 }
 
-/* ===== BID INPUT ===== */
 .bid-input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    background: white;
-    color: #111827;
-    transition: all 0.2s ease;
-
-    &:hover {
-        border-color: #9ca3af;
-    }
-
-    &:focus {
-        outline: none;
-        border-color: #003366;
-        box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
-    }
-
-    &::placeholder {
-        color: #d1d5db;
-    }
+  width: 100%; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+  font-size: .875rem; color: #111827; background: white;
+  &:focus  { outline: none; border-color: #003366; box-shadow: 0 0 0 3px rgba(0,51,102,.1); }
+  &:disabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
 }
 
-/* ===== MODAL STYLES ===== */
+/* modals */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 16px;
-
-    @media (max-width: 768px) {
-        padding: 16px;
-    }
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;
 }
-
 .modal-content {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
-    max-height: 90vh;
-    overflow-y: auto;
-
-    &.confirm-modal {
-        width: 100%;
-        max-width: 560px;
-
-        @media (max-width: 640px) {
-            max-width: 100%;
-        }
-    }
-
-    &.success-modal {
-        width: 100%;
-        max-width: 420px;
-        text-align: center;
-        padding: 24px;
-
-        @media (max-width: 640px) {
-            max-width: 100%;
-            padding: 16px;
-        }
-    }
+  background: white; border-radius: 12px; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,.2);
+  &.confirm-modal { width: 100%; max-width: 540px; }
+  &.success-modal { width: 100%; max-width: 400px; text-align: center; padding: 32px 24px; }
 }
-
 .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    border-bottom: 1px solid #e5e7eb;
-
-    h2 {
-        margin: 0;
-        font-size: 1.25rem;
-        font-weight: 500;
-        color: #111827;
-    }
-
-    .modal-close {
-        background: none;
-        font-size: 28px;
-        color: #6b7280;
-        cursor: pointer;
-        padding: 0;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-        background-color: #f3f4f6;
-        border-radius: 30px;
-
-        &:hover {
-            color: #111827;
-            background: #f3f4f6;
-        }
-    }
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px; border-bottom: 1px solid #e5e7eb;
+  h2 { margin: 0; font-size: 1.2rem; font-weight: 600; color: #111827; }
+  .modal-close {
+    background: #f3f4f6; border: none; width: 32px; height: 32px; font-size: 1.4rem;
+    border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280;
+  }
 }
-
-.modal-body {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    @media (max-width: 640px) {
-        padding: 16px;
-        gap: 12px;
-    }
-}
+.modal-body   { padding: 16px 24px; display: flex; flex-direction: column; gap: 16px; }
+.modal-footer { display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid #e5e7eb; .btn { flex: 1; } }
 
 .winner-card {
-    background: linear-gradient(135deg, #001f3f 0%, #003366 100%);
-    border-radius: 12px;
-    padding: 16px;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-
-    h3 {
-        margin: 0;
-        font-size: 0.95rem;
-        font-weight: 600;
-        opacity: 0.9;
-    }
-
-    .winner-details {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 8px 0;
-
-        .winner-icon {
-            font-size: 2rem;
-        }
-
-        .winner-name {
-            font-size: 1rem;
-            font-weight: 400;
-        }
-    }
-
-    .winner-divider {
-        height: 1px;
-        background: rgba(255, 255, 255, 0.3);
-        border: none;
-    }
-
-    .winner-amount-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        .amount-label {
-            font-size: 0.875rem;
-            opacity: 0.9;
-        }
-
-        .amount-value {
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-    }
+  background: linear-gradient(135deg, #001f3f, #003366);
+  border-radius: 12px; padding: 16px; color: white;
+  display: flex; flex-direction: column; gap: 14px;
+  h3 { margin: 0; font-size: .95rem; opacity: .9; }
+  .winner-details   { display: flex; align-items: center; gap: 10px; }
+  .winner-name      { font-size: 1rem; }
+  .winner-divider   { border: none; border-top: 1px solid rgba(255,255,255,.2); }
+  .winner-amount-section { display: flex; justify-content: space-between; align-items: center; }
+  .amount-label { font-size: .875rem; opacity: .85; }
+  .amount-value { font-size: 1.25rem; font-weight: 700; }
 }
 
 .net-payable-section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    label {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #111;
-    }
-
-    .net-payable-input {
-        padding: 12px 16px;
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #003366;
-    }
-}
-
-.modal-footer {
-    display: flex;
-    gap: 12px;
-    padding: 20px 24px;
-    border-top: 1px solid #e5e7eb;
-    justify-content: flex-end;
-
-    @media (max-width: 640px) {
-        padding: 16px;
-        flex-direction: column;
-    }
-
-    .btn {
-        &.btn-secondary {
-            flex: 1;
-
-            @media (max-width: 640px) {
-                order: 2;
-            }
-        }
-
-        &.btn-primary {
-            flex: 1;
-
-            @media (max-width: 640px) {
-                order: 1;
-            }
-        }
-    }
+  display: flex; flex-direction: column; gap: 6px;
+  label { font-size: .875rem; font-weight: 600; color: #374151; }
+  .net-payable-input {
+    padding: 12px 16px; background: #f9fafb; border: 1px solid #e5e7eb;
+    border-radius: 8px; font-size: 1rem; font-weight: 700; color: #003366;
+  }
 }
 
 .success-modal {
-    .success-icon {
-        font-size: 4rem;
-        margin-bottom: 20px;
-    }
-
-    .success-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #111827;
-        margin: 0 0 30px 0;
-        line-height: 1.4;
-    }
-
-    .btn-large {
-        width: 100%;
-        padding: 12px 24px;
-    }
+  .success-icon  { font-size: 4rem; margin-bottom: 12px; }
+  .success-title { font-size: 1.1rem; font-weight: 600; margin: 0 0 24px; color: #111827; }
 }

@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 
 const BASE = 'http://localhost:8080/chitfunds/api/v1';
 
@@ -72,40 +73,54 @@ export interface CreateBidRequest {
 
 @Injectable({ providedIn: 'root' })
 export class AuctionsService {
+    private platformId = inject(PLATFORM_ID);
     constructor(private http: HttpClient) { }
 
+    private getHeaders(): { headers: HttpHeaders } {
+        let headers = new HttpHeaders({
+            'Content-Type': 'application/json'
+        });
+        if (isPlatformBrowser(this.platformId)) {
+            const token = localStorage.getItem('token');
+            if (token) {
+                headers = headers.set('Authorization', `Bearer ${token}`);
+            }
+        }
+        return { headers };
+    }
+
     listChitGroups(): Observable<ApiResponse<ChitGroupDto[]>> {
-        return this.http.get<ApiResponse<ChitGroupDto[]>>(`${BASE}/chit-groups`).pipe(
+        return this.http.get<ApiResponse<ChitGroupDto[]>>(`${BASE}/chit-groups`, this.getHeaders()).pipe(
             catchError(() => of({ success: false, message: 'error', data: [] } as ApiResponse<ChitGroupDto[]>))
         );
     }
 
     listAuctions(): Observable<ApiResponse<AuctionResponse[]>> {
-        return this.http.get<ApiResponse<AuctionResponse[]>>(`${BASE}/auctions`).pipe(
+        return this.http.get<ApiResponse<AuctionResponse[]>>(`${BASE}/auctions`, this.getHeaders()).pipe(
             catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse[]>))
         );
     }
 
     listBids(auctionId: number): Observable<ApiResponse<AuctionBidResponse[]>> {
-        return this.http.get<ApiResponse<AuctionBidResponse[]>>(`${BASE}/auctions/${auctionId}/bids`).pipe(
+        return this.http.get<ApiResponse<AuctionBidResponse[]>>(`${BASE}/auctions/${auctionId}/bids`, this.getHeaders()).pipe(
             catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionBidResponse[]>))
         );
     }
 
     getEnrollments(chitGroupId: number): Observable<ApiResponse<EnrollmentResponse[]>> {
-        return this.http.get<ApiResponse<EnrollmentResponse[]>>(`${BASE}/enrollments/chit-group/${chitGroupId}`).pipe(
+        return this.http.get<ApiResponse<EnrollmentResponse[]>>(`${BASE}/enrollments/chit-group/${chitGroupId}`, this.getHeaders()).pipe(
             catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<EnrollmentResponse[]>))
         );
     }
 
     createBid(req: CreateBidRequest): Observable<ApiResponse<AuctionBidResponse>> {
-        return this.http.post<ApiResponse<AuctionBidResponse>>(`${BASE}/auctions/bids`, req).pipe(
+        return this.http.post<ApiResponse<AuctionBidResponse>>(`${BASE}/auctions/bids`, req, this.getHeaders()).pipe(
             catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionBidResponse>))
         );
     }
 
     selectWinner(auctionId: number, bidId: number): Observable<ApiResponse<AuctionResponse>> {
-        return this.http.put<ApiResponse<AuctionResponse>>(`${BASE}/auctions/${auctionId}/winner/${bidId}`, {}).pipe(
+        return this.http.put<ApiResponse<AuctionResponse>>(`${BASE}/auctions/${auctionId}/winner/${bidId}`, {}, this.getHeaders()).pipe(
             catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse>))
         );
     }
