@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../service/auth';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +18,7 @@ export class LoginComponent {
 
   errorMessage: string = '';
 
-  constructor(private router: Router) { }
+  constructor(private router: Router, private authService: AuthService) { }
 
   setRole(role: 'Admin' | 'User') {
     this.selectedRole = role;
@@ -32,19 +33,33 @@ export class LoginComponent {
       return;
     }
 
-    if (this.selectedRole === 'Admin') {
-      if (this.email === 'YogadaChits@Admin.com' && this.password === 'Admin123') {
-        this.router.navigate(['/admin/dashboard']);
-      } else {
-        this.errorMessage = 'Invalid Admin credentials';
+    const credentials = {
+      email: this.email,
+      password: this.password,
+      role: this.selectedRole
+    };
+
+    this.authService.login(credentials).subscribe({
+      next: (response: any) => {
+        if (response && (response.token || response.success)) {
+          // Save token if present
+          if (response.token) {
+            localStorage.setItem('authToken', response.token);
+          }
+          const route = this.selectedRole === 'Admin' ? '/admin/dashboard' : '/user/dashboard';
+          this.router.navigate([route]);
+        } else {
+          this.errorMessage = response?.message || 'Invalid credentials';
+        }
+      },
+      error: (err: any) => {
+        console.error('Login error', err);
+        if (err?.error?.message) {
+          this.errorMessage = err.error.message;
+        } else {
+          this.errorMessage = 'Login failed. Please check your credentials and try again.';
+        }
       }
-    } else if (this.selectedRole === 'User') {
-      if (this.email === 'YogadaChits@User.com' && this.password === 'User123') {
-        this.router.navigate(['/user/dashboard']);
-      } else {
-        this.errorMessage = 'Invalid User credentials';
-     
-     }
-    }
+    });
   }
 }
