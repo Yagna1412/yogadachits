@@ -1,63 +1,63 @@
 <div class="page-header">
-    <div class="header-left">
-        <h1 class="page-title">Receipt Enquiry</h1>
-        <nav class="breadcrumb">
-            <span class="breadcrumb-item">Enquiry</span>
-            <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
-            <span class="breadcrumb-item">Receipt Enquiry</span>
-        </nav>
-    </div>
+  <div class="header-left">
+    <h1 class="page-title">Receipt Enquiry</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Enquiry</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
+      <span class="breadcrumb-item">Receipt Enquiry</span>
+    </nav>
+  </div>
 </div>
 
 <div class="main-container">
-    <div class="filter-section card mb-4">
-        <div class="section-title">
-            <span class="title-square"></span> Receipt Filter
-        </div>
-        <div class="form-row mt-3">
-            <div class="form-group col-md-4">
-                <label>Receipt Type</label>
-                <select class="form-control" [(ngModel)]="selectedType" (ngModelChange)="search()">
-                    <option *ngFor="let t of receiptTypes" [value]="t">{{t}}</option>
-                </select>
-            </div>
-            <div class="form-group col-md-4">
-                <label>Series</label>
-                <input class="form-control" [(ngModel)]="seriesQuery" (ngModelChange)="search()" placeholder="Enter series" />
-            </div>
-            <div class="form-group col-md-4">
-                <label>Number</label>
-                <input class="form-control" [(ngModel)]="numberQuery" (ngModelChange)="search()" placeholder="Enter number" />
-            </div>
-        </div>
+  <div class="filter-section card mb-4">
+    <div class="section-title">
+      <span class="title-square"></span> Receipt Filter
     </div>
+    <div class="form-row mt-3">
+      <div class="form-group col-md-4">
+        <label>Receipt Type</label>
+        <select class="form-control" [(ngModel)]="selectedType" (ngModelChange)="search()">
+          <option *ngFor="let t of receiptTypes" [value]="t">{{t}}</option>
+        </select>
+      </div>
+      <div class="form-group col-md-4">
+        <label>Series</label>
+        <input class="form-control" [(ngModel)]="seriesQuery" (ngModelChange)="search()" placeholder="Enter series" />
+      </div>
+      <div class="form-group col-md-4">
+        <label>Number</label>
+        <input class="form-control" [(ngModel)]="numberQuery" (ngModelChange)="search()" placeholder="Enter number" />
+      </div>
+    </div>
+  </div>
 
-    <div class="table-wrapper card" *ngIf="results.length">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Series</th>
-                    <th>Number</th>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let r of results">
-                    <td class="type-cell"><span class="badge" [ngClass]="r.type.toLowerCase()">{{r.type}}</span></td>
-                    <td>{{r.series}}</td>
-                    <td>{{r.number}}</td>
-                    <td>{{r.date}}</td>
-                    <td class="amount-cell">{{r.amount | number}}</td>
-                    <td>{{r.description}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+  <div class="table-wrapper card" *ngIf="results.length">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Series</th>
+          <th>Number</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of results">
+          <td class="type-cell"><span class="badge" [ngClass]="r.type.toLowerCase()">{{r.type}}</span></td>
+          <td>{{r.series}}</td>
+          <td>{{r.number}}</td>
+          <td>{{r.date}}</td>
+          <td class="amount-cell">{{r.amount | number}}</td>
+          <td>{{r.description}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-    <div class="empty-state card p-5 text-center" *ngIf="!results.length">
-        <p class="text-muted">No receipts found for the selected criteria.</p>
-    </div>
+  <div class="empty-state card p-5 text-center" *ngIf="!results.length">
+    <p class="text-muted">No receipts found for the selected criteria.</p>
+  </div>
 </div>

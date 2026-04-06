@@ -8,50 +8,50 @@ const BASE_URL = 'http://localhost:8080/chitfunds/api/v1/bid-payments';
 const PAYOUT_URL = 'http://localhost:8080/chitfunds/api/v1/payouts';
 
 export interface ApiResponse<T> {
-    success: boolean;
-    message: string;
-    data: T | null;
+  success: boolean;
+  message: string;
+  data: T | null;
 }
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class BidPaymentsService {
+  
+  private platformId = inject(PLATFORM_ID);
 
-    private platformId = inject(PLATFORM_ID);
+  constructor(private http: HttpClient) {}
 
-    constructor(private http: HttpClient) { }
-
-    private getAuthHeaders(): { headers: HttpHeaders } {
-        let token = '';
-
-        if (isPlatformBrowser(this.platformId)) {
-            token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
-        }
-
-        return {
-            headers: new HttpHeaders({
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            })
-        };
+  private getAuthHeaders(): { headers: HttpHeaders } {
+    let token = '';
+    
+    if (isPlatformBrowser(this.platformId)) {
+      token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
     }
+    
+    return {
+      headers: new HttpHeaders({
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      })
+    };
+  }
 
-    getPayments(): Observable<ApiResponse<any[]>> {
-        return this.http.get<ApiResponse<any[]>>(PAYOUT_URL, this.getAuthHeaders()).pipe(
-            catchError(err => of({ success: false, message: err.message, data: [] }))
-        );
-    }
+  getPayments(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(PAYOUT_URL, this.getAuthHeaders()).pipe(
+      catchError(err => of({ success: false, message: err.message, data: [] }))
+    );
+  }
 
-    getBidPaymentDetails(auctionId: number): Observable<ApiResponse<any>> {
-        return this.http.get<ApiResponse<any>>(`${BASE_URL}/auction/${auctionId}`, this.getAuthHeaders()).pipe(
-            catchError(err => of({ success: false, message: err.message, data: null }))
-        );
-    }
+  getBidPaymentDetails(auctionId: number): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${BASE_URL}/auction/${auctionId}`, this.getAuthHeaders()).pipe(
+      catchError(err => of({ success: false, message: err.message, data: null }))
+    );
+  }
 
-    processPayment(paymentData: any): Observable<ApiResponse<any>> {
-        return this.http.post<ApiResponse<any>>(`${BASE_URL}/process`, paymentData, this.getAuthHeaders()).pipe(
-            catchError(err => of({ success: false, message: err.message, data: null }))
-        );
-    }
+  processPayment(paymentData: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${BASE_URL}/process`, paymentData, this.getAuthHeaders()).pipe(
+      catchError(err => of({ success: false, message: err.message, data: null }))
+    );
+  }
 }

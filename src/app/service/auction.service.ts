@@ -3,8 +3,10 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of, shareReplay } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
+import { Client } from '@stomp/stompjs';
 
 const BASE = 'http://localhost:8080/chitfunds/api/v1';
+const WS_BASE = 'ws://localhost:8080/chitfunds/ws/auctions';
 
 export interface ApiResponse<T> {
     success: boolean;
@@ -64,6 +66,16 @@ export interface EnrollmentResponse {
     status: string;
 }
 
+export interface AuctionSessionResponse {
+    id: number;
+    auctionId: number;
+    sessionStatus: string;
+    startedAt: string;
+    endedAt?: string;
+    durationSeconds: number;
+    remainingSeconds: number;
+}
+
 export interface CreateBidRequest {
     auctionId: number;
     enrollmentId: number;
@@ -80,12 +92,73 @@ export class AuctionsService {
     private _chitGroups$   : Observable<ApiResponse<ChitGroupDto[]>>   | null = null;
     private _auctions$     : Observable<ApiResponse<AuctionResponse[]>> | null = null;
     private _enrollments$  : Map<number, Observable<ApiResponse<EnrollmentResponse[]>>> = new Map();
+    private stompClient    : Client | null = null;
 
     clearAuctionsCache()  { this._auctions$    = null; }
     clearChitGroupsCache(){ this._chitGroups$   = null; }
     clearEnrollmentsCache(chitGroupId?: number) {
         if (chitGroupId !== undefined) { this._enrollments$.delete(chitGroupId); }
         else { this._enrollments$.clear(); }
+    }
+
+    startAuction(auctionId: number): Observable<ApiResponse<AuctionSessionResponse>> {
+        return this.http.post<ApiResponse<AuctionSessionResponse>>(`${BASE}/auctions/${auctionId}/start`, {}, this.getHeaders()).pipe(
+            catchError((err) => of({ success: false, message: err?.message || 'error', data: null } as ApiResponse<AuctionSessionResponse>))
+        );
+    }
+
+    getAuctionSession(auctionId: number): Observable<ApiResponse<AuctionSessionResponse>> {
+        return this.http.get<ApiResponse<AuctionSessionResponse>>(`${BASE}/auctions/${auctionId}/session`, this.getHeaders()).pipe(
+            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionSessionResponse>))
+        );
+    }
+
+    connectToAuction(
+        auctionId: number,
+        onSessionUpdate: (session: AuctionSessionResponse) => void,
+        onBidUpdate: (bid: AuctionBidResponse) => void
+    ): void {
+        this.disconnectFromAuction(); // Ensure we don't have multiple connections
+
+        if (!isPlatformBrowser(this.platformId)) return;
+
+        this.stompClient = new Client({
+            brokerURL: WS_BASE,
+            reconnectDelay: 5000,
+            onConnect: () => {
+                // Subscribe to Session Updates
+                this.stompClient?.subscribe(`/topic/auctions/${auctionId}`, (message) => {
+                    if (message.body) {
+                        try {
+                            const session: AuctionSessionResponse = JSON.parse(message.body);
+                            onSessionUpdate(session);
+                        } catch (e) { console.error('Error parsing session data', e); }
+                    }
+                });
+
+                // Subscribe to Live Bids
+                this.stompClient?.subscribe(`/topic/auctions/${auctionId}/bids`, (message) => {
+                    if (message.body) {
+                        try {
+                            const bid: AuctionBidResponse = JSON.parse(message.body);
+                            onBidUpdate(bid);
+                        } catch (e) { console.error('Error parsing bid data', e); }
+                    }
+                });
+            },
+            onStompError: (frame) => {
+               console.error('STOMP error:', frame.headers['message'], frame.body);
+            }
+        });
+        
+        this.stompClient.activate();
+    }
+
+    disconnectFromAuction(): void {
+        if (this.stompClient) {
+            this.stompClient.deactivate();
+            this.stompClient = null;
+        }
     }
 
     private getHeaders(): { headers: HttpHeaders } {

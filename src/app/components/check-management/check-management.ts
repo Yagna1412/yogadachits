@@ -1,19 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface Cheque {
-  chequeNo: string;
-  bank: string;
-  member: string;
-  amount: number;
-  status: string;
-  dueDate?: string;
-  chequeDate?: string;
-  clearedDate?: string;
-  bouncedDate?: string;
-  reason?: string;
-}
+import { ChequeService, ChequeResponse, ChequeSummary } from '../../service/cheque.service';
 
 interface ChequeStat {
   count: number;
@@ -26,16 +14,20 @@ interface ChequeStat {
   templateUrl: './check-management.html',
   styleUrl: './check-management.scss',
 })
-export class CheckManagementComponent {
+export class CheckManagementComponent implements OnInit {
   activeTab: string = 'pending';
   searchTerm: string = '';
   selectedStatus: string = '';
 
+  isLoading = false;
+  errorMessage = '';
+  isUpdating = false;
+
   // Modal states
   showUpdateModal = false;
   showSuccessModal = false;
-  selectedCheque: Cheque | null = null;
-  
+  selectedCheque: ChequeResponse | null = null;
+
   // Form fields
   updateFormData = {
     newStatus: 'Cleared',
@@ -48,92 +40,98 @@ export class CheckManagementComponent {
   previousStatus = '';
   newStatusValue = '';
 
-  pendingStats: ChequeStat = { count: 4, amount: 60000 };
-  clearedStats: ChequeStat = { count: 2, amount: 35000 };
-  bouncedStats: ChequeStat = { count: 1, amount: 25000 };
+  pendingStats: ChequeStat = { count: 0, amount: 0 };
+  clearedStats: ChequeStat = { count: 0, amount: 0 };
+  bouncedStats: ChequeStat = { count: 0, amount: 0 };
 
-  pendingCheques: Cheque[] = [
-    {
-      chequeNo: '456789',
-      bank: 'HDFC Bank',
-      member: 'Rajesh Kumar',
-      amount: 35000,
-      status: 'Pending',
-      dueDate: 'Mar 19,2026',
-    },
-    {
-      chequeNo: '123456',
-      bank: 'SBI',
-      member: 'Priya Sharma',
-      amount: 35000,
-      status: 'Pending',
-      dueDate: 'Mar 19,2026',
-    },
-    {
-      chequeNo: '789012',
-      bank: 'ICICI Bank',
-      member: 'Amit Patel',
-      amount: 35000,
-      status: 'Pending',
-      dueDate: 'Mar 19,2026',
-    },
-    {
-      chequeNo: '243454',
-      bank: 'ICICI Bank',
-      member: 'Sunita Devi',
-      amount: 35000,
-      status: 'Pending',
-      dueDate: 'Mar 19,2026',
-    },
-  ];
+  pendingCheques: ChequeResponse[] = [];
+  clearedCheques: ChequeResponse[] = [];
+  bouncedCheques: ChequeResponse[] = [];
 
-  clearedCheques: Cheque[] = [
-    {
-      chequeNo: '456789',
-      bank: 'HDFC Bank',
-      member: 'Rajesh Kumar',
-      amount: 35000,
-      status: 'Cleared',
-      chequeDate: 'Mar 19,2026',
-      clearedDate: 'Mar 19,2026',
-    },
-    {
-      chequeNo: '123456',
-      bank: 'SBI',
-      member: 'Priya Sharma',
-      amount: 35000,
-      status: 'Cleared',
-      chequeDate: 'Mar 19,2026',
-      clearedDate: 'Mar 19,2026',
-    },
-  ];
+  filteredPendingCheques: ChequeResponse[] = [];
+  filteredClearedCheques: ChequeResponse[] = [];
+  filteredBouncedCheques: ChequeResponse[] = [];
 
-  bouncedCheques: Cheque[] = [
-    {
-      chequeNo: '456789',
-      bank: 'HDFC Bank',
-      member: 'Rajesh Kumar',
-      amount: 35000,
-      status: 'Bounced',
-      bouncedDate: 'Mar 19,2026',
-      reason: 'Insufficient funds',
-    },
-  ];
+  constructor(private chequeService: ChequeService) {}
 
-  filteredPendingCheques: Cheque[] = [];
-  filteredClearedCheques: Cheque[] = [];
-  filteredBouncedCheques: Cheque[] = [];
+  ngOnInit(): void {
+    this.loadAll();
+  }
 
-  constructor() {
-    this.filteredPendingCheques = this.pendingCheques;
-    this.filteredClearedCheques = this.clearedCheques;
-    this.filteredBouncedCheques = this.bouncedCheques;
+  private loadAll(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.loadSummary();
+    this.loadPending();
+    this.loadCleared();
+    this.loadBounced();
+  }
+
+  private loadSummary(): void {
+    this.chequeService.getSummary().subscribe({
+      next: (res) => {
+        if (res.data) {
+          this.pendingStats = { count: res.data.pendingCount ?? 0, amount: res.data.pendingAmount ?? 0 };
+          this.clearedStats = { count: res.data.clearedCount ?? 0, amount: res.data.clearedAmount ?? 0 };
+          this.bouncedStats = { count: res.data.bouncedCount ?? 0, amount: res.data.bouncedAmount ?? 0 };
+        }
+      },
+      error: () => {} // Summary failure is non-critical; counts will fall back to list lengths
+    });
+  }
+
+  private loadPending(): void {
+    this.chequeService.getPending().subscribe({
+      next: (res) => {
+        this.pendingCheques = res.data ?? [];
+        // fallback stats from list if summary endpoint not available
+        if (this.pendingStats.count === 0) {
+          this.pendingStats.count = this.pendingCheques.length;
+          this.pendingStats.amount = this.pendingCheques.reduce((s, c) => s + (c.amount ?? 0), 0);
+        }
+        this.filteredPendingCheques = [...this.pendingCheques];
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+        this.errorMessage = 'Failed to load pending cheques.';
+      }
+    });
+  }
+
+  private loadCleared(): void {
+    this.chequeService.getCleared().subscribe({
+      next: (res) => {
+        this.clearedCheques = res.data ?? [];
+        if (this.clearedStats.count === 0) {
+          this.clearedStats.count = this.clearedCheques.length;
+          this.clearedStats.amount = this.clearedCheques.reduce((s, c) => s + (c.amount ?? 0), 0);
+        }
+        this.filteredClearedCheques = [...this.clearedCheques];
+      },
+      error: () => {}
+    });
+  }
+
+  private loadBounced(): void {
+    this.chequeService.getBounced().subscribe({
+      next: (res) => {
+        this.bouncedCheques = res.data ?? [];
+        if (this.bouncedStats.count === 0) {
+          this.bouncedStats.count = this.bouncedCheques.length;
+          this.bouncedStats.amount = this.bouncedCheques.reduce((s, c) => s + (c.amount ?? 0), 0);
+        }
+        this.filteredBouncedCheques = [...this.bouncedCheques];
+      },
+      error: () => {}
+    });
   }
 
   switchTab(tab: string): void {
     this.activeTab = tab;
     this.searchTerm = '';
     this.selectedStatus = '';
+    this.errorMessage = '';
     this.filterCheques();
   }
 
@@ -141,26 +139,20 @@ export class CheckManagementComponent {
     const search = this.searchTerm.toLowerCase();
 
     if (this.activeTab === 'pending') {
-      this.filteredPendingCheques = this.pendingCheques.filter((cheque) =>
-        this.matchesFilter(cheque, search)
-      );
+      this.filteredPendingCheques = this.pendingCheques.filter((c) => this.matchesFilter(c, search));
     } else if (this.activeTab === 'cleared') {
-      this.filteredClearedCheques = this.clearedCheques.filter((cheque) =>
-        this.matchesFilter(cheque, search)
-      );
+      this.filteredClearedCheques = this.clearedCheques.filter((c) => this.matchesFilter(c, search));
     } else if (this.activeTab === 'bounced') {
-      this.filteredBouncedCheques = this.bouncedCheques.filter((cheque) =>
-        this.matchesFilter(cheque, search)
-      );
+      this.filteredBouncedCheques = this.bouncedCheques.filter((c) => this.matchesFilter(c, search));
     }
   }
 
-  private matchesFilter(cheque: Cheque, search: string): boolean {
+  private matchesFilter(cheque: ChequeResponse, search: string): boolean {
     const matchesSearch =
       !search ||
-      cheque.chequeNo.toLowerCase().includes(search) ||
-      cheque.bank.toLowerCase().includes(search) ||
-      cheque.member.toLowerCase().includes(search);
+      (cheque.chequeNo ?? '').toLowerCase().includes(search) ||
+      (cheque.bank ?? '').toLowerCase().includes(search) ||
+      (cheque.member ?? '').toLowerCase().includes(search);
 
     const matchesStatus = !this.selectedStatus || cheque.status === this.selectedStatus;
 
@@ -168,24 +160,18 @@ export class CheckManagementComponent {
   }
 
   formatCurrency(amount: number): string {
-    return (
-      '₹' +
-      amount.toLocaleString('en-IN', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      })
-    );
+    return '₹' + (amount ?? 0).toLocaleString('en-IN', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
   }
 
-  openUpdateModal(cheque: Cheque): void {
+  openUpdateModal(cheque: ChequeResponse): void {
     this.selectedCheque = { ...cheque };
     this.previousStatus = cheque.status;
-    this.updateFormData = {
-      newStatus: 'Cleared',
-      date: '',
-      remarks: '',
-    };
+    this.updateFormData = { newStatus: 'Cleared', date: '', remarks: '' };
     this.remarkCharCount = 0;
+    this.errorMessage = '';
     this.showUpdateModal = true;
   }
 
@@ -198,39 +184,46 @@ export class CheckManagementComponent {
 
   submitStatusUpdate(): void {
     if (!this.selectedCheque || !this.updateFormData.date) {
+      this.errorMessage = 'Please select a date before saving.';
       return;
     }
 
+    this.isUpdating = true;
+    this.errorMessage = '';
     this.newStatusValue = this.updateFormData.newStatus;
+    const newStatus = this.updateFormData.newStatus.toUpperCase(); // API expects CLEARED / BOUNCED
 
-    // Update the selected cheque
-    this.selectedCheque.status = this.updateFormData.newStatus;
-    if (this.updateFormData.newStatus === 'Cleared') {
-      this.selectedCheque.clearedDate = this.updateFormData.date;
-    } else if (this.updateFormData.newStatus === 'Bounced') {
-      this.selectedCheque.bouncedDate = this.updateFormData.date;
-      this.selectedCheque.reason = this.updateFormData.remarks;
-    }
-
-    // Update in the corresponding array
-    const chequeIndex = this.pendingCheques.findIndex(
-      (c) => c.chequeNo === this.selectedCheque!.chequeNo
-    );
-    if (chequeIndex !== -1) {
-      this.pendingCheques[chequeIndex] = { ...this.selectedCheque };
-    }
-
-    this.showUpdateModal = false;
-    this.showSuccessModal = true;
-
-    setTimeout(() => {
-      this.showSuccessModal = false;
-      this.closeUpdateModal();
-    }, 2000);
+    this.chequeService.updateStatus(this.selectedCheque.id, newStatus).subscribe({
+      next: (res) => {
+        this.isUpdating = false;
+        // Reload fresh data from backend
+        this.loadPending();
+        this.loadCleared();
+        this.loadBounced();
+        this.loadSummary();
+        this.showUpdateModal = false;
+        this.showSuccessModal = true;
+        setTimeout(() => { this.showSuccessModal = false; }, 2500);
+      },
+      error: () => {
+        this.isUpdating = false;
+        this.errorMessage = 'Failed to update cheque status. Please try again.';
+      }
+    });
   }
 
-  rePresentCheque(cheque: Cheque): void {
-    alert(`Cheque ${cheque.chequeNo} has been queued for re-presentment!`);
+  rePresentCheque(cheque: ChequeResponse): void {
+    // Re-present moves status back to PENDING
+    this.chequeService.updateStatus(cheque.id, 'PENDING').subscribe({
+      next: () => {
+        this.loadPending();
+        this.loadBounced();
+        this.loadSummary();
+      },
+      error: () => {
+        this.errorMessage = `Failed to re-present cheque #${cheque.chequeNo}.`;
+      }
+    });
   }
 
   closeSuccessModal(): void {
@@ -243,3 +236,6 @@ export class CheckManagementComponent {
     this.remarkCharCount = value.length;
   }
 }
+
+
+

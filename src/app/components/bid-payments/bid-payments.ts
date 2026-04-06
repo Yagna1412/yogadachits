@@ -1,80 +1,210 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+
+import { BidPaymentsService } from '../../service/bid-payment.service';
+import { AuctionsService, AuctionResponse } from '../../service/auction.service'; 
+import { EnrollmentsService, EnrollmentResponse } from '../../service/enrollments.service';
+
+// Extend the AuctionResponse to hold UI-friendly strings for the dropdown
+interface AuctionDropdownItem extends AuctionResponse {
+  memberName?: string;
+  ticketString?: string;
+}
 
 @Component({
   selector: 'app-bid-payments',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './bid-payments.html',
   styleUrls: ['./bid-payments.scss']
 })
-export class BidPaymentsComponent {
+export class BidPaymentsComponent implements OnInit, AfterViewInit {
   showForm = false;
   searchTerm: string = '';
-
-  payments: any[] = [
-    { id: 1, groupName: 'Group A', ticketNo: '101', paidTo: 'Ramesh', series: 'A', no: '1', transactionDate: '2026-02-01', account: 'Cash', amount: 5000, narration: 'Bid win payout', chequeNumber: '', chequeDate: '', currentInstallment: 5, paidUpTo: '2026-01', auctionOn: '2026-01-20', installmentMonth: 'Jan 2026', chitAmount: 4500, companyCommission: 50, bidAmount: 4800, bidPayable: 4700, bpAdjustment: 0, advanceAdjustment: 0, paidAmount: 4700, netPayable: 4700 },
-    { id: 2, groupName: 'Group B', ticketNo: '202', paidTo: 'Suresh', series: 'B', no: '2', transactionDate: '2026-02-03', account: 'Bank', amount: 8000, narration: '', chequeNumber: 'CHK001', chequeDate: '2026-02-03', currentInstallment: 6, paidUpTo: '2026-02', auctionOn: '2026-01-22', installmentMonth: 'Feb 2026', chitAmount: 7800, companyCommission: 100, bidAmount: 7900, bidPayable: 7800, bpAdjustment: 0, advanceAdjustment: 0, paidAmount: 7800, netPayable: 7800 },
-    { id: 3, groupName: 'Group C', ticketNo: '303', paidTo: 'Meena', series: 'C', no: '3', transactionDate: '2026-02-05', account: 'Cash', amount: 6000, narration: '', chequeNumber: '', chequeDate: '', currentInstallment: 4, paidUpTo: '2026-01', auctionOn: '2026-01-25', installmentMonth: 'Jan 2026', chitAmount: 6000, companyCommission: 80, bidAmount: 6100, bidPayable: 6020, bpAdjustment: 0, advanceAdjustment: 0, paidAmount: 6020, netPayable: 6020 },
-    { id: 4, groupName: 'Group D', ticketNo: '404', paidTo: 'Anita', series: 'D', no: '4', transactionDate: '2026-02-07', account: 'Bank', amount: 15000, narration: 'Large bid', chequeNumber: 'CHK002', chequeDate: '2026-02-07', currentInstallment: 8, paidUpTo: '2026-02', auctionOn: '2026-02-01', installmentMonth: 'Feb 2026', chitAmount: 15000, companyCommission: 300, bidAmount: 15200, bidPayable: 14900, bpAdjustment: 0, advanceAdjustment: 0, paidAmount: 14900, netPayable: 14900 },
-    { id: 5, groupName: 'Group E', ticketNo: '505', paidTo: 'Vikas', series: 'E', no: '5', transactionDate: '2026-02-09', account: 'Cash', amount: 2000, narration: '', chequeNumber: '', chequeDate: '', currentInstallment: 2, paidUpTo: '2026-01', auctionOn: '2026-01-30', installmentMonth: 'Jan 2026', chitAmount: 2500, companyCommission: 20, bidAmount: 2050, bidPayable: 2030, bpAdjustment: 0, advanceAdjustment: 0, paidAmount: 2030, netPayable: 2030 },
-    { id: 6, groupName: 'Group F', ticketNo: '606', paidTo: 'Priya', series: 'F', no: '6', transactionDate: '2026-02-11', account: 'Bank', amount: 10000, narration: '', chequeNumber: 'CHK003', chequeDate: '2026-02-11', currentInstallment: 7, paidUpTo: '2026-01', auctionOn: '2026-01-15', installmentMonth: 'Jan 2026', chitAmount: 10000, companyCommission: 150, bidAmount: 10100, bidPayable: 10000, bpAdjustment: 0, advanceAdjustment: 0, paidAmount: 10000, netPayable: 10000 },
-    { id: 7, groupName: 'Group G', ticketNo: '707', paidTo: 'Sunil', series: 'G', no: '7', transactionDate: '2026-02-13', account: 'Cash', amount: 3000, narration: '', chequeNumber: '', chequeDate: '', currentInstallment: 3, paidUpTo: '2026-01', auctionOn: '2026-01-18', installmentMonth: 'Jan 2026', chitAmount: 3000, companyCommission: 30, bidAmount: 3050, bidPayable: 3020, bpAdjustment: 0, advanceAdjustment: 0, paidAmount: 3020, netPayable: 3020 },
-    { id: 8, groupName: 'Group H', ticketNo: '808', paidTo: 'Geeta', series: 'H', no: '8', transactionDate: '2026-02-15', account: 'Bank', amount: 4500, narration: '', chequeNumber: '', chequeDate: '', currentInstallment: 5, paidUpTo: '2026-01', auctionOn: '2026-01-20', installmentMonth: 'Jan 2026', chitAmount: 4500, companyCommission: 45, bidAmount: 4550, bidPayable: 4505, bpAdjustment: 0, advanceAdjustment: 0, paidAmount: 4505, netPayable: 4505 },
-    { id: 9, groupName: 'Group I', ticketNo: '909', paidTo: 'Rohit', series: 'I', no: '9', transactionDate: '2026-02-17', account: 'Cash', amount: 7000, narration: '', chequeNumber: '', chequeDate: '', currentInstallment: 6, paidUpTo: '2026-01', auctionOn: '2026-02-05', installmentMonth: 'Feb 2026', chitAmount: 7000, companyCommission: 70, bidAmount: 7050, bidPayable: 6980, bpAdjustment: 0, advanceAdjustment: 0, paidAmount: 6980, netPayable: 6980 },
-    { id: 10, groupName: 'Group J', ticketNo: '1001', paidTo: 'Sunita', series: 'J', no: '10', transactionDate: '2026-02-19', account: 'Bank', amount: 9500, narration: '', chequeNumber: 'CHK004', chequeDate: '2026-02-19', currentInstallment: 9, paidUpTo: '2026-02', auctionOn: '2026-01-22', installmentMonth: 'Feb 2026', chitAmount: 9500, companyCommission: 95, bidAmount: 9600, bidPayable: 9505, BPAdjustment: 0, advanceAdjustment: 0, paidAmount: 9505, netPayable: 9505 }
-  ];
-
-  filteredPayments: any[] = [...this.payments];
-
+  isLoadingTable = false;
+  
+  payments: any[] = [];
+  filteredPayments: any[] = [];
   newPayment: any = {};
 
-  constructor() {}
+  completedAuctions: AuctionDropdownItem[] = [];
+  selectedAuctionId: number | null = null;
+  isLoadingForm = false;
+
+  constructor(
+    private bidPaymentService: BidPaymentsService,
+    private auctionsService: AuctionsService,
+    private enrollmentsService: EnrollmentsService
+  ) {}
 
   ngOnInit(): void {}
 
-  toggleForm() {
-    this.showForm = !this.showForm;
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.loadData();
+    }, 0);
   }
 
-  filterPayments() {
-    const q = (this.searchTerm || '').toLowerCase();
-    this.filteredPayments = this.payments.filter(p => {
-      return (
-        !q ||
-        (p.groupName && p.groupName.toLowerCase().includes(q)) ||
-        (p.ticketNo && p.ticketNo.toLowerCase().includes(q)) ||
-        (p.paidTo && p.paidTo.toLowerCase().includes(q))
-      );
+  toggleForm() {
+    this.showForm = !this.showForm;
+    if (this.showForm) {
+      this.newPayment = {}; 
+      this.selectedAuctionId = null;
+    }
+  }
+
+  loadData() {
+    this.isLoadingTable = true;
+
+    forkJoin({
+      payoutsRes: this.bidPaymentService.getPayments(),
+      auctionsRes: this.auctionsService.listAuctions(),
+      chitGroupsRes: this.auctionsService.listChitGroups(),
+      enrollmentsRes: this.enrollmentsService.getEnrollments()
+    }).subscribe({
+      next: ({ payoutsRes, auctionsRes, chitGroupsRes, enrollmentsRes }) => {
+        this.isLoadingTable = false;
+
+        const payouts = payoutsRes?.data || [];
+        const auctions = auctionsRes?.data || [];
+        
+        // EXPLICIT ANY CAST TO BYPASS TYPESCRIPT STRICTNESS
+        const chitGroups: any[] = (chitGroupsRes?.data as any[]) || []; 
+        const enrollments = enrollmentsRes?.data || [];
+
+        const auctionMap = new Map(auctions.map(a => [a.id, a]));
+        // EXPLICIT MAP TYPING
+        const chitGroupMap = new Map<number, any>(chitGroups.map(g => [g.id, g]));
+        const enrollmentMap = new Map(enrollments.map(e => [e.id, e]));
+
+        const auctionPayouts = payouts.filter(p => p.payoutType === 'auction_winner_payout');
+        
+        this.payments = auctionPayouts.map(p => {
+          const matchedAuction = auctionMap.get(p.auctionId);
+          const matchedEnrollment = enrollmentMap.get(p.enrollmentId);
+          const matchedChitGroup = chitGroupMap.get(matchedAuction?.chitGroupId || matchedEnrollment?.chitGroupId || 0);
+
+          const memberName = matchedEnrollment?.memberName || 'Unknown Member';
+          const series = matchedChitGroup?.chitSeries || matchedAuction?.auctionNumber?.toString() || 'N/A';
+
+          return {
+            id: p.id,
+            groupName: matchedAuction?.groupName || matchedChitGroup?.name || `Group (Auction #${p.auctionId})`,
+            ticketNo: matchedEnrollment ? `T${String(matchedEnrollment.ticketNo).padStart(3, '0')}` : `ID: ${p.enrollmentId}`,
+            paidTo: memberName,
+            series,
+            no: p.voucherNo || p.payoutNo || p.id || 'N/A',
+            transactionDate: p.paidDate || p.scheduledDate,
+            account: p.account || p.paymentMode || 'Cash',
+            amount: p.amountGross || p.amount || p.paidAmount || 0,
+            narration: p.narration || '',
+            chequeNumber: p.chequeNumber || p.chequeNo || '',
+            chequeDate: p.chequeDate || null,
+            currentInstallment: p.currentInstallment || matchedAuction?.installmentNo || 0,
+            paidUpTo: p.paidUpTo || p.paidInstallments || 0,
+            auctionOn: matchedAuction?.auctionDate || '',
+            installmentMonth: p.installmentMonth || p.installmentMonthYear || matchedAuction?.installmentDueDate || '',
+            chitAmount: matchedAuction?.chitAmount || matchedChitGroup?.chitAmount || 0,
+            companyCommission: p.companyCommission || matchedAuction?.companyCommissionPct || matchedChitGroup?.companyCommission || 0,
+            bidAmount: p.bidAmount || matchedAuction?.winningBidAmount || 0,
+            bidPayable: p.bidPayable || p.amountNet || 0,
+            bpAdjustment: p.bpAdjustment || 0,
+            advanceAdjustment: p.advanceAdjustment || 0,
+            paidAmount: p.amountNet || p.paidAmount || p.amount || 0,
+            netPayable: p.netPayable || p.amountNet || 0
+          };
+        });
+
+        this.filteredPayments = [...this.payments];
+
+        this.completedAuctions = auctions
+          .filter(a => a.winningBidId != null) 
+          .map(a => {
+            const e = enrollmentMap.get(a.winnerEnrollmentId!);
+            const memberName = e?.memberName || 'Unknown Member';
+            
+            return {
+              ...a,
+              memberName: memberName,
+              ticketString: e ? `T${String(e.ticketNo).padStart(3, '0')}` : ''
+            };
+          });
+      },
+      error: (err) => {
+        this.isLoadingTable = false;
+        console.error('Error fetching relational data', err);
+      }
     });
   }
 
-  validationErrors: { [key: string]: boolean } = {};
+  filterPayments() {
+    if (!this.searchTerm) {
+      this.filteredPayments = [...this.payments];
+      return;
+    }
+    const lower = this.searchTerm.toLowerCase();
+    this.filteredPayments = this.payments.filter(p => 
+      (p.groupName && p.groupName.toLowerCase().includes(lower)) || 
+      (p.paidTo && p.paidTo.toLowerCase().includes(lower)) ||
+      (p.ticketNo && p.ticketNo.toLowerCase().includes(lower))
+    );
+  }
+
+  onAuctionSelect() {
+    if (!this.selectedAuctionId) {
+      this.newPayment = {};
+      return;
+    }
+
+    this.isLoadingForm = true;
+    this.bidPaymentService.getBidPaymentDetails(this.selectedAuctionId).subscribe({
+      next: (res) => {
+        this.isLoadingForm = false;
+        if (res && res.success && res.data) {
+          this.newPayment = res.data;
+        } else {
+          alert('Failed to load details: ' + (res?.message || 'Unknown error'));
+          this.selectedAuctionId = null;
+        }
+      },
+      error: (err) => {
+        this.isLoadingForm = false;
+        alert('Server error loading auction details.');
+      }
+    });
+  }
 
   savePayment() {
-    this.validationErrors = {};
-    let isValid = true;
-
-    if (!this.newPayment.groupName?.trim()) { this.validationErrors['groupName'] = true; isValid = false; }
-    if (!this.newPayment.ticketNo?.trim()) { this.validationErrors['ticketNo'] = true; isValid = false; }
-    if (!this.newPayment.amount || isNaN(parseFloat(this.newPayment.amount))) { this.validationErrors['amount'] = true; isValid = false; }
-
-    if (!isValid) {
-      alert("Please fill in the highlighted required fields.");
+    if (!this.selectedAuctionId) {
+      alert('Please select an auction to disburse first.');
       return;
     }
 
     const amt = parseFloat(this.newPayment.amount) || 0;
-    
-    // parse other numeric fields if present
-    ['chitAmount','companyCommission','bidAmount','bidPayable','bpAdjustment','advanceAdjustment','paidAmount','netPayable'].forEach(f=>{
-      if(this.newPayment[f]!==undefined) this.newPayment[f]=parseFloat(this.newPayment[f])||0;
+    if (!amt || isNaN(amt)) {
+      alert('Paid Amount must be numeric and greater than zero.');
+      return;
+    }
+
+    this.newPayment.bpAdjustment = parseFloat(this.newPayment.bpAdjustment) || 0;
+    this.newPayment.advanceAdjustment = parseFloat(this.newPayment.advanceAdjustment) || 0;
+
+    this.bidPaymentService.processPayment(this.newPayment).subscribe({
+      next: (res: any) => {
+        if (res && res.success === false) {
+          alert('Failed to save: ' + res.message);
+          return;
+        }
+        alert('Payment disbursed and recorded successfully!');
+        this.showForm = false;
+        this.loadData(); 
+      },
+      error: (err) => {
+        console.error('Save failed', err);
+        alert('Failed to connect to backend.');
+      }
     });
-    const entry = { ...this.newPayment, id: Date.now(), amount: amt, paidAmount: amt, netPayable: amt };
-    this.payments.unshift(entry);
-    this.newPayment = {};
-    this.showForm = false;
-    this.filterPayments();
-    alert('Payment recorded');
   }
 }

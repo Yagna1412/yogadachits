@@ -24,29 +24,67 @@
     </div>
 
     <div class="table-wrapper">
-      <table class="table" *ngIf="filteredPayments.length">
+      <div *ngIf="isLoadingTable" style="padding: 20px; text-align: center; color: gray;">
+        Loading records...
+      </div>
+      
+      <table class="table" *ngIf="!isLoadingTable && filteredPayments.length > 0">
         <thead>
           <tr>
-            <th>Group</th>
-            <th>Ticket</th>
+            <th>Group Name</th>
+            <th>Ticket No</th>
             <th>Paid To</th>
+            <th>Series</th>
+            <th>No</th>
             <th>Transaction Date</th>
+            <th>Cash/Bank A/C</th>
             <th>Amount</th>
+            <th>Narration</th>
+            <th>Cheque No</th>
+            <th>Cheque Date</th>
+            <th>Current Installment No</th>
+            <th>Paid Up To</th>
+            <th>Auction On</th>
+            <th>Installment Month & Year</th>
+            <th>Chit Amount</th>
+            <th>Company Commission</th>
+            <th>Bid Amount</th>
+            <th>Bid Payable</th>
+            <th>BP Adjustment</th>
+            <th>Advance Adjustment</th>
             <th>Paid Amount</th>
+            <th>Net Payable</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let p of filteredPayments">
             <td>{{p.groupName}}</td>
-            <td>{{p.ticketNo}}</td>
-            <td>{{p.paidTo}}</td>
-            <td>{{p.transactionDate}}</td>
-            <td>{{p.amount}}</td>
-            <td>{{p.paidAmount}}</td>
+            <td><span class="badge" style="background: #eef2ff; color: #2b5cff; padding: 4px 8px; border-radius: 4px; font-weight: bold;">{{p.ticketNo}}</span></td>
+            <td style="font-weight: 500;">{{p.paidTo}}</td>
+            <td>{{p.series}}</td>
+            <td>{{p.no}}</td>
+            <td>{{p.transactionDate | date:'dd-MM-yyyy'}}</td>
+            <td>{{p.account}}</td>
+            <td>{{p.amount | currency:'INR':'symbol':'1.0-0'}}</td>
+            <td>{{p.narration}}</td>
+            <td>{{p.chequeNumber}}</td>
+            <td>{{p.chequeDate ? (p.chequeDate | date:'dd-MM-yyyy') : ''}}</td>
+            <td>{{p.currentInstallment}}</td>
+            <td>{{p.paidUpTo}}</td>
+            <td>{{p.auctionOn ? (p.auctionOn | date:'dd-MM-yyyy') : ''}}</td>
+            <td>{{p.installmentMonth}}</td>
+            <td>{{p.chitAmount | currency:'INR':'symbol':'1.0-0'}}</td>
+            <td>{{p.companyCommission | currency:'INR':'symbol':'1.0-0'}}</td>
+            <td>{{p.bidAmount | currency:'INR':'symbol':'1.0-0'}}</td>
+            <td>{{p.bidPayable | currency:'INR':'symbol':'1.0-0'}}</td>
+            <td>{{p.bpAdjustment | currency:'INR':'symbol':'1.0-0'}}</td>
+            <td>{{p.advanceAdjustment | currency:'INR':'symbol':'1.0-0'}}</td>
+            <td style="color: green; font-weight: bold;">{{p.paidAmount | currency:'INR':'symbol':'1.0-0'}}</td>
+            <td>{{p.netPayable | currency:'INR':'symbol':'1.0-0'}}</td>
           </tr>
         </tbody>
       </table>
-      <div class="empty-state" *ngIf="!filteredPayments.length">
+      <div class="empty-state" *ngIf="!isLoadingTable && filteredPayments.length === 0">
         <p>No bid payments found. Click "Add Bid Payment" to create one.</p>
       </div>
     </div>
@@ -55,129 +93,130 @@
   <div class="add-entry-form" *ngIf="showForm">
     <div class="form-card">
       <div class="form-header">
-        <h2>Add Bid Payment</h2>
+        <h2>Add Bid Payment (Disbursement)</h2>
         <button class="close-btn" (click)="toggleForm()">×</button>
       </div>
       <div class="form-body">
+        
         <div class="form-row">
-          <div class="form-group">
-            <label>Group Name <span class="text-danger">*</span></label>
-            <input class="form-control" [(ngModel)]="newPayment.groupName" [class.is-invalid]="validationErrors['groupName']" />
-          </div>
-          <div class="form-group">
-            <label>Ticket No <span class="text-danger">*</span></label>
-            <input class="form-control" [(ngModel)]="newPayment.ticketNo" [class.is-invalid]="validationErrors['ticketNo']" />
+          <div class="form-group" style="width: 100%;">
+            <label style="color: #2b5cff; font-weight: bold;">Step 1: Select Completed Auction to Disburse</label>
+            <select class="form-control" [(ngModel)]="selectedAuctionId" (change)="onAuctionSelect()">
+              <option [ngValue]="null">-- Select a Winner --</option>
+              <option *ngFor="let a of completedAuctions" [ngValue]="a.id">
+                {{ a.groupName }} | {{ a.memberName }} ({{ a.ticketString }}) | Auction #{{ a.auctionNumber }}
+              </option>
+            </select>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Paid To</label>
-            <input class="form-control" [(ngModel)]="newPayment.paidTo" />
+        
+        <p *ngIf="isLoadingForm" style="color: gray; margin-top: 10px;">Loading calculations from server...</p>
+
+        <div *ngIf="selectedAuctionId && !isLoadingForm">
+          <hr/>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Group Name</label>
+              <input class="form-control" [value]="newPayment.groupName" disabled />
+            </div>
+            <div class="form-group">
+              <label>Ticket No</label>
+              <input class="form-control" [value]="newPayment.ticketNo" disabled />
+            </div>
           </div>
-          <div class="form-group">
-            <label>Series</label>
-            <input class="form-control" [(ngModel)]="newPayment.series" />
+          <div class="form-row">
+            <div class="form-group">
+              <label>Paid To</label>
+              <input class="form-control" [value]="newPayment.paidTo" disabled />
+            </div>
+            <div class="form-group">
+              <label>Series</label>
+              <input class="form-control" [value]="newPayment.series" disabled />
+            </div>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Current Installment No</label>
+              <input class="form-control" [value]="newPayment.currentInstallment" disabled />
+            </div>
+            <div class="form-group">
+              <label>Installment Month & Year</label>
+              <input class="form-control" [value]="newPayment.installmentMonth" disabled />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Chit Amount</label>
+              <input class="form-control" [value]="newPayment.chitAmount" disabled />
+            </div>
+            <div class="form-group">
+              <label>Bid Amount</label>
+              <input class="form-control" [value]="newPayment.bidAmount" disabled />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Company Commission</label>
+              <input class="form-control" [value]="newPayment.companyCommission" disabled />
+            </div>
+            <div class="form-group">
+              <label>Net Payable (Before Adjustments)</label>
+              <input class="form-control" [value]="newPayment.netPayable" disabled style="font-weight: bold; color: green;"/>
+            </div>
+          </div>
+
+          <hr/>
+          <h4 style="margin-bottom: 10px;">Payment Details</h4>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Cash/Bank A/C</label>
+              <select class="form-control" [(ngModel)]="newPayment.account">
+                <option value="Cash">Cash</option>
+                <option value="Bank">Bank Transfer / Cheque</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Final Paid Amount</label>
+              <input class="form-control" type="number" [(ngModel)]="newPayment.amount" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Transaction Date</label>
+              <input class="form-control" type="date" [(ngModel)]="newPayment.transactionDate" />
+            </div>
+             <div class="form-group">
+              <label>Narration / Notes</label>
+              <input class="form-control" [(ngModel)]="newPayment.narration" placeholder="e.g. Cleared pending dues" />
+            </div>
+          </div>
+          <div class="form-row" *ngIf="newPayment.account === 'Bank'">
+            <div class="form-group">
+              <label>Cheque / Reference No</label>
+              <input class="form-control" [(ngModel)]="newPayment.chequeNumber" />
+            </div>
+            <div class="form-group">
+              <label>Cheque Date</label>
+              <input class="form-control" type="date" [(ngModel)]="newPayment.chequeDate" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>BP Adjustment (Deductions)</label>
+              <input class="form-control" type="number" [(ngModel)]="newPayment.bpAdjustment" />
+            </div>
+            <div class="form-group">
+              <label>Advance Adjustment</label>
+              <input class="form-control" type="number" [(ngModel)]="newPayment.advanceAdjustment" />
+            </div>
+          </div>
+          
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>No</label>
-            <input class="form-control" [(ngModel)]="newPayment.no" />
-          </div>
-          <div class="form-group">
-            <label>Transaction Date</label>
-            <input class="form-control" type="date" [(ngModel)]="newPayment.transactionDate" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Cash/Bank A/C</label>
-            <input class="form-control" [(ngModel)]="newPayment.account" />
-          </div>
-          <div class="form-group">
-            <label>Amount <span class="text-danger">*</span></label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.amount" [class.is-invalid]="validationErrors['amount']" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Narration</label>
-            <input class="form-control" [(ngModel)]="newPayment.narration" />
-          </div>
-          <div class="form-group">
-            <label>Cheque No</label>
-            <input class="form-control" [(ngModel)]="newPayment.chequeNumber" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Cheque Date</label>
-            <input class="form-control" type="date" [(ngModel)]="newPayment.chequeDate" />
-          </div>
-          <div class="form-group">
-            <label>Current Installment No</label>
-            <input class="form-control" [(ngModel)]="newPayment.currentInstallment" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Paid Up To</label>
-            <input class="form-control" [(ngModel)]="newPayment.paidUpTo" />
-          </div>
-          <div class="form-group">
-            <label>Auction On</label>
-            <input class="form-control" [(ngModel)]="newPayment.auctionOn" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Installment Month & Year</label>
-            <input class="form-control" [(ngModel)]="newPayment.installmentMonth" />
-          </div>
-          <div class="form-group">
-            <label>Chit Amount</label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.chitAmount" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Company Commission</label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.companyCommission" />
-          </div>
-          <div class="form-group">
-            <label>Bid Amount</label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.bidAmount" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Bid Payable</label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.bidPayable" />
-          </div>
-          <div class="form-group">
-            <label>BP Adjustment</label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.bpAdjustment" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Advance Adjustment</label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.advanceAdjustment" />
-          </div>
-          <div class="form-group">
-            <label>Paid Amount</label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.paidAmount" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Net Payable</label>
-            <input class="form-control" type="number" [(ngModel)]="newPayment.netPayable" />
-          </div>
-        </div>
+
         <div class="form-footer">
           <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
-          <button class="btn btn-primary" (click)="savePayment()">Save</button>
+          <button class="btn btn-primary" [disabled]="!selectedAuctionId" (click)="savePayment()">Save & Disburse</button>
         </div>
       </div>
     </div>

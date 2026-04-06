@@ -8,6 +8,7 @@ import {
   AuctionsService,
   AuctionResponse,
   AuctionBidResponse,
+  AuctionSessionResponse,
   EnrollmentResponse,
   ChitGroupDto,
   ApiResponse,
@@ -113,37 +114,73 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.stopTimer();
+    this.stopLocalTimer();
+    this.svc.disconnectFromAuction();
   }
 
   startAuction(): void {
-    if (this.isTimerRunning) return;
-    this.isTimerRunning = true;
-    this.auctionLocked = false;
-    this.timerValue = 180; // 3 mins default
-    this.cdr.detectChanges();
-    
-    this.timerInterval = setInterval(() => {
-      if (this.timerValue > 0) {
-        this.timerValue--;
-        this.cdr.detectChanges();
-      } else {
-        this.stopAuction();
+    if (this.isTimerRunning || !this.selected) return;
+    this.svc.startAuction(this.selected.id).subscribe({
+      next: (res) => {
+        if (res.data) {
+          this.handleSessionUpdate(res.data);
+        }
       }
-    }, 1000);
+    });
   }
 
   stopAuction(): void {
-    this.stopTimer();
+    this.stopLocalTimer();
     this.isTimerRunning = false;
     this.auctionLocked = true;
     this.cdr.detectChanges();
   }
 
-  private stopTimer(): void {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-    }
+  handleSessionUpdate(session: AuctionSessionResponse): void {
+      if (session.sessionStatus === 'live') {
+          this.timerValue = session.remainingSeconds;
+          this.isTimerRunning = true;
+          this.auctionLocked = false;
+          this.startLocalTimer();
+      } else {
+          this.timerValue = session.remainingSeconds; // might be 0
+          this.isTimerRunning = false;
+          this.auctionLocked = true;
+          this.stopLocalTimer();
+      }
+      this.cdr.detectChanges();
+  }
+
+  handleBidUpdate(bid: AuctionBidResponse): void {
+      const row = this.bids.find(b => b.enrollmentId === bid.enrollmentId);
+      if (row) {
+          row.bidAmount = bid.bidAmount;
+          row.bidId = bid.id;
+          row.channel = bid.channel;
+          this.recalculate();
+      }
+  }
+
+  private startLocalTimer(): void {
+      this.stopLocalTimer();
+      this.timerInterval = setInterval(() => {
+          if (this.timerValue > 0) {
+              this.timerValue--;
+              this.cdr.detectChanges();
+          } else {
+              this.stopLocalTimer();
+              this.isTimerRunning = false;
+              this.auctionLocked = true;
+              this.cdr.detectChanges();
+          }
+      }, 1000);
+  }
+
+  private stopLocalTimer(): void {
+      if (this.timerInterval) {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+      }
   }
 
   get formattedTimer(): string {
@@ -230,6 +267,16 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
           this.header.totalMembers = this.bids.length;
           
           if (bids.length) { this.recalculate(); }
+          
+          this.svc.connectToAuction(
+              first.id,
+              (session) => this.handleSessionUpdate(session),
+              (bid) => this.handleBidUpdate(bid)
+          );
+          
+          this.svc.getAuctionSession(first.id).subscribe(res => {
+              if (res.data) this.handleSessionUpdate(res.data);
+          });
         }
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -288,6 +335,17 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.bids = this.buildRows(enrollments.data ?? [], bids.data ?? []);
         this.header.totalMembers = this.bids.length;
         if ((bids.data ?? []).length) { this.recalculate(); }
+
+        this.svc.connectToAuction(
+            item.id,
+            (session) => this.handleSessionUpdate(session),
+            (bid) => this.handleBidUpdate(bid)
+        );
+
+        this.svc.getAuctionSession(item.id).subscribe(res => {
+            if (res.data) this.handleSessionUpdate(res.data);
+        });
+
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -317,10 +375,7 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (res: ApiResponse<AuctionBidResponse>) => {
         this.isSubmittingBid = false;
         if (res.data) {
-          bid.bidId  = res.data.id;
-          bid.status = 'Bid Paid';
-          this.recalculate();
-          this.cdr.detectChanges();
+          // No need to manually update and recalculate row since WebSocket push will handle it globally
         } else {
           this.errorMessage = res.message ?? 'Bid rejected — must be lower than current lowest bid.';
         }

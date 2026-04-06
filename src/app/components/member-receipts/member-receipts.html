@@ -1,4 +1,3 @@
-<!-- Page Header -->
 <div class="page-header">
   <div class="header-left">
     <h1 class="page-title">Member Receipts</h1>
@@ -11,32 +10,40 @@
     </nav>
   </div>
 </div>
-<!-- Bid Entry Section -->
+
 <div class="bid-entry-container">
   <div class="bid-entry-wrapper">
-    <!-- Bid Entry Form -->
     <div class="bid-entry-form">
-      <h2 class="section-title">Bid Entry</h2>
+      <h2 class="section-title">Member Receipt Entry</h2>
       
       <div class="form-grid">
-        <!-- Select Member -->
         <div class="form-group">
-          <label class="form-label">Select Member <span class="text-danger">*</span></label>
-          <select class="form-control" [(ngModel)]="newReceipt.member">
-            <option value="">-- Select Member --</option>
-            <option value="Rajesh Kumar">Rajesh Kumar (MEM001)</option>
-            <option value="Priya Sharma">Priya Sharma (MEM002)</option>
-            <option value="Amit Patel">Amit Patel (MEM003)</option>
+          <label class="form-label">Select Enrollment (Member + Chit Group)</label>
+          <select class="form-control" [(ngModel)]="newReceipt.enrollmentId" (ngModelChange)="onEnrollmentSelected($event)">
+            <option [ngValue]="null">-- Select --</option>
+            <option *ngFor="let e of enrollments" [ngValue]="e.id">
+              {{ e.memberName || getMemberName(e.memberId) || 'Unknown member' }} - {{ e.chitGroupName || getGroupName(e.chitGroupId) || 'Unknown group' }} - T{{ e.ticketNo || '-' }}
+            </option>
+          </select>
+          <div class="helper-text" *ngIf="isLoadingEnrollments || isLoadingMembers || isLoadingChitGroups">
+            Loading members/enrollments/chit groups...
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Receipt Type</label>
+          <select class="form-control" [(ngModel)]="newReceipt.receiptType">
+            <option value="Daily">Daily</option>
+            <option value="Advance">Advance</option>
+            <option value="Future">Future</option>
           </select>
         </div>
 
-        <!-- Amount -->
         <div class="form-group">
-          <label class="form-label">Amount (₹) <span class="text-danger">*</span></label>
+          <label class="form-label">Amount (₹)</label>
           <input type="number" class="form-control" placeholder="Enter Amount" [(ngModel)]="newReceipt.amount" />
         </div>
 
-        <!-- Payment Mode -->
         <div class="form-group">
           <label class="form-label">Payment Mode</label>
           <select class="form-control" [(ngModel)]="newReceipt.paymentMode">
@@ -46,123 +53,133 @@
             <option value="Bank Transfer">Bank Transfer</option>
           </select>
         </div>
+
+        <ng-container *ngIf="newReceipt.paymentMode === 'Cheque'">
+          <div class="form-group">
+            <label class="form-label">Bank Name</label>
+            <input type="text" class="form-control" placeholder="e.g., SBI" [(ngModel)]="newReceipt.bankName" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cheque No</label>
+            <input type="text" class="form-control" placeholder="6-digit Cheque No" [(ngModel)]="newReceipt.instrumentNo" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cheque Date</label>
+            <input type="date" class="form-control" [(ngModel)]="newReceipt.instrumentDate" />
+          </div>
+        </ng-container>
       </div>
 
-      <!-- Member Details Section -->
-      <div class="member-details">
+      <div class="member-details" *ngIf="selectedEnrollment">
         <div class="detail-item">
-          <span class="detail-label">Total Members</span>
-          <span class="detail-value">Golden Circle 2024</span>
+          <span class="detail-label">Member</span>
+          <span class="detail-value">{{ selectedEnrollment.memberName || getMemberName(selectedEnrollment.memberId) || 'Unknown' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Group</span>
+          <span class="detail-value">{{ selectedEnrollment.chitGroupName || getGroupName(selectedEnrollment.chitGroupId) || 'Unknown' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Ticket Number</span>
-          <span class="detail-value">T001</span>
+          <span class="detail-value">{{ selectedEnrollment.ticketNo ? ('T' + selectedEnrollment.ticketNo) : 'N/A' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Net Due</span>
-          <span class="detail-value">₹25,000</span>
+          <span class="detail-value">₹ {{ totalDue | number:'1.2-2' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Arrears</span>
-          <span class="detail-value">₹0</span>
+          <span class="detail-value">₹ {{ arrears | number:'1.2-2' }}</span>
+        </div>
+      </div>
+      <div class="member-details" *ngIf="!selectedEnrollment">
+        <div class="detail-item">
+          <span class="detail-label">Member</span>
+          <span class="detail-value">Please select enrollment</span>
         </div>
       </div>
 
-      <!-- Action Buttons -->
       <div class="button-group">
-        <button class="btn btn-ghost" (click)="saveAndPrintReceipt()">Save & Print Receipt</button>
+        <button class="btn btn-ghost">Save & Print Receipt</button>
         <button class="btn btn-primary" (click)="saveReceipt()">Save Receipt</button>
       </div>
     </div>
 
-    <!-- Today's Collection Card -->
     <div class="today-collection">
       <h2 class="section-title">Today's Collection</h2>
       
       <div class="collection-amount">
         <span class="currency-symbol">₹</span>
-        <span class="amount-value">5,00,000</span>
+        <span class="amount-value">{{ todayKpi.totalCollection | number:'1.2-2' }}</span>
       </div>
 
       <div class="collection-breakdown">
         <div class="breakdown-item">
           <span class="breakdown-label">Cash</span>
-          <span class="breakdown-value">₹5,00,000</span>
+          <span class="breakdown-value">₹{{ todayKpi.cash | number:'1.2-2' }}</span>
         </div>
         <div class="breakdown-item">
           <span class="breakdown-label">UPI</span>
-          <span class="breakdown-value">₹5,00,000</span>
+          <span class="breakdown-value">₹{{ todayKpi.upi | number:'1.2-2' }}</span>
         </div>
         <div class="breakdown-item">
           <span class="breakdown-label">Cheque</span>
-          <span class="breakdown-value">₹5,00,000</span>
+          <span class="breakdown-value">₹{{ todayKpi.cheque | number:'1.2-2' }}</span>
         </div>
         <div class="breakdown-item">
           <span class="breakdown-label">Bank Transfer</span>
-          <span class="breakdown-value">₹5,00,000</span>
+          <span class="breakdown-value">₹{{ todayKpi.bankTransfer | number:'1.2-2' }}</span>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Bid Entry Table Section -->
 <div class="bid-entry-table-section">
   <div class="bid-inner">
     <div class="table-header">
-    <h2 class="section-title">Bid Entry</h2>
-    <div class="table-controls">
-      <div class="search-box">
-        <span class="search-icon">
-          <img src="assets/images/icons/Search.png" alt="Search" />
-        </span>
-        <input type="text" class="search-input" placeholder="Search receipts" [(ngModel)]="searchTerm" (input)="filterReceipts()" />
-        <span class="search-shortcut">Ctrl Shift K</span>
+      <h2 class="section-title">Member Receipt List</h2>
+      <div class="table-controls">
+        <div class="search-box">
+          <span class="search-icon">
+            <img src="assets/images/icons/Search.png" alt="Search" />
+          </span>
+          <input type="text" class="search-input" placeholder="Search receipts" [(ngModel)]="searchTerm" (input)="filterReceipts()" />
+          <span class="search-shortcut">Ctrl Shift K</span>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="table-wrapper">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Receipt ID</th>
-          <th>Member</th>
-          <th>Group</th>
-          <th>Amount</th>
-          <th>Payment Mode</th>
-          <th>Date</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let receipt of filteredReceipts">
-          <td>{{ receipt.id }}</td>
-          <td>{{ receipt.member }}</td>
-          <td>{{ receipt.group }}</td>
-          <td>{{ receipt.amount }}</td>
-          <td>{{ receipt.paymentMode }}</td>
-          <td>{{ receipt.date }}</td>
-          <td>
-            <div class="action-icons">
-              <button class="icon-btn" title="View" (click)="viewReceipt(receipt.id)">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              </button>
-              <button class="icon-btn" title="Print" (click)="printReceipt(receipt.id)">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                  <rect x="6" y="14" width="12" height="8"></rect>
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Receipt ID</th>
+            <th>Member</th>
+            <th>Group</th>
+            <th>Amount</th>
+            <th>Payment Mode</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let receipt of filteredReceipts">
+            <td>{{ receipt.receiptNo }}</td>
+            <td>{{ receipt.memberName }}</td>
+            <td>{{ receipt.groupName }}</td>
+            <td>₹ {{ receipt.amount | number:'1.2-2' }}</td>
+            <td>{{ receipt.paymentMode | uppercase }}</td>
+            <td>{{ receipt.entryDate | date:'medium' }}</td>
+            <td>
+              <div class="action-icons">
+                <button class="icon-btn" title="View">...</button>
+                <button class="icon-btn" title="Print">...</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
