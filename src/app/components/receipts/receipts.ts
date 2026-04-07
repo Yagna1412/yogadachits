@@ -27,6 +27,19 @@ export class ReceiptsComponent implements OnInit, AfterViewInit {
 
   receipts: any[] = []; 
   filteredReceipts: any[] = [];
+  paginatedReceipts: any[] = [];
+
+  // Pagination
+  currentPage: number = 1;
+  pageSize: number = 10;
+  totalPages: number = 1;
+
+  // Sorting
+  sortColumn: string = 'receiptDate';
+  sortDirection: 'asc' | 'desc' = 'desc';
+
+  isLoading: boolean = false;
+  Math = Math;
 
   enrollments: EnrollmentResponse[] = [];
   members: MemberResponse[] = [];
@@ -97,10 +110,12 @@ export class ReceiptsComponent implements OnInit, AfterViewInit {
           }));
           this.filterReceipts();
         }
+        this.isLoading = false;
       },
       error: (err) => {
         console.error('Error fetching receipts', err);
         this.errorMessage = 'Failed to load receipts from backend. Please ensure the server is running.';
+        this.isLoading = false;
       }
     });
   }
@@ -221,11 +236,15 @@ export class ReceiptsComponent implements OnInit, AfterViewInit {
   }
 
   filterReceipts(): void {
-    this.filteredReceipts = this.receipts.filter(r => {
-      const matchesSearch = !this.searchTerm ||
-        (r.groupName && r.groupName.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        (r.ticketNo && r.ticketNo.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        (r.subscriber && r.subscriber.toLowerCase().includes(this.searchTerm.toLowerCase()));
+    const searchStr = (this.searchTerm || '').trim().toLowerCase();
+
+    // 1. Filter
+    let result = this.receipts.filter(r => {
+      const matchesSearch = !searchStr ||
+        (r.groupName && r.groupName.toLowerCase().includes(searchStr)) ||
+        (r.ticketNo && r.ticketNo.toLowerCase().includes(searchStr)) ||
+        (r.receiptNo && r.receiptNo.toLowerCase().includes(searchStr)) ||
+        (r.subscriber && r.subscriber.toLowerCase().includes(searchStr));
 
       const matchesType = !this.searchType || r.type === this.searchType;
       const matchesDate = !this.searchDate || r.receiptDate === this.searchDate;
@@ -235,6 +254,94 @@ export class ReceiptsComponent implements OnInit, AfterViewInit {
 
       return matchesSearch && matchesType && matchesDate && matchesGroup && matchesSubscriber && matchesAgent;
     });
+
+    // 2. Sort
+    result.sort((a: any, b: any) => {
+      let valA = a[this.sortColumn];
+      let valB = b[this.sortColumn];
+
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    this.filteredReceipts = result;
+    this.updatePagination();
+  }
+
+  updatePagination(): void {
+    this.totalPages = Math.ceil(this.filteredReceipts.length / this.pageSize) || 1;
+    if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
+    
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    this.paginatedReceipts = this.filteredReceipts.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  toggleSort(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.filterReceipts();
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  prevPage(): void {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  getVisiblePages(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 3;
+    let start = Math.max(1, this.currentPage - 1);
+    let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - (maxVisible - 1));
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  viewReceipt(receipt: any): void {
+    this.selectReceipt(receipt);
+    // Logic to open a view modal could go here, for now using selectReceipt
+  }
+
+  printReceipt(receipt: any): void {
+    alert(`Printing Receipt: ${receipt.receiptNo}`);
+    // Real print logic would go here
+  }
+
+  deleteReceipt(id: number): void {
+    if (confirm('Are you sure you want to delete this receipt?')) {
+      this.receiptService.deleteReceipt(id).subscribe({
+        next: () => {
+          this.loadReceipts();
+        },
+        error: (err: any) => {
+          alert('Failed to delete receipt: ' + (err.error?.message || 'Server error'));
+        }
+      });
+    }
   }
 
   getMemberName(memberId?: number): string {

@@ -70,18 +70,36 @@
       <table class="table">
         <thead>
           <tr>
-            <th>Type</th>
-            <th>Group</th>
-            <th>Ticket</th>
-            <th>Date</th>
-            <th>Mode</th>
-            <th>Amount</th>
-            <th>Subscriber</th>
-            <th>Agent</th>
+            <th class="sortable" (click)="toggleSort('type')">
+              Type <span class="sort-icon" *ngIf="sortColumn === 'type'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('groupName')">
+              Group <span class="sort-icon" *ngIf="sortColumn === 'groupName'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('ticketNo')">
+              Ticket <span class="sort-icon" *ngIf="sortColumn === 'ticketNo'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('receiptDate')">
+              Date <span class="sort-icon" *ngIf="sortColumn === 'receiptDate'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('paymentMode')">
+              Mode <span class="sort-icon" *ngIf="sortColumn === 'paymentMode'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('amount')">
+              Amount <span class="sort-icon" *ngIf="sortColumn === 'amount'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('subscriber')">
+              Subscriber <span class="sort-icon" *ngIf="sortColumn === 'subscriber'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('agent')">
+              Agent <span class="sort-icon" *ngIf="sortColumn === 'agent'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of filteredReceipts" (click)="selectReceipt(r)" [class.selected-row]="selectedReceipt?.receiptNo === r.receiptNo">
+          <tr *ngFor="let r of paginatedReceipts" (click)="selectReceipt(r)"
+            [class.selected-row]="selectedReceipt?.receiptNo === r.receiptNo">
             <td>{{r.type}}</td>
             <td>{{r.groupName}}</td>
             <td>{{r.ticketNo}}</td>
@@ -90,9 +108,54 @@
             <td>{{r.amount}}</td>
             <td><a href="#" (click)="$event.preventDefault(); selectReceipt(r)">{{r.subscriber}}</a></td>
             <td>{{r.agent}}</td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button class="icon-btn view" (click)="$event.stopPropagation(); viewReceipt(r)" title="View">
+                  👁️
+                </button>
+                <button class="icon-btn print" (click)="$event.stopPropagation(); printReceipt(r)" title="Print">
+                  🖨️
+                </button>
+                <button class="icon-btn delete" (click)="$event.stopPropagation(); deleteReceipt(r.id)" title="Delete">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="paginatedReceipts.length === 0">
+            <td colspan="9" class="text-center">No receipts found matching the filters.</td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="filteredReceipts.length > 0">
+      <div class="pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredReceipts.length) }} of {{ filteredReceipts.length }} receipts
+      </div>
+      <div class="pagination-controls">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(1)">
+          <span>«</span> First
+        </button>
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="prevPage()">
+          <span>‹</span> Previous
+        </button>
+        <div class="page-numbers">
+          <button *ngFor="let page of getVisiblePages()" 
+                  class="page-number" 
+                  [class.active]="currentPage === page"
+                  (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </div>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+          Next <span>›</span>
+        </button>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)">
+          Last <span>»</span>
+        </button>
+      </div>
     </div>
 
     <div class="detail-card" *ngIf="selectedReceipt">
@@ -102,7 +165,8 @@
       <p><strong>Group:</strong> {{ selectedReceipt.groupName || 'N/A' }}</p>
       <p><strong>Enrollment ID:</strong> {{ selectedReceipt.enrollment?.id || 'N/A' }}</p>
       <p><strong>Ticket No:</strong> {{ selectedReceipt.enrollment?.ticketNo || 'N/A' }}</p>
-      <p><strong>Net Due:</strong> ₹{{ selectedReceipt.enrollment ? selectedReceipt.enrollment.dueAmount || '0.00' : '0.00' }}</p>
+      <p><strong>Net Due:</strong> ₹{{ selectedReceipt.enrollment ? selectedReceipt.enrollment.dueAmount || '0.00' :
+        '0.00' }}</p>
       <p><strong>Status:</strong> {{ selectedReceipt.paymentMode || 'N/A' }}</p>
     </div>
   </div>
@@ -135,7 +199,8 @@
                 <select class="form-control" [(ngModel)]="newReceipt.enrollmentId" name="enrollmentId">
                   <option [ngValue]="null">Select Enrollment</option>
                   <option *ngFor="let e of enrollments" [ngValue]="e.id">
-                    {{ e.memberName || getMemberName(e.memberId) || 'Unknown Member' }} - {{ e.chitGroupName || getGroupName(e.chitGroupId) || 'Unknown Group' }}
+                    {{ e.memberName || getMemberName(e.memberId) || 'Unknown Member' }} - {{ e.chitGroupName ||
+                    getGroupName(e.chitGroupId) || 'Unknown Group' }}
                   </option>
                 </select>
               </div>

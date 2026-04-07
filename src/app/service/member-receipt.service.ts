@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface MemberReceiptTableResponse {
+  id: number; // Added ID for delete action
   receiptNo: string;
   memberName: string;
   groupName: string;
@@ -77,5 +78,12 @@ export class MemberReceiptService {
       request, 
       this.getAuthHeaders() 
     ).pipe(map(response => response.message));
+  }
+
+  deleteReceipt(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(
+      `${this.apiUrl}/${id}`,
+      this.getAuthHeaders()
+    );
   }
 }

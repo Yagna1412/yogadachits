@@ -154,17 +154,29 @@
       <table class="table">
         <thead>
           <tr>
-            <th>Receipt ID</th>
-            <th>Member</th>
-            <th>Group</th>
-            <th>Amount</th>
-            <th>Payment Mode</th>
-            <th>Date</th>
+            <th class="sortable" (click)="toggleSort('receiptNo')">
+              Receipt ID <span class="sort-icon" *ngIf="sortColumn === 'receiptNo'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('memberName')">
+              Member <span class="sort-icon" *ngIf="sortColumn === 'memberName'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('groupName')">
+              Group <span class="sort-icon" *ngIf="sortColumn === 'groupName'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('amount')">
+              Amount <span class="sort-icon" *ngIf="sortColumn === 'amount'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('paymentMode')">
+              Payment Mode <span class="sort-icon" *ngIf="sortColumn === 'paymentMode'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
+            <th class="sortable" (click)="toggleSort('entryDate')">
+              Date <span class="sort-icon" *ngIf="sortColumn === 'entryDate'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+            </th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let receipt of filteredReceipts">
+          <tr *ngFor="let receipt of paginatedReceipts">
             <td>{{ receipt.receiptNo }}</td>
             <td>{{ receipt.memberName }}</td>
             <td>{{ receipt.groupName }}</td>
@@ -172,14 +184,47 @@
             <td>{{ receipt.paymentMode | uppercase }}</td>
             <td>{{ receipt.entryDate | date:'medium' }}</td>
             <td>
-              <div class="action-icons">
-                <button class="icon-btn" title="View">...</button>
-                <button class="icon-btn" title="Print">...</button>
+              <div class="action-buttons">
+                <button class="icon-btn view" (click)="viewReceipt(receipt)" title="View">👁️</button>
+                <button class="icon-btn print" (click)="printReceipt(receipt)" title="Print">🖨️</button>
+                <button class="icon-btn delete" (click)="deleteReceipt(receipt.id)" title="Delete">🗑️</button>
               </div>
             </td>
           </tr>
+          <tr *ngIf="paginatedReceipts.length === 0">
+            <td colspan="7" class="text-center">No matching receipts found.</td>
+          </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="filteredReceipts.length > 0">
+      <div class="pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredReceipts.length) }} of {{ filteredReceipts.length }} receipts
+      </div>
+      <div class="pagination-controls">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(1)">
+          <span>«</span> First
+        </button>
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="prevPage()">
+          <span>‹</span> Previous
+        </button>
+        <div class="page-numbers">
+          <button *ngFor="let page of getVisiblePages()" 
+                  class="page-number" 
+                  [class.active]="currentPage === page"
+                  (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </div>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+          Next <span>›</span>
+        </button>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)">
+          Last <span>»</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>

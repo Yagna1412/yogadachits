@@ -77,4 +77,10 @@ export class ReceiptService {
       headers: this.getAuthHeaders()
     });
   }
+
+  deleteReceipt(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`, {
+      headers: this.getAuthHeaders()
+    });
+  }
 }
