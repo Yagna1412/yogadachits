@@ -22,10 +22,13 @@ export class ChitGroupsService {
 
   private getHeaders(): { headers: HttpHeaders } {
     let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-Tenant-Id': '1'
     });
     if (isPlatformBrowser(this.platformId)) {
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken')
+              || localStorage.getItem('token')
+              || localStorage.getItem('auth_token');
       if (token) {
         headers = headers.set('Authorization', `Bearer ${token}`);
       }

@@ -20,6 +20,16 @@ export class LoginComponent {
 
   constructor(private router: Router, private authService: AuthService) { }
 
+  private extractToken(response: any): string | null {
+    return response?.token
+      || response?.accessToken
+      || response?.jwt
+      || response?.data?.token
+      || response?.data?.accessToken
+      || response?.data?.jwt
+      || null;
+  }
+
   setRole(role: 'Admin' | 'User') {
     this.selectedRole = role;
     this.errorMessage = ''; // Clear error when switching roles
@@ -41,12 +51,15 @@ export class LoginComponent {
 
     this.authService.login(credentials).subscribe({
       next: (response: any) => {
-        if (response && (response.token || response.success)) {
-          // Save token if present
-          if (response.token) {
-            localStorage.setItem('authToken', response.token);
+        const token = this.extractToken(response);
+
+        if (response && (token || response.success)) {
+          // Save token if present, and keep both keys for compatibility with existing services
+          if (token) {
+            localStorage.setItem('authToken', token);
+            localStorage.setItem('token', token);
           }
-          const route = this.selectedRole === 'Admin' ? '/admin/dashboard' : '/user/dashboard';
+          const route = this.selectedRole === 'Admin' ? '/admin/members' : '/user/dashboard';
           this.router.navigate([route]);
         } else {
           this.errorMessage = response?.message || 'Invalid credentials';
