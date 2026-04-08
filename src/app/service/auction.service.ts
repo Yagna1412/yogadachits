@@ -113,6 +113,12 @@ export class AuctionsService {
         );
     }
 
+    getAuctionById(auctionId: number): Observable<ApiResponse<AuctionResponse>> {
+        return this.http.get<ApiResponse<AuctionResponse>>(`${BASE}/auctions/${auctionId}`, this.getHeaders()).pipe(
+            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse>))
+        );
+    }
+
     connectToAuction(
         auctionId: number,
         onSessionUpdate: (session: AuctionSessionResponse) => void,
@@ -163,10 +169,13 @@ export class AuctionsService {
 
     private getHeaders(): { headers: HttpHeaders } {
         let headers = new HttpHeaders({
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Tenant-Id': '1'
         });
         if (isPlatformBrowser(this.platformId)) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken')
+                || localStorage.getItem('token')
+                || localStorage.getItem('auth_token');
             if (token) {
                 headers = headers.set('Authorization', `Bearer ${token}`);
             }

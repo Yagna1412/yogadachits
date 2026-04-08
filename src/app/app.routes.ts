@@ -85,6 +85,7 @@ import { OutstandingLocationsComponent } from './components/outstanding-location
 import { GroupWiseConsolidationReportComponent } from './components/group-wise-consolidation-report/group-wise-consolidation-report';
 import { BidPayableOsReportComponent } from './components/bid-payable-os-report/bid-payable-os-report';
 import { AuditLogComponent } from './components/audit-log/audit-log';
+import { AuctionDetailComponent } from './components/auction-detail/auction-detail';
 import { AuctionWiseOutstandingAccountsCompareReportComponent } from './components/auction-wise-outstanding-accounts-compare-report/auction-wise-outstanding-accounts-compare-report';
 import { AccountsOutstandingCompareReportComponent } from './components/accounts-outstanding-compare-report/accounts-outstanding-compare-report';
 import { GroupWiseOutstandingAccountsCompareReportComponent } from './components/group-wise-outstanding-accounts-compare-report/group-wise-outstanding-accounts-compare-report';
@@ -107,13 +108,14 @@ export const routes: Routes = [
     path: 'admin',
     component: AdminLayout,
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: '', redirectTo: 'members', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'members', component: MembersComponent },
       { path: 'agents-target-entry', component: AgentsTargetEntryComponent },
       { path: 'chit-groups', component: ChitGroupsComponent },
       { path: 'suit-file', component: SuitFileInfoComponent },
       { path: 'member-receipts', component: MemberReceiptsComponent },
+      { path: 'auctions/view/:auctionId', component: AuctionDetailComponent },
       { path: 'auctions', component: AuctionsComponent },
       { path: 're-auction', component: ReAuctionComponent },
       { path: 'check-management', component: CheckManagementComponent },

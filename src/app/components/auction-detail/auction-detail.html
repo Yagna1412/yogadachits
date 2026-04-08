@@ -1,0 +1,168 @@
+<div class="auction-detail-page">
+  <section class="hero-card">
+    <div class="hero-copy">
+      <span class="eyebrow">Auction Detail Page</span>
+      <h1>{{ selected ? (selected.groupName + ' - Auction #' + selected.auctionNumber) : 'Auction Detail' }}</h1>
+      <p>
+        Complete snapshot with auction metadata, settlement fields, session details, and member or bid records.
+      </p>
+    </div>
+
+    <div class="hero-actions">
+      <a routerLink="/admin/auctions" class="btn btn-secondary">Back to Auctions</a>
+      <button type="button" class="btn btn-primary" (click)="reload()" [disabled]="isLoading || !auctionId">
+        Refresh Details
+      </button>
+    </div>
+  </section>
+
+  <div class="error-banner" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <section class="loading-card" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <div>
+      <h3>Loading auction details...</h3>
+      <p>Fetching the auction snapshot, all member rows, and the latest session data.</p>
+    </div>
+  </section>
+
+  <ng-container *ngIf="!isLoading">
+    <ng-container *ngIf="selected as auction; else emptyState">
+      <section class="stats-grid" *ngIf="quickStats.length">
+        <article class="stat-card" *ngFor="let field of quickStats" [ngClass]="field.tone ? 'tone-' + field.tone : null">
+          <span class="stat-label">{{ field.label }}</span>
+          <strong class="stat-value">{{ field.value }}</strong>
+        </article>
+      </section>
+
+      <section class="section-card">
+        <div class="section-heading">
+          <h2>Auction Overview</h2>
+          <p>All core fields returned by the auction APIs.</p>
+        </div>
+
+        <div class="detail-grid">
+          <article class="detail-card" *ngFor="let field of overviewFields">
+            <span class="detail-label">{{ field.label }}</span>
+            <strong class="detail-value">{{ field.value }}</strong>
+          </article>
+        </div>
+      </section>
+
+      <div class="stats-grid two-up">
+        <section class="section-card">
+          <div class="section-heading">
+            <h2>Settlement Snapshot</h2>
+            <p>Saved values and the current live calculation from the loaded bids.</p>
+          </div>
+
+          <div class="detail-grid compact">
+            <article class="detail-card accent" *ngFor="let field of settlementFields">
+              <span class="detail-label">{{ field.label }}</span>
+              <strong class="detail-value">{{ field.value }}</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="section-card">
+          <div class="section-heading">
+            <h2>Session Details</h2>
+            <p>Backend session state and timing information.</p>
+          </div>
+
+          <div class="detail-grid compact">
+            <article class="detail-card" *ngFor="let field of sessionFields">
+              <span class="detail-label">{{ field.label }}</span>
+              <strong class="detail-value">{{ field.value }}</strong>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <section class="section-card">
+        <div class="section-heading">
+          <h2>Member and Bid Details</h2>
+          <p>Sorted by bid amount so the highest bid stays at the top.</p>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ticket No.</th>
+                <th>Subscriber</th>
+                <th>Subscriber ID</th>
+                <th>Enrollment ID</th>
+                <th>Member Status</th>
+                <th>Bid Amount</th>
+                <th>Bid Time</th>
+                <th>Created At</th>
+                <th>Channel</th>
+                <th>Bid Status</th>
+                <th>Winning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let bid of bids" [class.highest-row]="bid.isWinning">
+                <td>{{ bid.ticketNumber }}</td>
+                <td>{{ bid.subscriber }}</td>
+                <td>#{{ bid.subscriberId }}</td>
+                <td>#{{ bid.enrollmentId }}</td>
+                <td>{{ bid.memberStatus }}</td>
+                <td>{{ bid.bidAmount > 0 ? formatCurrency(bid.bidAmount) : '-' }}</td>
+                <td>{{ bid.bidTime ? fmtDateTime(bid.bidTime) : '-' }}</td>
+                <td>{{ bid.createdAt ? fmtDateTime(bid.createdAt) : '-' }}</td>
+                <td>{{ bid.channel }}</td>
+                <td>
+                  <span
+                    class="status-pill"
+                    [class.no-bid]="bid.status === 'No Bid'"
+                    [class.paid]="bid.status === 'Bid Paid'"
+                    [class.highest]="bid.status === 'Highest Bid'">
+                    {{ bid.status }}
+                  </span>
+                </td>
+                <td>{{ bid.isWinning ? 'Yes' : '-' }}</td>
+              </tr>
+              <tr *ngIf="!bids.length">
+                <td colspan="11" class="empty-table">
+                  No member records were returned for this auction.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-heading">
+          <h2>Audit Fields</h2>
+          <p>Creation and update timestamps for the loaded auction record.</p>
+        </div>
+
+        <div class="detail-grid compact">
+          <article class="detail-card" *ngFor="let field of auditFields">
+            <span class="detail-label">{{ field.label }}</span>
+            <strong class="detail-value">{{ field.value }}</strong>
+          </article>
+        </div>
+      </section>
+    </ng-container>
+
+    <ng-template #emptyState>
+      <section class="empty-card">
+        <div class="empty-icon">A</div>
+        <h2>Auction details are not available</h2>
+        <p>
+          We could not find an auction record for the selected id. Go back to the auctions page and try another auction.
+        </p>
+        <div class="empty-actions">
+          <a routerLink="/admin/auctions" class="btn btn-primary">Back to Auctions</a>
+          <button type="button" class="btn btn-secondary" (click)="reload()" [disabled]="!auctionId">
+            Try Again
+          </button>
+        </div>
+      </section>
+    </ng-template>
+  </ng-container>
+</div>
