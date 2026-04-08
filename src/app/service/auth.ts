@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../enviornment/enviornment';
 
 @Injectable({
-  providedIn: 'root' 
+  providedIn: 'root'
 })
 export class AuthService {
-// Add /chitfunds right after the port number
-private apiUrl = 'http://localhost:8080/chitfunds/api/v1/auth/login';
+  private apiUrl = `${environment.apiUrl}/auth/login`;
 
   constructor(private http: HttpClient) { }
 
