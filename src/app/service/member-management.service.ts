@@ -83,7 +83,7 @@ export interface MemberReallotment {
 })
 export class MemberManagementService {
 
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/member-management';
+    private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/member-management';
 
     constructor(
         private http: HttpClient,

@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class AgentCommissionPaymentService {
   // Matched to standard Spring Boot port and path
-  private apiUrl = 'http://localhost:8080/chitfunds/api/admin/agent-commission-payment';
+  private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/admin/agent-commission-payment';
 
   constructor(private http: HttpClient) {}
 

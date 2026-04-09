@@ -4,7 +4,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
-const BASE_URL = 'http://localhost:8080/chitfunds/api/v1/chit-groups';
+const BASE_URL = 'http://3.108.194.139:8080/chitfunds/api/v1/chit-groups';
 
 export interface ApiResponse<T> {
   success: boolean;

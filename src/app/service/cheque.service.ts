@@ -37,7 +37,7 @@ export interface ChequeSummary {
 })
 export class ChequeService {
 
-    private baseUrl = 'http://localhost:8080/chitfunds/api/v1/cheque-management';
+    private baseUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/cheque-management';
 
     constructor(
         private http: HttpClient,
@@ -80,4 +80,4 @@ export class ChequeService {
             this.getAuthHeaders()
         );
     }
-}
+}

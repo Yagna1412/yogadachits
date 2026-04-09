@@ -33,7 +33,7 @@ export interface EnrollmentResponse {
 export class EnrollmentsService {
 
   private platformId = inject(PLATFORM_ID);
-  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/enrollments';
+  private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/enrollments';
 
   constructor(private http: HttpClient) {}
 
@@ -87,7 +87,7 @@ export class EnrollmentsService {
 
   getInstallmentsByEnrollmentId(enrollmentId: number): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(
-      `http://localhost:8080/chitfunds/api/v1/installments?enrollmentId=${enrollmentId}`,
+      `http://3.108.194.139:8080/chitfunds/api/v1/installments?enrollmentId=${enrollmentId}`,
       this.getHeaders()
     ).pipe(
       catchError(() => of({

@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class RemovalPaymentService {
     // Make sure this matches your Spring Boot application port (usually 8080)
-    private apiUrl = 'http://localhost:8080/chitfunds/api/removal-payment-members';
+    private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/removal-payment-members';
 
     constructor(private http: HttpClient) { }
 

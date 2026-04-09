@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 // Adjust this base URL to match your environment
-const BASE_URL = 'http://localhost:8080/chitfunds/api/v1/credit-balance-returns';
+const BASE_URL = 'http://3.108.194.139:8080/chitfunds/api/v1/credit-balance-returns';
 
 @Injectable({
     providedIn: 'root'

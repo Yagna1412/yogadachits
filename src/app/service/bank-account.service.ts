@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class BankAccountService {
-    private apiUrl = 'http://localhost:8080/chitfunds/api/admin/account-bank';
+    private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/admin/account-bank';
 
     constructor(private http: HttpClient) { }
 

@@ -48,7 +48,7 @@ export interface ReceiptCreateRequest {
 })
 export class ReceiptService {
   
-  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/receipts'; 
+  private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/receipts'; 
 
   constructor(
     private http: HttpClient,

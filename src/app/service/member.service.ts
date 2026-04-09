@@ -38,7 +38,7 @@ export interface ApiResponse<T> {
 })
 export class MemberService {
     // Ensure this URL matches your Spring Boot application properties context-path
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/members';
+    private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/members';
 
     constructor(private http: HttpClient) { }
 

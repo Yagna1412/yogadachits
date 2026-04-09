@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class BidAdvanceService {
     // Update this to match your actual backend URL/port
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/bid-advances';
+    private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/bid-advances';
 
     constructor(private http: HttpClient) { }
 

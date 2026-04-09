@@ -9,7 +9,7 @@ import { catchError } from 'rxjs/operators';
 })
 export class SuretyService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/sureties';
+    private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/sureties';
 
     constructor(private http: HttpClient) { }
 

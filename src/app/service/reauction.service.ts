@@ -47,7 +47,7 @@ export interface ApiResponse<T> {
     providedIn: 'root'
 })
 export class ReAuctionService {
-    private baseUrl = 'http://localhost:8080/chitfunds/api/v1/re-auctions';
+    private baseUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/re-auctions';
 
     constructor(private http: HttpClient) { }
 
