@@ -89,34 +89,40 @@ export class AuctionsService {
     constructor(private http: HttpClient) { }
 
     // ── In-memory caches (singleton, survive route changes) ──────────────────
-    private _chitGroups$   : Observable<ApiResponse<ChitGroupDto[]>>   | null = null;
-    private _auctions$     : Observable<ApiResponse<AuctionResponse[]>> | null = null;
-    private _enrollments$  : Map<number, Observable<ApiResponse<EnrollmentResponse[]>>> = new Map();
-    private stompClient    : Client | null = null;
+    private _chitGroups$: Observable<ApiResponse<ChitGroupDto[]>> | null = null;
+    private _auctions$: Observable<ApiResponse<AuctionResponse[]>> | null = null;
+    private _enrollments$: Map<number, Observable<ApiResponse<EnrollmentResponse[]>>> = new Map();
+    private stompClient: Client | null = null;
 
-    clearAuctionsCache()  { this._auctions$    = null; }
-    clearChitGroupsCache(){ this._chitGroups$   = null; }
+    clearAuctionsCache() { this._auctions$ = null; }
+    clearChitGroupsCache() { this._chitGroups$ = null; }
     clearEnrollmentsCache(chitGroupId?: number) {
         if (chitGroupId !== undefined) { this._enrollments$.delete(chitGroupId); }
         else { this._enrollments$.clear(); }
     }
 
     startAuction(auctionId: number): Observable<ApiResponse<AuctionSessionResponse>> {
-        return this.http.post<ApiResponse<AuctionSessionResponse>>(`${BASE}/auctions/${auctionId}/start`, {}, this.getHeaders()).pipe(
-            catchError((err) => of({ success: false, message: err?.message || 'error', data: null } as ApiResponse<AuctionSessionResponse>))
-        );
+        return of({
+            success: true,
+            message: 'Mock Data Mode',
+            data: { id: 1, auctionId, sessionStatus: 'Live', startedAt: '2026-04-09T10:00:00', durationSeconds: 600, remainingSeconds: 300 }
+        });
     }
 
     getAuctionSession(auctionId: number): Observable<ApiResponse<AuctionSessionResponse>> {
-        return this.http.get<ApiResponse<AuctionSessionResponse>>(`${BASE}/auctions/${auctionId}/session`, this.getHeaders()).pipe(
-            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionSessionResponse>))
-        );
+        return of({
+            success: true,
+            message: 'Mock Data Mode',
+            data: { id: 1, auctionId, sessionStatus: 'Live', startedAt: '2026-04-09T10:00:00', durationSeconds: 600, remainingSeconds: 300 }
+        });
     }
 
     getAuctionById(auctionId: number): Observable<ApiResponse<AuctionResponse>> {
-        return this.http.get<ApiResponse<AuctionResponse>>(`${BASE}/auctions/${auctionId}`, this.getHeaders()).pipe(
-            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse>))
-        );
+        return of({
+            success: true,
+            message: 'Mock Data Mode',
+            data: { id: auctionId, chitGroupId: 1, auctionNumber: 1, auctionDate: '2026-01-01', status: 'Completed', maxMembers: 4, companyCommissionPct: 5, chitAmount: 500000, netPayable: 450000, winningBidAmount: 50000, createdAt: '', updatedAt: '' }
+        });
     }
 
     connectToAuction(
@@ -124,47 +130,11 @@ export class AuctionsService {
         onSessionUpdate: (session: AuctionSessionResponse) => void,
         onBidUpdate: (bid: AuctionBidResponse) => void
     ): void {
-        this.disconnectFromAuction(); // Ensure we don't have multiple connections
-
-        if (!isPlatformBrowser(this.platformId)) return;
-
-        this.stompClient = new Client({
-            brokerURL: WS_BASE,
-            reconnectDelay: 5000,
-            onConnect: () => {
-                // Subscribe to Session Updates
-                this.stompClient?.subscribe(`/topic/auctions/${auctionId}`, (message) => {
-                    if (message.body) {
-                        try {
-                            const session: AuctionSessionResponse = JSON.parse(message.body);
-                            onSessionUpdate(session);
-                        } catch (e) { console.error('Error parsing session data', e); }
-                    }
-                });
-
-                // Subscribe to Live Bids
-                this.stompClient?.subscribe(`/topic/auctions/${auctionId}/bids`, (message) => {
-                    if (message.body) {
-                        try {
-                            const bid: AuctionBidResponse = JSON.parse(message.body);
-                            onBidUpdate(bid);
-                        } catch (e) { console.error('Error parsing bid data', e); }
-                    }
-                });
-            },
-            onStompError: (frame) => {
-               console.error('STOMP error:', frame.headers['message'], frame.body);
-            }
-        });
-        
-        this.stompClient.activate();
+        // Disabling STOMP for Mock Data Mode
     }
 
     disconnectFromAuction(): void {
-        if (this.stompClient) {
-            this.stompClient.deactivate();
-            this.stompClient = null;
-        }
+        // Disabling STOMP for Mock Data Mode
     }
 
     private getHeaders(): { headers: HttpHeaders } {
@@ -184,59 +154,65 @@ export class AuctionsService {
     }
 
     listChitGroups(): Observable<ApiResponse<ChitGroupDto[]>> {
-        if (!this._chitGroups$) {
-            this._chitGroups$ = this.http
-                .get<ApiResponse<ChitGroupDto[]>>(`${BASE}/chit-groups`, this.getHeaders())
-                .pipe(
-                    shareReplay(1),
-                    catchError(() => of({ success: false, message: 'error', data: [] } as ApiResponse<ChitGroupDto[]>))
-                );
-        }
-        return this._chitGroups$;
+        return of({
+            success: true,
+            message: 'Mock Data Mode',
+            data: [
+                { id: 1, groupName: 'T1-GROUP-01 (MOCKED)', chitAmount: 500000 },
+                { id: 2, groupName: 'T2-GROUP-02 (MOCKED)', chitAmount: 1000000 }
+            ]
+        });
     }
 
     listAuctions(): Observable<ApiResponse<AuctionResponse[]>> {
-        if (!this._auctions$) {
-            this._auctions$ = this.http
-                .get<ApiResponse<AuctionResponse[]>>(`${BASE}/auctions`, this.getHeaders())
-                .pipe(
-                    shareReplay(1),
-                    catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse[]>))
-                );
-        }
-        return this._auctions$;
+        return of({
+            success: true,
+            message: 'Mock Data Mode',
+            data: [
+                { id: 1, chitGroupId: 1, auctionNumber: 1, auctionDate: '2026-01-01', status: 'Completed', chitAmount: 500000, maxMembers: 4, companyCommissionPct: 5, netPayable: 450000, winningBidAmount: 50000, createdAt: '', updatedAt: '' },
+                { id: 2, chitGroupId: 1, auctionNumber: 2, auctionDate: '2026-02-01', status: 'Completed', chitAmount: 500000, maxMembers: 4, companyCommissionPct: 5, netPayable: 460000, winningBidAmount: 40000, createdAt: '', updatedAt: '' },
+                { id: 3, chitGroupId: 1, auctionNumber: 3, auctionDate: '2026-03-01', status: 'Active', chitAmount: 500000, maxMembers: 4, companyCommissionPct: 5, createdAt: '', updatedAt: '' },
+            ]
+        });
     }
 
     listBids(auctionId: number): Observable<ApiResponse<AuctionBidResponse[]>> {
-        return this.http.get<ApiResponse<AuctionBidResponse[]>>(`${BASE}/auctions/${auctionId}/bids`, this.getHeaders()).pipe(
-            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionBidResponse[]>))
-        );
+        return of({
+            success: true,
+            message: 'Mock Data Mode',
+            data: [
+                { id: 100, auctionId, enrollmentId: 10, bidAmount: 15000, bidTime: '', isWinning: false, channel: 'offline', createdAt: '' },
+                { id: 101, auctionId, enrollmentId: 11, bidAmount: 25000, bidTime: '', isWinning: true, channel: 'offline', createdAt: '' }
+            ]
+        });
     }
 
     getEnrollments(chitGroupId: number): Observable<ApiResponse<EnrollmentResponse[]>> {
-        if (!this._enrollments$.has(chitGroupId)) {
-            const req$ = this.http
-                .get<ApiResponse<EnrollmentResponse[]>>(`${BASE}/enrollments/chit-group/${chitGroupId}`, this.getHeaders())
-                .pipe(
-                    shareReplay(1),
-                    catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<EnrollmentResponse[]>))
-                );
-            this._enrollments$.set(chitGroupId, req$);
-        }
-        return this._enrollments$.get(chitGroupId)!;
+        return of({
+            success: true,
+            message: 'Mock Data Mode',
+            data: [
+                { id: 10, subscriberId: 100, subscriberName: 'John Doe', chitGroupId, ticketNo: 1, status: 'Active' },
+                { id: 11, subscriberId: 101, subscriberName: 'Jane Smith', chitGroupId, ticketNo: 2, status: 'Active' },
+                { id: 12, subscriberId: 102, subscriberName: 'Bob Builder', chitGroupId, ticketNo: 3, status: 'Active' },
+                { id: 13, subscriberId: 103, subscriberName: 'Alice Green', chitGroupId, ticketNo: 4, status: 'Active' }
+            ]
+        });
     }
 
     createBid(req: CreateBidRequest): Observable<ApiResponse<AuctionBidResponse>> {
-        this.clearAuctionsCache(); // Bust so next load reflects new bid state
-        return this.http.post<ApiResponse<AuctionBidResponse>>(`${BASE}/auctions/bids`, req, this.getHeaders()).pipe(
-            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionBidResponse>))
-        );
+        return of({
+            success: true,
+            message: 'Mock Data Mode',
+            data: { id: 999, auctionId: req.auctionId, enrollmentId: req.enrollmentId, bidAmount: req.bidAmount, bidTime: '', isWinning: true, channel: 'offline', createdAt: '' }
+        });
     }
 
     selectWinner(auctionId: number, bidId: number): Observable<ApiResponse<AuctionResponse>> {
-        this.clearAuctionsCache(); // Bust so winner state is fresh on re-visit
-        return this.http.put<ApiResponse<AuctionResponse>>(`${BASE}/auctions/${auctionId}/winner/${bidId}`, {}, this.getHeaders()).pipe(
-            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse>))
-        );
+        return of({
+            success: true,
+            message: 'Mock Data Mode',
+            data: { id: auctionId, chitGroupId: 1, auctionNumber: 3, auctionDate: '2026-03-01', status: 'Completed', maxMembers: 4, companyCommissionPct: 5, createdAt: '', updatedAt: '' }
+        });
     }
 }

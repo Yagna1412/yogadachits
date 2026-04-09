@@ -1,7 +1,6 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -30,6 +29,7 @@ interface AuctionItem {
   dividendPerMember?: number;
   netPayable?: number;
   status: string;
+  totalBidsParticipant?: number;
 }
 
 interface BidRow {
@@ -64,6 +64,12 @@ interface Calc {
   netPayable: number;
 }
 
+interface LiveBanner {
+  label: string;
+  summary: string;
+  variant: 'selected' | 'group' | 'global';
+}
+
 @Component({
   selector: 'app-auctions',
   standalone: true,
@@ -80,7 +86,7 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   showConfirmModal = false;
   showSuccessModal = false;
   errorMessage = '';
-  viewMode: 'selector' | 'details' = 'selector';
+  activePanel: 'none' | 'details' = 'none';
 
   // Data arrays
   chitGroups: ChitGroupDto[] = [];
@@ -113,19 +119,43 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get highestBid(): BidRow | undefined { return this.bids.find(b => b.status === 'Highest Bid'); }
 
-  get liveAuctionSummary(): string {
-    const liveAuction = this.groupAuctions.find(item => this.isLiveAuctionStatus(item.status))
-      ?? this.allAuctions.find(item => this.isLiveAuctionStatus(item.status))
-      ?? null;
-
-    if (!liveAuction) {
-      return '';
-    }
-
-    return `Auction #${liveAuction.auctionNumber} - ${liveAuction.groupName}`;
+  get globalLiveAuction(): AuctionItem | undefined {
+    return this.allAuctions.find(a => this.isLiveAuctionStatus(a.status));
   }
 
-  constructor(private svc: AuctionsService, private cdr: ChangeDetectorRef, private router: Router) { }
+
+  get liveAuctionBanner(): LiveBanner | null {
+    const selectedAuction = this.getSelectedAuction();
+    if (selectedAuction && this.isLiveAuctionStatus(selectedAuction.status)) {
+      return {
+        label: 'Selected Auction is Live',
+        summary: `Auction #${selectedAuction.auctionNumber} - ${selectedAuction.groupName}`,
+        variant: 'selected',
+      };
+    }
+
+    const groupLiveAuction = this.groupAuctions.find(item => this.isLiveAuctionStatus(item.status)) ?? null;
+    if (groupLiveAuction) {
+      return {
+        label: this.selectedGroupId ? 'Live Auction in Selected Group' : 'Live Auction in Current Group',
+        summary: `Auction #${groupLiveAuction.auctionNumber} - ${groupLiveAuction.groupName}`,
+        variant: 'group',
+      };
+    }
+
+    const liveAuction = this.allAuctions.find(item => this.isLiveAuctionStatus(item.status)) ?? null;
+    if (liveAuction) {
+      return {
+        label: 'Live Auction Running',
+        summary: `Auction #${liveAuction.auctionNumber} - ${liveAuction.groupName}`,
+        variant: 'global',
+      };
+    }
+
+    return null;
+  }
+
+  constructor(private svc: AuctionsService, private cdr: ChangeDetectorRef) { }
 
   ngOnInit(): void {
     this.loadAuctionWorkspace();
@@ -139,7 +169,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   private loadAuctionWorkspace(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    this.viewMode = 'selector';
     this.cdr.detectChanges();
 
     this.svc.clearChitGroupsCache();
@@ -219,14 +248,14 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.filterAuctionsByGroup();
     this.selectedAuctionId = this.groupAuctions[0]?.id ?? null;
     this.errorMessage = '';
-    this.viewMode = 'selector';
+    this.activePanel = 'none';
     this.resetAuctionViewState(false);
   }
 
   onAuctionSelect(auctionId?: number | string | null): void {
     this.selectedAuctionId = auctionId === undefined || auctionId === null ? null : Number(auctionId);
     this.errorMessage = '';
-    this.viewMode = 'selector';
+    this.activePanel = 'none';
     this.resetAuctionViewState(false);
   }
 
@@ -302,7 +331,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selected = item;
     this.setHeader(item, this.groupAuctions.length);
     this.setCalcBase(item);
-    this.viewMode = 'details';
     this.cdr.detectChanges();
 
     // Use pipe(catchError) on all calls to ensure forkJoin doesn't fail silently if one fails
@@ -376,16 +404,44 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.errorMessage = '';
+    this.activePanel = 'details';
     this.loadAuctionDetails(item);
 
     setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const stage = document.getElementById('auction-stage');
+      stage?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
   }
 
+
+
   goBack(): void {
-    this.viewMode = 'selector';
+    this.activePanel = 'none';
     this.resetAuctionViewState(false);
+  }
+
+  onHeaderActionClick(): void {
+    const live = this.globalLiveAuction;
+    if (live) {
+      if (this.activePanel === 'details' && this.selected?.id === live.id) {
+         return; // Already viewing it
+      }
+      this.selectedGroupId = live.chitGroupId;
+      this.onGroupSelect(live.chitGroupId);
+      this.selectedAuctionId = live.id;
+      this.viewAuction();
+    } else {
+      if (this.activePanel === 'details' && this.selected) {
+         this.startAuction();
+      } else if (this.selectedAuctionId) {
+         this.viewAuction();
+         setTimeout(() => {
+           if (this.selected) this.startAuction();
+         }, 500); 
+      } else {
+         this.errorMessage = 'Please select a chit group and auction month first.';
+      }
+    }
   }
 
   stopAuction(): void {
@@ -895,6 +951,15 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   formatCurrency(n: number): string {
     return '₹' + (n ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  formatHistoryStatus(status?: string | null): string {
+    const value = (status ?? 'CLOSED').toString().trim();
+    return value ? value.replace(/_/g, ' ').toUpperCase() : 'CLOSED';
+  }
+
+  formatDisplayDate(date: string): string {
+    return this.fmtDate(date);
   }
 
   private setHeader(item: AuctionItem, total: number): void {

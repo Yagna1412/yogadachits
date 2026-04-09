@@ -75,6 +75,24 @@
   background: #fff7ed;
   border: 1px solid #fed7aa;
   color: #9a3412;
+
+  &.is-selected {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #7f1d1d;
+  }
+
+  &.is-group {
+    background: #fff7ed;
+    border-color: #fed7aa;
+    color: #9a3412;
+  }
+
+  &.is-global {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+  }
 }
 
 .live-dot {
@@ -102,7 +120,22 @@
 .live-auction-copy strong {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #7c2d12;
+  color: inherit;
+}
+
+.live-auction-banner.is-selected .live-dot {
+  background: #dc2626;
+  box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.14);
+}
+
+.live-auction-banner.is-group .live-dot {
+  background: #ef4444;
+  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.14);
+}
+
+.live-auction-banner.is-global .live-dot {
+  background: #2563eb;
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.14);
 }
 
 .spinner-inline {
@@ -115,6 +148,12 @@
 .auction-view-actions {
   display: flex;
   align-items: flex-end;
+  gap: 10px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .view-btn {
@@ -445,6 +484,8 @@
 }
 .section-title { font-size: 1.1rem; font-weight: 600; color: #111827; margin: 0 0 12px; }
 .table-wrapper { overflow-x: auto; }
+
+
 
 .table {
   width: 100%; border-collapse: collapse; font-size: .875rem;
