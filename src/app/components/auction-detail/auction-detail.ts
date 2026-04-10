@@ -1,14 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { FormsModule } from '@angular/forms';
 
 import {
   AuctionBidResponse,
   AuctionResponse,
   AuctionSessionResponse,
   AuctionsService,
+  ChitGroupDto,
   EnrollmentResponse,
 } from '../../service/auction.service';
 
@@ -89,14 +91,28 @@ interface AuctionDetailState {
 @Component({
   selector: 'app-auction-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './auction-detail.html',
   styleUrl: './auction-detail.scss',
 })
 export class AuctionDetailComponent implements OnInit, OnDestroy {
+  private readonly AUCTION_TIMER_SECONDS = 300;
+
   isLoading = false;
   errorMessage = '';
   auctionId: number | null = null;
+  isLoadingSelectors = false;
+  public timerValue: number = this.AUCTION_TIMER_SECONDS;
+  isTimerRunning = false;
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
+
+  chitGroups: ChitGroupDto[] = [];
+  allAuctions: AuctionSummary[] = [];
+  groupAuctions: AuctionSummary[] = [];
+  selectedGroupId: number | null = null;
+  selectedAuctionId: number | null = null;
+  private routeSubscription: Subscription | null = null;
+  private pendingRouteAuctionId: number | null = null;
 
   selected: AuctionSummary | null = null;
   session: AuctionSessionResponse | null = null;
@@ -130,14 +146,22 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const rawId = this.route.snapshot.paramMap.get('auctionId');
-    const auctionId = rawId ? Number(rawId) : 10100; // Default to a mock ID if not found
+    this.loadSelectorData();
+    this.routeSubscription = this.route.paramMap.subscribe((params) => {
+      const rawId = params.get('auctionId');
+      const parsed = rawId ? Number(rawId) : 10100;
+      const auctionId = Number.isFinite(parsed) ? parsed : 10100;
 
-    this.auctionId = auctionId;
-    this.loadAuctionDetail(auctionId);
+      this.pendingRouteAuctionId = auctionId;
+      this.auctionId = auctionId;
+      this.applyRouteSelection();
+      this.loadAuctionDetail(auctionId);
+    });
   }
 
   ngOnDestroy(): void {
+    this.routeSubscription?.unsubscribe();
+    this.stopLocalTimer();
     this.svc.disconnectFromAuction();
   }
 
@@ -146,6 +170,95 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
       return;
     }
     this.loadAuctionDetail(this.auctionId);
+  }
+
+  onGroupSelect(groupId: number | null): void {
+    this.selectedGroupId = groupId === null ? null : Number(groupId);
+    this.filterAuctionsByGroup();
+    if (this.groupAuctions.length > 0) {
+      this.selectedAuctionId = this.groupAuctions[0].id;
+    } else {
+      this.selectedAuctionId = null;
+    }
+  }
+
+  onAuctionSelect(auctionId: number | null): void {
+    this.selectedAuctionId = auctionId === null ? null : Number(auctionId);
+  }
+
+  viewSelectedAuctionDetail(): void {
+    if (!this.selectedAuctionId) {
+      this.errorMessage = 'Select a chit group and auction month first.';
+      return;
+    }
+
+    this.errorMessage = '';
+    this.router.navigate(['/admin/auctions/view', this.selectedAuctionId]);
+  }
+
+  get globalLiveAuction(): AuctionSummary | undefined {
+    return this.allAuctions.find((item) => this.isLiveAuctionStatus(item.status));
+  }
+
+  get headerActionLabel(): string {
+    return this.globalLiveAuction ? 'View' : 'Start Auction';
+  }
+
+  get formattedTimer(): string {
+    const minutes = Math.floor(this.timerValue / 60);
+    const seconds = this.timerValue % 60;
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  }
+
+  onHeaderAction(): void {
+    const liveAuction = this.globalLiveAuction;
+    if (liveAuction) {
+      if (this.auctionId !== liveAuction.id) {
+        this.router.navigate(['/admin/auctions/view', liveAuction.id]);
+      } else {
+        this.loadAuctionDetail(liveAuction.id);
+      }
+      return;
+    }
+
+    const targetAuctionId = this.selectedAuctionId
+      ?? this.groupAuctions[0]?.id
+      ?? this.allAuctions[0]?.id
+      ?? null;
+
+    if (!targetAuctionId) {
+      this.errorMessage = 'No auction available to start.';
+      return;
+    }
+
+    const targetAuction = this.allAuctions.find((item) => item.id === targetAuctionId) ?? null;
+    if (!targetAuction) {
+      this.errorMessage = 'Selected auction could not be found.';
+      return;
+    }
+
+    this.errorMessage = '';
+    this.allAuctions = this.allAuctions.map((item) => {
+      if (item.id === targetAuctionId) {
+        return { ...item, status: 'LIVE' };
+      }
+      return item;
+    });
+
+    this.selectedGroupId = targetAuction.chitGroupId;
+    this.filterAuctionsByGroup();
+    this.selectedAuctionId = targetAuctionId;
+    this.pendingRouteAuctionId = targetAuctionId;
+    this.auctionId = targetAuctionId;
+
+    this.resetTimer();
+    this.startLocalTimer();
+
+    if (this.route.snapshot.paramMap.get('auctionId') !== String(targetAuctionId)) {
+      this.router.navigate(['/admin/auctions/view', targetAuctionId]);
+    } else {
+      this.loadAuctionDetail(targetAuctionId);
+    }
   }
 
   private readonly MOCK_AUCTION: AuctionSummary = {
@@ -173,6 +286,38 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
     updatedAt: '2024-10-10T11:00:00Z'
   };
 
+  private readonly MOCK_GROUPS: ChitGroupDto[] = [
+    { id: 101, groupName: 'T1-GOLD-100K', chitAmount: 100000 },
+    { id: 102, groupName: 'T2-PREMIUM-500K', chitAmount: 500000 },
+    { id: 103, groupName: 'T3-SAVINGS-200K', chitAmount: 200000 },
+  ];
+
+  private readonly MOCK_AUCTIONS: AuctionSummary[] = [
+    {
+      ...this.MOCK_AUCTION,
+      id: 10100,
+      auctionNumber: 10,
+      status: 'CLOSED',
+    },
+    {
+      ...this.MOCK_AUCTION,
+      id: 10101,
+      auctionNumber: 11,
+      auctionDate: '2024-11-10',
+      status: 'CLOSED',
+    },
+    {
+      ...this.MOCK_AUCTION,
+      id: 10200,
+      chitGroupId: 102,
+      groupName: 'T2-PREMIUM-500K',
+      chitAmount: 500000,
+      auctionNumber: 4,
+      auctionDate: '2024-10-15',
+      status: 'CLOSED',
+    },
+  ];
+
   private readonly MOCK_BIDS: BidRow[] = Array.from({ length: 30 }, (_, i) => ({
     ticketNumber: `T${String(i + 1).padStart(3, '0')}`,
     enrollmentId: 1000 + i,
@@ -195,11 +340,103 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
     isWinning: i === 0
   }));
 
+  private loadSelectorData(): void {
+    this.isLoadingSelectors = true;
+
+    forkJoin({
+      groups: this.svc.listChitGroups().pipe(catchError(() => of(null))),
+      auctions: this.svc.listAuctions().pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: ({ groups, auctions }) => {
+        const groupData = this.extractData<ChitGroupDto[]>(groups) ?? [];
+        const auctionData = this.normalizeAuctionList(this.extractData<AuctionResponse[]>(auctions));
+
+        this.allAuctions = auctionData.length > 0 ? auctionData : [...this.MOCK_AUCTIONS];
+        this.chitGroups = groupData.length > 0 ? groupData : this.deriveGroupsFromAuctions(this.allAuctions);
+
+        if (!this.chitGroups.length) {
+          this.chitGroups = [...this.MOCK_GROUPS];
+        }
+
+        this.applyRouteSelection();
+        if (this.auctionId !== null) {
+          this.loadAuctionDetail(this.auctionId);
+        }
+        this.isLoadingSelectors = false;
+      },
+      error: () => {
+        this.allAuctions = [...this.MOCK_AUCTIONS];
+        this.chitGroups = [...this.MOCK_GROUPS];
+        this.applyRouteSelection();
+        if (this.auctionId !== null) {
+          this.loadAuctionDetail(this.auctionId);
+        }
+        this.isLoadingSelectors = false;
+      },
+    });
+  }
+
+  private applyRouteSelection(): void {
+    if (this.pendingRouteAuctionId === null) {
+      return;
+    }
+
+    const routeAuction = this.allAuctions.find((item) => item.id === this.pendingRouteAuctionId);
+    if (routeAuction) {
+      this.selectedGroupId = routeAuction.chitGroupId;
+      this.filterAuctionsByGroup();
+      this.selectedAuctionId = routeAuction.id;
+      return;
+    }
+
+    if (this.selectedGroupId === null && this.chitGroups.length > 0) {
+      this.selectedGroupId = this.chitGroups[0].id;
+    }
+
+    this.filterAuctionsByGroup();
+    if (this.selectedAuctionId === null && this.groupAuctions.length > 0) {
+      this.selectedAuctionId = this.groupAuctions[0].id;
+    }
+  }
+
+  private filterAuctionsByGroup(): void {
+    if (!this.selectedGroupId) {
+      this.groupAuctions = [];
+      return;
+    }
+
+    this.groupAuctions = this.allAuctions.filter((item) => item.chitGroupId === this.selectedGroupId);
+  }
+
+  private deriveGroupsFromAuctions(items: AuctionSummary[]): ChitGroupDto[] {
+    const grouped = new Map<number, ChitGroupDto>();
+
+    for (const item of items) {
+      if (!grouped.has(item.chitGroupId)) {
+        grouped.set(item.chitGroupId, {
+          id: item.chitGroupId,
+          groupName: item.groupName || `Group #${item.chitGroupId}`,
+          chitAmount: item.chitAmount || 0,
+        });
+      }
+    }
+
+    return [...grouped.values()];
+  }
+
   private loadAuctionDetail(auctionId: number): void {
     this.errorMessage = '';
-    this.isLoading = false; // We don't need a loading state for sync dummy data
-    this.selected = { ...this.MOCK_AUCTION, id: auctionId };
-    this.setHeader(this.selected, 24);
+    this.isLoading = false;
+
+    const selectedFromList = this.allAuctions.find((item) => item.id === auctionId) ?? null;
+    this.selected = selectedFromList ? { ...selectedFromList } : { ...this.MOCK_AUCTION, id: auctionId };
+
+    const selectedGroupId = this.selected?.chitGroupId ?? 0;
+    const totalAuctions = this.selected
+      ? this.allAuctions.filter((item) => item.chitGroupId === selectedGroupId).length || 24
+      : 24;
+
+    this.setHeader(this.selected, totalAuctions);
     this.setCalcBase(this.selected);
     this.bids = [...this.MOCK_BIDS];
     this.header.totalMembers = this.bids.length;
@@ -207,12 +444,44 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
     this.session = {
       id: 999,
       auctionId: auctionId,
-      sessionStatus: 'COMPLETED',
+      sessionStatus: this.isLiveAuctionStatus(this.selected?.status) ? 'LIVE' : 'COMPLETED',
       startedAt: '2024-10-10T10:00:00Z',
       endedAt: '2024-10-10T10:30:00Z',
       durationSeconds: 1800,
       remainingSeconds: 0
     };
+  }
+
+  private isLiveAuctionStatus(status?: string | null): boolean {
+    const normalized = (status ?? '').trim().toLowerCase();
+    return normalized === 'live' || normalized === 'active' || normalized === 'running';
+  }
+
+  private resetTimer(): void {
+    this.stopLocalTimer();
+    this.timerValue = this.AUCTION_TIMER_SECONDS;
+    this.isTimerRunning = false;
+  }
+
+  private startLocalTimer(): void {
+    this.stopLocalTimer();
+    this.isTimerRunning = true;
+    this.timerInterval = setInterval(() => {
+      if (this.timerValue > 0) {
+        this.timerValue--;
+      } else {
+        this.stopLocalTimer();
+      }
+      this.cdr.detectChanges();
+    }, 1000);
+  }
+
+  private stopLocalTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+    this.isTimerRunning = false;
   }
 
   private loadSupplementaryData(auction: AuctionSummary): void {

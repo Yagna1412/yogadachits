@@ -12,10 +12,67 @@
         <span class="breadcrumb-item active">Auctions</span>
       </nav>
     </div>
+
+    <div class="header-right">
+      <div class="auction-timer-controls">
+        <div class="timer-badge" [class.timer-alert]="timerValue < 30 && isTimerRunning">
+          <span class="timer-icon">T</span>
+          <span class="timer-text">{{ formattedTimer }}</span>
+        </div>
+        <button class="btn btn-primary start-btn" type="button" (click)="onHeaderAction()">
+          {{ headerActionLabel }}
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Error / Empty -->
   <div class="error-banner" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <div class="auction-controls" [class.is-loading]="isLoadingSelectors">
+    <div class="auction-form-container">
+      <div class="auction-loading-note" *ngIf="isLoadingSelectors">
+        <div class="spinner spinner-inline"></div>
+        <span>Loading available chit groups and auction months...</span>
+      </div>
+
+      <div class="auction-selector-bar">
+        <label class="selector-label">Select Chit Group</label>
+        <select
+          class="auction-select"
+          [(ngModel)]="selectedGroupId"
+          (ngModelChange)="onGroupSelect($event)"
+          [disabled]="!chitGroups.length">
+          <option [ngValue]="null" *ngIf="isLoadingSelectors">Loading chit groups...</option>
+          <option [ngValue]="null" *ngIf="!isLoadingSelectors && !chitGroups.length">No chit groups available</option>
+          <option *ngFor="let group of chitGroups" [ngValue]="group.id">
+            {{ group.groupName }} (Amount: {{ formatCurrency(group.chitAmount) }})
+          </option>
+        </select>
+      </div>
+
+      <div class="auction-selector-bar">
+        <label class="selector-label">Select Auction Month</label>
+        <select
+          class="auction-select"
+          [(ngModel)]="selectedAuctionId"
+          (ngModelChange)="onAuctionSelect($event)"
+          [disabled]="!groupAuctions.length">
+          <option [ngValue]="null" *ngIf="isLoadingSelectors">Loading auctions...</option>
+          <option [ngValue]="null" *ngIf="!isLoadingSelectors && !groupAuctions.length">No auctions available</option>
+          <option *ngFor="let item of groupAuctions" [ngValue]="item.id">
+            {{ item.status === 'LIVE' ? 'LIVE - ' : '' }}Auction #{{ item.auctionNumber }} - Date: {{ item.auctionDate }}
+          </option>
+        </select>
+      </div>
+
+      <div class="auction-view-actions">
+        <button class="btn btn-primary view-btn" type="button" [disabled]="!selectedAuctionId" (click)="viewSelectedAuctionDetail()">
+          View Auction Detail
+        </button>
+      </div>
+    </div>
+  </div>
 
   <ng-container *ngIf="selected; else emptyState">
 
@@ -23,7 +80,7 @@
     <div class="detail-subheader">
       <div class="subheader-left">
         <h2 class="detail-title">{{ selected.groupName }} - Auction #{{ selected.auctionNumber }}</h2>
-        <p class="detail-subtitle">Review the full auction record below, or go back to change the selection.</p>
+        <p class="detail-subtitle">Read-only auction detail view based on the selected chit group and month.</p>
       </div>
       <a routerLink="/admin/auctions" class="btn btn-secondary back-btn">Back to Selection</a>
     </div>
@@ -121,20 +178,14 @@
 
         <!-- Action Buttons -->
         <div class="detail-actions">
-          <button class="btn btn-secondary" type="button" (click)="goBack()">Download Detail</button>
-          <button
-            class="btn btn-primary"
-            type="button"
-            [disabled]="!highestBid || !selected.winningBidId">
-            {{ selected.winningBidId ? 'Winner Confirmed' : 'Confirm Winner' }}
-          </button>
+          <button class="btn btn-secondary" type="button" (click)="goBack()">Back to Live Auction</button>
         </div>
       </div>
 
       <!-- RIGHT COLUMN: Bid Entry Table -->
       <div class="detail-right">
         <div class="bid-table-section">
-          <h3 class="section-title">Bid Entry</h3>
+          <h3 class="section-title">Bid Details (Read Only)</h3>
           <div class="table-wrapper">
             <table class="bid-table">
               <thead>

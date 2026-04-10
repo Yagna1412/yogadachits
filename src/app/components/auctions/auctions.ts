@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 // Re-saved to resolve module recognition issue
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -75,7 +75,7 @@ interface LiveBanner {
 @Component({
   selector: 'app-auctions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './auctions.html',
   styleUrl: './auctions.scss',
 })
@@ -127,6 +127,10 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get headerActionLabel(): string {
     return this.globalLiveAuction ? 'View' : 'Start Auction';
+  }
+
+  get auctionListRouteId(): number {
+    return this.globalLiveAuction?.id ?? this.allAuctions[0]?.id ?? 10100;
   }
 
 
@@ -281,8 +285,16 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.selectedGroupId = this.chitGroups[0]?.id ?? null;
     this.filterAuctionsByGroup();
-    this.selectedAuctionId = this.groupAuctions[0]?.id ?? null;
-    this.resetAuctionViewState(false);
+    const liveAuction = this.globalLiveAuction ?? null;
+    if (liveAuction) {
+      this.selectedAuctionId = liveAuction.id;
+      this.loadAuctionDetails(liveAuction);
+      this.activePanel = 'details';
+    } else {
+      this.selectedAuctionId = this.groupAuctions[0]?.id ?? null;
+      this.resetAuctionViewState(false);
+      this.activePanel = 'none';
+    }
     this.isLoading = false;
     this.cdr.detectChanges();
   }
