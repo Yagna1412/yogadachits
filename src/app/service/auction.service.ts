@@ -153,10 +153,10 @@ export class AuctionsService {
                 });
             },
             onStompError: (frame) => {
-               console.error('STOMP error:', frame.headers['message'], frame.body);
+                console.error('STOMP error:', frame.headers['message'], frame.body);
             }
         });
-        
+
         this.stompClient.activate();
     }
 

@@ -1,6 +1,6 @@
 <div class="page-header">
   <div class="header-left">
-    <h1 class="page-title">Monthly Auctions</h1>
+    <h1 class="page-title">Auction</h1>
     <nav class="breadcrumb">
       <span class="breadcrumb-item">Transactions</span>
       <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt=">" /></span>
@@ -18,8 +18,8 @@
       </div>
       <button 
         class="btn btn-primary start-btn" 
-        (click)="onHeaderActionClick()">
-        {{ globalLiveAuction ? 'View Auction' : 'Start Auction' }}
+        (click)="viewLiveAuctionFromHeader()">
+        {{ headerActionLabel }}
       </button>
     </div>
   </div>
@@ -76,7 +76,7 @@
     </div>
 
     <div class="auction-view-actions">
-      <button class="btn btn-primary view-btn" type="button" [disabled]="isLoading || !canViewAuction" (click)="viewAuction()">
+      <button class="btn btn-primary view-btn" type="button" [disabled]="isLoading || !canViewAuction" (click)="viewSelectedAuctionFromForm()">
         View Auction Detail
       </button>
     </div>
@@ -87,7 +87,6 @@
   <div class="auction-workspace">
     <div class="auction-detail-header" *ngIf="activePanel === 'details' && (selected || isDetailLoading)">
       <div class="detail-heading">
-        <span class="detail-kicker">Auction Detail Page</span>
         <h2>{{ isDetailLoading ? 'Loading Auction Details' : (header.groupName || 'Selected Auction') + ' - Auction #' + (header.auctionNumber || '-') }}</h2>
         <p>{{ isDetailLoading ? 'Fetching the auction summary, bids, and calculations.' : 'Review the selected auction details and bid table below.' }}</p>
       </div>

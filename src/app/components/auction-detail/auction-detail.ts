@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import {
   AuctionBidResponse,
@@ -124,17 +125,13 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private svc: AuctionsService
+    private svc: AuctionsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     const rawId = this.route.snapshot.paramMap.get('auctionId');
-    const auctionId = rawId ? Number(rawId) : NaN;
-
-    if (!rawId || Number.isNaN(auctionId)) {
-      this.errorMessage = 'Invalid auction id.';
-      return;
-    }
+    const auctionId = rawId ? Number(rawId) : 10100; // Default to a mock ID if not found
 
     this.auctionId = auctionId;
     this.loadAuctionDetail(auctionId);
@@ -151,67 +148,75 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
     this.loadAuctionDetail(this.auctionId);
   }
 
+  private readonly MOCK_AUCTION: AuctionSummary = {
+    id: 10100,
+    chitGroupId: 101,
+    groupName: 'T1-GOLD-100K',
+    auctionNumber: 10,
+    auctionDate: '2024-10-10',
+    chitAmount: 100000,
+    maxMembers: 50,
+    commissionPct: 5,
+    winningBidId: 501,
+    winningBidAmount: 85000,
+    bidLossAmount: 15000,
+    dividendSnapshot: 10000,
+    dividendPerMember: 200,
+    installmentDueDate: '2024-10-25',
+    installmentNo: 10,
+    winnerEnrollmentId: 1001,
+    winnerSubscriberId: 1,
+    bidderType: 'Member',
+    netPayable: 80200,
+    status: 'CLOSED',
+    createdAt: '2024-01-01T10:00:00Z',
+    updatedAt: '2024-10-10T11:00:00Z'
+  };
+
+  private readonly MOCK_BIDS: BidRow[] = Array.from({ length: 30 }, (_, i) => ({
+    ticketNumber: `T${String(i + 1).padStart(3, '0')}`,
+    enrollmentId: 1000 + i,
+    subscriber: [
+      'Ramesh Kumar', 'Sneha Reddy', 'Mohan Lal', 'Anita Devi', 'Prakash Raj',
+      'Kavitha S.', 'Sanjay Dutt', 'Lakshmi N.', 'Prashanth V.', 'Deepak Chopra',
+      'Meera Jasmine', 'Arjun Das', 'Bhavana P.', 'Chiranjeevi K.', 'Dhanush R.',
+      'Eshwar Rao', 'Farhan Akhtar', 'Ganesh H.', 'Harini M.', 'Ishaan K.',
+      'Jyothi S.', 'Kishore J.', 'Latha G.', 'Manoj B.', 'Nandini R.',
+      'Omprakash L.', 'Pallavi D.', 'Qamar S.', 'Ravi Teja', 'Suresh Raina'
+    ][i] || `Member #${i + 1}`,
+    subscriberId: i + 1,
+    memberStatus: 'Active',
+    bidAmount: i === 0 ? 85000 : (i < 5 ? 70000 - i * 2000 : 0),
+    bidId: i < 5 ? 501 + i : null,
+    bidTime: i < 5 ? `2024-10-10T10:0${i + 1}:00Z` : '',
+    createdAt: i < 5 ? `2024-10-10T10:0${i + 1}:00Z` : '',
+    channel: i % 2 === 0 ? 'online' : 'offline',
+    status: i === 0 ? 'Highest Bid' : (i < 5 ? 'Bid Paid' : 'No Bid'),
+    isWinning: i === 0
+  }));
+
   private loadAuctionDetail(auctionId: number): void {
-    this.isLoading = true;
     this.errorMessage = '';
-    this.selected = null;
-    this.session = null;
-    this.bids = [];
-    this.svc.disconnectFromAuction();
+    this.isLoading = false; // We don't need a loading state for sync dummy data
+    this.selected = { ...this.MOCK_AUCTION, id: auctionId };
+    this.setHeader(this.selected, 24);
+    this.setCalcBase(this.selected);
+    this.bids = [...this.MOCK_BIDS];
+    this.header.totalMembers = this.bids.length;
 
-    forkJoin({
-      auctions: this.svc.listAuctions(),
-      detail: this.svc.getAuctionById(auctionId),
-    }).subscribe({
-      next: ({ auctions, detail }) => {
-        const allAuctions = this.normalizeAuctionList(this.extractData<AuctionResponse[]>(auctions));
-        const base = allAuctions.find((item) => item.id === auctionId) ?? null;
-        const merged = this.mergeAuction(base, this.extractData<Partial<AuctionResponse>>(detail));
-
-        if (!merged) {
-          this.errorMessage = 'Auction details are not available for the selected auction.';
-          this.isLoading = false;
-          return;
-        }
-
-        this.selected = merged;
-        this.setHeader(merged, allAuctions.filter((item) => item.chitGroupId === merged.chitGroupId).length || 1);
-        this.setCalcBase(merged);
-
-        this.loadSupplementaryData(merged);
-      },
-      error: () => {
-        this.errorMessage = 'Failed to load auction details.';
-        this.isLoading = false;
-      },
-    });
+    this.session = {
+      id: 999,
+      auctionId: auctionId,
+      sessionStatus: 'COMPLETED',
+      startedAt: '2024-10-10T10:00:00Z',
+      endedAt: '2024-10-10T10:30:00Z',
+      durationSeconds: 1800,
+      remainingSeconds: 0
+    };
   }
 
   private loadSupplementaryData(auction: AuctionSummary): void {
-    forkJoin({
-      bids: this.svc.listBids(auction.id),
-      enrollments: this.svc.getEnrollments(auction.chitGroupId),
-      session: this.svc.getAuctionSession(auction.id),
-    }).subscribe({
-      next: ({ bids, enrollments, session }) => {
-        const bidData = this.extractData<AuctionBidResponse[]>(bids) ?? [];
-        const enrollmentData = this.extractData<EnrollmentResponse[]>(enrollments) ?? [];
-
-        this.bids = this.buildRows(enrollmentData, bidData);
-        this.header.totalMembers = this.bids.length;
-
-        if (bidData.length > 0) {
-          this.recalculate();
-        }
-
-        this.session = this.extractData<AuctionSessionResponse>(session);
-        this.isLoading = false;
-      },
-      error: () => {
-        this.errorMessage = 'Auction snapshot loaded, but bids or session data could not be fetched.';
-        this.isLoading = false;
-      },
-    });
+    // No-op - mock data already populated in loadAuctionDetail
   }
 
   get highestBid(): BidRow | undefined {

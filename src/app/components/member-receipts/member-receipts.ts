@@ -1,4 +1,5 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MemberReceiptService, MemberReceiptTableResponse, MemberReceiptCreateRequest } from '../../service/member-receipt.service';
@@ -61,7 +62,8 @@ export class MemberReceiptsComponent implements OnInit, AfterViewInit {
     private enrollmentsService: EnrollmentsService,
     private chitGroupsService: ChitGroupsService,
     private memberService: MemberService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   ngOnInit(): void {}
@@ -196,6 +198,12 @@ export class MemberReceiptsComponent implements OnInit, AfterViewInit {
       },
       error: (err: any) => console.error('Error fetching KPIs:', err)
     });
+  }
+
+  onPaymentModeChange(mode: string): void {
+    if (mode === 'Cheque') {
+      this.router.navigate(['/admin/check-management']);
+    }
   }
 
   filterReceipts(): void {
