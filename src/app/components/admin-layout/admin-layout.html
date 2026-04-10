@@ -8,480 +8,93 @@
         <img src="assets/images/icons/logo-small.png" class="small-logo" alt="logo" />
       </div>
     </div>
-
     <!-- Navigation Menu -->
     <nav class="nav-menu">
       <div class="platform-label">Platform</div>
 
       <!-- Dashboard -->
-      <div class="menu-item">
+      <div class="menu-item" *ngIf="isVisible('/admin/dashboard')">
         <a routerLink="/admin/dashboard" routerLinkActive="active" class="menu-link">
           <img src="assets/images/icons/ouline-globe.png" alt="Dashboard Icon" class="menu-icon" />
           <span>Dashboard</span>
         </a>
       </div>
 
-      <!-- Master (with submenu) -->
-      <div class="menu-item">
+      <!-- Master -->
+      <div class="menu-item" *ngIf="hasAnyVisible(['/admin/members', '/admin/chit-groups', '/admin/enrollments'])">
         <button class="menu-link" [class.expanded]="masterMenuExpanded" (click)="toggleMasterMenu()">
-          <img src="assets/images/icons/ouline-globe.png" alt="Dashboard Icon" class="menu-icon" />
+          <img src="assets/images/icons/ouline-globe.png" alt="Master Icon" class="menu-icon" />
           <span>Master</span>
           <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon" [class.rotated]="masterMenuExpanded" />
         </button>
 
         <div class="submenu" *ngIf="masterMenuExpanded">
-          <div class="submenu-item">
+          <div class="submenu-item" *ngIf="hasAnyVisible(['/admin/members', '/admin/chit-groups', '/admin/enrollments'])">
             <button class="submenu-link" [class.expanded]="accountsSubmenuExpanded" (click)="toggleAccountsSubmenu()">
               <span>Members</span>
-              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                [class.rotated]="accountsSubmenuExpanded" />
+              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon" [class.rotated]="accountsSubmenuExpanded" />
             </button>
             <div class="nested-submenu" *ngIf="accountsSubmenuExpanded">
-              <a routerLink="/admin/members" routerLinkActive="active" class="nested-submenu-link">
+              <a *ngIf="isVisible('/admin/members')" routerLink="/admin/members" routerLinkActive="active" class="nested-submenu-link">
                 <span>Member Registration</span>
               </a>
-              <a routerLink="/admin/chit-groups" routerLinkActive="active" class="nested-submenu-link">
+              <a *ngIf="isVisible('/admin/chit-groups')" routerLink="/admin/chit-groups" routerLinkActive="active" class="nested-submenu-link">
                 <span>Chit Group</span>
               </a>
-              <a *ngIf="false" routerLink="/admin/suit-file" routerLinkActive="active" class="nested-submenu-link">
-                <span>Suit File Info</span>
-              </a>
-              <a routerLink="/admin/enrollments" routerLinkActive="active" class="nested-submenu-link">
+              <a *ngIf="isVisible('/admin/enrollments')" routerLink="/admin/enrollments" routerLinkActive="active" class="nested-submenu-link">
                 <span>Enrollments</span>
               </a>
-              <a *ngIf="false" routerLink="/admin/self-chits-entry" routerLinkActive="active"
-                class="nested-submenu-link">
-                <span>Self Chits Entry</span>
-              </a>
-              <a *ngIf="false" routerLink="/admin/agents-target-entry" routerLinkActive="active"
-                class="nested-submenu-link">
-                <span>Agents Target Entry</span>
-              </a>
-              <a *ngIf="false" routerLink="/admin/business-agent-transfer" routerLinkActive="active"
-                class="nested-submenu-link">
-                <span>Business/Collection Agent Transfer</span>
-              </a>
             </div>
           </div>
-          <div class="submenu-item" *ngIf="false">
-            <button class="submenu-link" [class.expanded]="accountsSectionExpanded" (click)="toggleAccountsSection()">
-              <span>Accounts</span>
-              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                [class.rotated]="accountsSectionExpanded" />
-            </button>
-            <div class="nested-submenu" *ngIf="accountsSectionExpanded">
-              <a routerLink="/admin/account-group-entry" routerLinkActive="active" class="nested-submenu-link">
-                <span>Account Group Entry</span>
-              </a>
-              <a routerLink="/admin/ledger-account-entry" routerLinkActive="active" class="nested-submenu-link">
-                <span>Accounts</span>
-              </a>
-            </div>
-          </div>
-          <div class="submenu-item" *ngIf="false">
-            <button class="submenu-link" [class.expanded]="placesSectionExpanded" (click)="togglePlacesSection()">
-              <span>Places</span>
-              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                [class.rotated]="placesSectionExpanded" />
-            </button>
-            <div class="nested-submenu" *ngIf="placesSectionExpanded">
-              <a routerLink="/admin/location" routerLinkActive="active" class="nested-submenu-link">
-                <span>Location</span>
-              </a>
-            </div>
-          </div>
-
         </div>
       </div>
 
-      <!-- Security -->
-      <div class="menu-item" *ngIf="false">
-        <button class="menu-link" [class.expanded]="securityMenuExpanded" (click)="toggleSecurityMenu()">
-          <img src="assets/images/icons/ouline-globe.png" alt="Security Icon" class="menu-icon" />
-          <span>Security</span>
-          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-            [class.rotated]="securityMenuExpanded" />
+      <!-- Transactions -->
+      <div class="menu-item" *ngIf="hasAnyVisible(['/admin/auctions', '/admin/member-receipts', '/admin/check-management', '/admin/receipts', '/admin/bid-payments'])">
+        <button class="menu-link" [class.expanded]="transactionsMenuExpanded" (click)="toggleTransactionsMenu()">
+          <img src="assets/images/icons/ouline-globe.png" alt="Transactions Icon" class="menu-icon" />
+          <span>Transactions</span>
+          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon" [class.rotated]="transactionsMenuExpanded" />
         </button>
-        <div class="submenu" *ngIf="securityMenuExpanded">
-          <a routerLink="/admin/roles-entry" routerLinkActive="active" class="submenu-link">
-            <span>Roles Entry</span>
-          </a>
-          <a routerLink="/admin/role-permissions-list" routerLinkActive="active" class="submenu-link">
-            <span>Role Permissions List</span>
-          </a>
-          <a routerLink="/admin/users-list" routerLinkActive="active" class="submenu-link">
-            <span>Users List</span>
-          </a>
-        </div>
-      </div>
 
-      <!-- Consolidation -->
-      <div class="menu-item" *ngIf="false">
-        <button class="menu-link" [class.expanded]="consolidationMenuExpanded" (click)="toggleConsolidationMenu()">
-          <img src="assets/images/icons/ouline-globe.png" alt="Consolidation Icon" class="menu-icon" />
-          <span>Consolidation</span>
-          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-            [class.rotated]="consolidationMenuExpanded" />
-        </button>
-        <div class="submenu" *ngIf="consolidationMenuExpanded">
-          <a routerLink="/admin/group-wise-consolidation-report" routerLinkActive="active" class="submenu-link">
-            <span>Group Wise Consolidation Report</span>
-          </a>
-          <a routerLink="/admin/group-wise-outstanding-compare-report" routerLinkActive="active" class="submenu-link">
-            <span>Group Wise Outstanding Accounts Compare Report</span>
-          </a>
-          <a routerLink="/admin/bid-payable-os-report" routerLinkActive="active" class="submenu-link">
-            <span>Bid Payable O/S As On Date</span>
-          </a>
-          <a routerLink="/admin/auction-wise-outstanding-compare-report" routerLinkActive="active" class="submenu-link">
-            <span>Auction Wise Outstanding Accounts Compare Report</span>
-          </a>
-          <a routerLink="/admin/accounts-outstanding-compare-report" routerLinkActive="active" class="submenu-link">
-            <span>Accounts Outstanding Compare Report</span>
-          </a>
-
-          <a routerLink="/admin/audit-log" routerLinkActive="active" class="submenu-link">
-            <span>Audit Log</span>
-          </a>
-        </div>
-      </div>
-      <div class="menu-item" *ngIf="false">
-        <button class="menu-link" [class.expanded]="enquiryMenuExpanded" (click)="toggleEnquiryMenu()">
-          <img src="assets/images/icons/ouline-globe.png" alt="Enquiry Icon" class="menu-icon" />
-          <span>Enquiry</span>
-          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-            [class.rotated]="enquiryMenuExpanded" />
-        </button>
-        <div class="submenu" *ngIf="enquiryMenuExpanded">
-          <a routerLink="/admin/person-enquiry" routerLinkActive="active" class="submenu-link">
-            <span>Person Enquiry</span>
-          </a>
-          <a routerLink="/admin/receipt-enquiry" routerLinkActive="active" class="submenu-link">
-            <span>Receipt Enquiry</span>
-          </a>
-          <a routerLink="/admin/group-enquiry" routerLinkActive="active" class="submenu-link">
-            <span>Group Enquiry</span>
-          </a>
-          <a routerLink="/admin/penalty-calculation" routerLinkActive="active" class="submenu-link">
-            <span>Penalty Calculation</span>
-          </a>
-          <div class="submenu-item">
-            <button class="nested-submenu-link submenu-link" (click)="toggleMisSubmenu()">
-              <span>MIS</span>
-              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                [class.rotated]="misSubmenuExpanded" />
+        <div class="submenu" *ngIf="transactionsMenuExpanded">
+          <div class="submenu-item" *ngIf="hasAnyVisible(['/admin/auctions', '/admin/member-receipts', '/admin/check-management', '/admin/receipts'])">
+            <button class="submenu-link" [class.expanded]="accountsSubmenuExpanded" (click)="toggleAccountsSubmenu()">
+              <span>Members</span>
+              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon" [class.rotated]="accountsSubmenuExpanded" />
             </button>
-            <div class="nested-submenu" *ngIf="misSubmenuExpanded">
-              <a routerLink="/admin/home-dashboards" routerLinkActive="active" class="nested-submenu-link">
-                <span>Home Dashboards</span>
+            <div class="nested-submenu" *ngIf="accountsSubmenuExpanded">
+              <a *ngIf="isVisible('/admin/auctions')" routerLink="/admin/auctions" routerLinkActive="active" class="nested-submenu-link">
+                <span>Auctions</span>
               </a>
-              <a routerLink="/admin/persons-information-dashboards" routerLinkActive="active"
-                class="nested-submenu-link">
-                <span>Persons Information Dashboards</span>
+              <a *ngIf="isVisible('/admin/auctions/view/:auctionId')" routerLink="/admin/auctions/view/10100" routerLinkActive="active" class="nested-submenu-link">
+                <span>Auction List</span>
               </a>
-              <a routerLink="/admin/agent-locations-dashboard" routerLinkActive="active" class="nested-submenu-link">
-                <span>Collection Agent-Wise Locations</span>
+              <a *ngIf="isVisible('/admin/member-receipts')" routerLink="/admin/member-receipts" routerLinkActive="active" class="nested-submenu-link">
+                <span>Receipts</span>
               </a>
-              <a routerLink="/admin/collection-agent-track-locations" routerLinkActive="active"
-                class="nested-submenu-link">
-                <span>Collection Agent Track Locations</span>
+              <a *ngIf="isVisible('/admin/check-management')" routerLink="/admin/check-management" routerLinkActive="active" class="nested-submenu-link">
+                <span>Cheque Management</span>
               </a>
-              <a routerLink="/admin/position-wise-locations" routerLinkActive="active" class="nested-submenu-link">
-                <span>Position Wise Locations</span>
-              </a>
-              <a routerLink="/admin/outstanding-locations" routerLinkActive="active" class="nested-submenu-link">
-                <span>Outstanding Locations</span>
+              <a *ngIf="isVisible('/admin/receipts')" routerLink="/admin/receipts" routerLinkActive="active" class="nested-submenu-link">
+                <span>Installments</span>
               </a>
             </div>
           </div>
-        </div>
 
-
-
-
-        <!-- Transactions -->
-        <div class="menu-item">
-          <button class="menu-link" [class.expanded]="transactionsMenuExpanded" (click)="toggleTransactionsMenu()">
-            <img src="assets/images/icons/ouline-globe.png" alt="Dashboard Icon" class="menu-icon" />
-            <span>Transactions</span>
-            <i class="pi pi-chevron-down expand-icon" [class.rotated]="transactionsMenuExpanded"></i>
-            <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-              [class.rotated]="transactionsMenuExpanded" />
-          </button>
-
-          <div class="submenu" *ngIf="transactionsMenuExpanded">
-            <div class="submenu-item">
-              <button class="submenu-link" [class.expanded]="accountsSubmenuExpanded" (click)="toggleAccountsSubmenu()">
-                <span>Members</span>
-                <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                  [class.rotated]="accountsSubmenuExpanded" />
-              </button>
-              <div class="nested-submenu" *ngIf="accountsSubmenuExpanded">
-                <a routerLink="/admin/auctions" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Auctions</span>
-                </a>
-                <a routerLink="/admin/member-receipts" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Receipts</span>
-                </a>
-                <a routerLink="/admin/check-management" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Cheque Management</span>
-                </a>
-                <a *ngIf="false" routerLink="/admin/re-auction" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Re-Auction</span>
-                </a>
-                <a routerLink="/admin/receipts" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Installments</span>
-                </a>
-                <a *ngIf="false" routerLink="/admin/member-management" routerLinkActive="active"
-                  class="nested-submenu-link">
-                  <span>Member Management</span>
-                </a>
-                <a *ngIf="false" routerLink="/admin/creditors-debtors-closing" routerLinkActive="active"
-                  class="nested-submenu-link">
-                  <span>Creditors/Debtors Closing</span>
-                </a>
-              </div>
-            </div>
-            <div class="submenu-item">
-              <button class="submenu-link" [class.expanded]="paymentsSubmenuExpanded" (click)="togglePaymentsSubmenu()">
-                <span>Payments</span>
-                <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                  [class.rotated]="paymentsSubmenuExpanded" />
-              </button>
-              <div class="nested-submenu" *ngIf="paymentsSubmenuExpanded">
-                <a routerLink="/admin/bid-payments" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Bid Payments</span>
-                </a>
-                <a *ngIf="false" routerLink="/admin/bid-advance" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Bid Advance</span>
-                </a>
-                <a *ngIf="false" routerLink="/admin/credit-balance-return" routerLinkActive="active"
-                  class="nested-submenu-link">
-                  <span>Credit Balance Return</span>
-                </a>
-                <a *ngIf="false" routerLink="/admin/surety-entry" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Surety Entry</span>
-                </a>
-                <a *ngIf="false" routerLink="/admin/payments-removal-members" routerLinkActive="active"
-                  class="nested-submenu-link">
-                  <span>Payments to Removal Members</span>
-                </a>
-              </div>
-            </div>
-            <!-- Agents submenu under Transactions -->
-            <div class="submenu-item" *ngIf="false">
-              <button class="submenu-link" [class.expanded]="agentsSubmenuExpanded" (click)="toggleAgentsSubmenu()">
-                <span>Agents</span>
-                <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                  [class.rotated]="agentsSubmenuExpanded" />
-              </button>
-              <div class="nested-submenu" *ngIf="agentsSubmenuExpanded">
-                <a routerLink="/admin/agent-commission-setup" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Agent Commission Setup</span>
-                </a>
-                <a routerLink="/admin/agent-commission-payment" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Agent Commission Payment</span>
-                </a>
-              </div>
-            </div>
-            <!-- Accounts submenu under Transactions -->
-            <div class="submenu-item" *ngIf="false">
-              <button class="submenu-link" [class.expanded]="accountsTransactionSubmenuExpanded"
-                (click)="toggleAccountsTransactionSubmenu()">
-                <span>Accounts</span>
-                <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                  [class.rotated]="accountsTransactionSubmenuExpanded" />
-              </button>
-              <div class="nested-submenu" *ngIf="accountsTransactionSubmenuExpanded">
-                <a routerLink="/admin/account-cash" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Cash</span>
-                </a>
-                <a routerLink="/admin/account-bank" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Bank</span>
-                </a>
-                <a routerLink="/admin/account-journal-voucher" routerLinkActive="active" class="nested-submenu-link">
-                  <span>Journal Voucher</span>
-                </a>
-              </div>
-            </div>
-            <!-- Suit File link under Transactions -->
-            <a *ngIf="false" routerLink="/admin/suit-filed-receipt" routerLinkActive="active"
-              class="nested-submenu-link">
-              <span>Suit File</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-
-
-
-
-      <!-- Utilities -->
-      <div class="menu-item" *ngIf="false">
-        <button class="menu-link" [class.expanded]="utilitiesMenuExpanded" (click)="toggleUtilitiesMenu()">
-          <img src="assets/images/icons/ouline-globe.png" alt="Utilities Icon" class="menu-icon" />
-          <span>Utilities</span>
-          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-            [class.rotated]="utilitiesMenuExpanded" />
-        </button>
-        <div class="submenu" *ngIf="utilitiesMenuExpanded">
-          <a routerLink="/admin/company-setup-utilities" routerLinkActive="active" class="submenu-link">
-            <span>Company Setup</span>
-          </a>
-          <a routerLink="/admin/sms-options" routerLinkActive="active" class="submenu-link">
-            <span>SMS Options</span>
-          </a>
-          <a routerLink="/admin/company-setup-information" routerLinkActive="active" class="submenu-link">
-            <span>Company Setup Information</span>
-          </a>
-          <a routerLink="/admin/report-sms-options" routerLinkActive="active" class="submenu-link">
-            <span>Report SMS Options</span>
-          </a>
-          <a routerLink="/admin/accounts-posting" routerLinkActive="active" class="submenu-link">
-            <span>Accounts Posting</span>
-          </a>
-          <a routerLink="/admin/re-adjust-credit-installments" routerLinkActive="active" class="submenu-link">
-            <span>Re-Adjust Credit Installments</span>
-          </a>
-          <a routerLink="/admin/wrong-accounts-posting" routerLinkActive="active" class="submenu-link">
-            <span>Wrong Accounts Posting</span>
-          </a>
-          <a routerLink="/admin/audit-trail" routerLinkActive="active" class="submenu-link">
-            <span>Audit Trail</span>
-          </a>
-          <a routerLink="/admin/cheque-details-updation" routerLinkActive="active" class="submenu-link">
-            <span>Cheque Details Updation</span>
-          </a>
-          <a routerLink="/admin/repeated-persons" routerLinkActive="active" class="submenu-link">
-            <span>Repeated Persons</span>
-          </a>
-          <a routerLink="/admin/mail-setup" routerLinkActive="active" class="submenu-link">
-            <span>Mail Setup</span>
-          </a>
-          <a routerLink="/admin/communication-setup-information" routerLinkActive="active" class="submenu-link">
-            <span>Communication Setup Information</span>
-          </a>
-          <a routerLink="/admin/transaction-vouchers" routerLinkActive="active" class="submenu-link">
-            <span>Transaction Vouchers</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Reports -->
-      <div class="menu-item" *ngIf="false">
-        <button class="menu-link" [class.expanded]="reportsMenuExpanded" (click)="toggleReportsMenu()">
-          <img src="assets/images/icons/ouline-globe.png" alt="Reports Icon" class="menu-icon" />
-          <span>Reports</span>
-          <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-            [class.rotated]="reportsMenuExpanded" />
-        </button>
-        <div class="submenu" *ngIf="reportsMenuExpanded">
-          <div class="submenu-item">
-            <button class="submenu-link" [class.expanded]="enrollmentsSubmenuExpanded"
-              (click)="toggleEnrollmentsSubmenu()">
-              <span>Enrollments</span>
-              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                [class.rotated]="enrollmentsSubmenuExpanded" />
+          <div class="submenu-item" *ngIf="hasAnyVisible(['/admin/bid-payments'])">
+            <button class="submenu-link" [class.expanded]="paymentsSubmenuExpanded" (click)="togglePaymentsSubmenu()">
+              <span>Payments</span>
+              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon" [class.rotated]="paymentsSubmenuExpanded" />
             </button>
-            <div class="nested-submenu" *ngIf="enrollmentsSubmenuExpanded">
-              <a routerLink="/admin/groups-list-report" routerLinkActive="active" class="nested-submenu-link">
-                <span>Groups List Report</span>
-              </a>
-              <a routerLink="/admin/group-wise-subscribers-list" routerLinkActive="active" class="nested-submenu-link">
-                <span>Group-Wise Subscribers List</span>
-              </a>
-              <a routerLink="/admin/business-statement" routerLinkActive="active" class="nested-submenu-link">
-                <span>Business Statement</span>
-              </a>
-              <a routerLink="/admin/company-investment-on-vacant-chits" routerLinkActive="active"
-                class="nested-submenu-link">
-                <span>Company Investment On Vacant Chits</span>
-              </a>
-              <a routerLink="/admin/surety-list" routerLinkActive="active" class="nested-submenu-link">
-                <span>Surety List</span>
-              </a>
-              <a routerLink="/admin/persons-report" routerLinkActive="active" class="nested-submenu-link">
-                <span>Persons Report</span>
-              </a>
-              <a routerLink="/admin/member-account-copy" routerLinkActive="active" class="nested-submenu-link">
-                <span>Member Account Copy</span>
-              </a>
-              <a routerLink="/admin/daily-member-account-copy-balances" routerLinkActive="active"
-                class="nested-submenu-link">
-                <span>Daily Member Account Copy / Balances</span>
-              </a>
-              <a routerLink="/admin/agents-target-report" routerLinkActive="active" class="submenu-link">
-                <span>Agents Target Report</span>
-              </a>
-              <a routerLink="/admin/chit-agreement" routerLinkActive="active" class="submenu-link">
-                <span>Chit Agreement</span>
-              </a>
-              <a routerLink="/admin/member-account-copy-crdr" routerLinkActive="active" class="submenu-link">
-                <span>Member Account Copy (Cr/Dr)</span>
-              </a>
-            </div>
-          </div>
-          <div class="submenu-item">
-            <button class="submenu-link" [class.expanded]="auctionSubmenuExpanded" (click)="toggleAuctionSubmenu()">
-              <span>Auctions</span>
-              <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon"
-                [class.rotated]="auctionSubmenuExpanded" />
-            </button>
-            <div class="nested-submenu" *ngIf="auctionSubmenuExpanded">
-              <a routerLink="/admin/auction-turnover-statement" routerLinkActive="active" class="nested-submenu-link">
-                <span>Auction Turnover Statement</span>
-              </a>
-              <a routerLink="/admin/company-investment-own-chits" routerLinkActive="active" class="nested-submenu-link">
-                <span>Company Investment On Own Chits</span>
-              </a>
-              <a routerLink="/admin/successful-bidders-list" routerLinkActive="active" class="nested-submenu-link">
-                <span>Successful Bidders List</span>
-              </a>
-              <a routerLink="/admin/dividend-list-month-ii" routerLinkActive="active" class="nested-submenu-link">
-                <span>Dividend List For Month-II</span>
-              </a>
-              <a routerLink="/admin/dividend-list-for-month" routerLinkActive="active" class="nested-submenu-link">
-                <span>Dividend List For Month</span>
-              </a>
-              <a routerLink="/admin/group-wise-successful-bidders-list" routerLinkActive="active"
-                class="nested-submenu-link">
-                <span>Group Wise Successful Bidders List</span>
-              </a>
-              <a routerLink="/admin/auction-chart" routerLinkActive="active" class="nested-submenu-link">
-                <span>Auction Chart</span>
-              </a>
-              <a routerLink="/admin/bids-register-for-month" routerLinkActive="active" class="nested-submenu-link">
-                <span>Bids Register For Month</span>
-              </a>
-              <a routerLink="/admin/minutes-filing-register" routerLinkActive="active" class="nested-submenu-link">
-                <span>Minutes Filing Register</span>
-              </a>
-              <a routerLink="/admin/intimation-card" routerLinkActive="active" class="nested-submenu-link">
-                <span>Intimation Card</span>
-              </a>
-              <a routerLink="/admin/gst-report" routerLinkActive="active" class="nested-submenu-link">
-                <span>GST Report</span>
-              </a>
-              <a routerLink="/admin/gst-balance" routerLinkActive="active" class="nested-submenu-link">
-                <span>GST Balance</span>
-              </a>
-              <a routerLink="/admin/gst-summary" routerLinkActive="active" class="nested-submenu-link">
-                <span>GST Summary</span>
+            <div class="nested-submenu" *ngIf="paymentsSubmenuExpanded">
+              <a *ngIf="isVisible('/admin/bid-payments')" routerLink="/admin/bid-payments" routerLinkActive="active" class="nested-submenu-link">
+                <span>Bid Payments</span>
               </a>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Settings -->
-      <div class="menu-item" *ngIf="false">
-        <a routerLink="/admin/settings" routerLinkActive="active" class="menu-link">
-          <img src="assets/images/icons/ouline-globe.png" alt="Dashboard Icon" class="menu-icon" />
-          <span>Settings</span>
-        </a>
-      </div>
-
     </nav>
 
     <!-- Sidebar Footer -->
@@ -496,8 +109,8 @@
         </button>
 
         <div class="footer-settings-submenu" *ngIf="footerSettingsExpanded">
-          <a routerLink="/admin/profile" routerLinkActive="active" class="footer-submenu-link">Profile</a>
-          <a routerLink="/admin/preferences" routerLinkActive="active" class="footer-submenu-link">Preferences</a>
+          <a *ngIf="isVisible('/admin/profile')" routerLink="/admin/profile" routerLinkActive="active" class="footer-submenu-link">Profile</a>
+          <a *ngIf="isVisible('/admin/preferences')" routerLink="/admin/preferences" routerLinkActive="active" class="footer-submenu-link">Preferences</a>
           <button class="footer-submenu-link" (click)="logout()">Logout</button>
         </div>
       </div>

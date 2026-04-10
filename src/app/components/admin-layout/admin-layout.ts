@@ -30,8 +30,28 @@ export class AdminLayout {
 
   auctionSubmenuExpanded = false;
   searchResults: any[] = [];
+  private readonly visibleMenuRoutes = new Set<string>([
+    '/admin/dashboard',
+    '/admin/members',
+    '/admin/chit-groups',
+    '/admin/enrollments',
+    '/admin/auctions',
+    '/admin/auctions/view/:auctionId',
+    '/admin/member-receipts',
+    '/admin/check-management',
+    '/admin/receipts',
+    '/admin/bid-payments',
+  ]);
 
   constructor(private router: Router) {}
+
+  isVisible(route: string): boolean {
+    return this.visibleMenuRoutes.has(route);
+  }
+
+  hasAnyVisible(routes: string[]): boolean {
+    return routes.some((route) => this.isVisible(route));
+  }
 
   onSearch() {
     if (this.searchQuery.length > 2) {
