@@ -13,13 +13,15 @@
     <nav class="nav-menu">
       <div class="platform-label">Platform</div>
 
-      <!-- Dashboard -->
+      <!-- Dashboard (Phase 2 temporarily hidden) -->
+      <!--
       <div class="menu-item">
         <a routerLink="/admin/dashboard" routerLinkActive="active" class="menu-link">
           <img src="assets/images/icons/ouline-globe.png" alt="Dashboard Icon" class="menu-icon" />
           <span>Dashboard</span>
         </a>
       </div>
+      -->
 
       <!-- Master (with submenu) -->
       <div class="menu-item">
@@ -43,12 +45,15 @@
               <a routerLink="/admin/chit-groups" routerLinkActive="active" class="nested-submenu-link">
                 <span>Chit Group</span>
               </a>
+              <!-- PHASE 2 
               <a routerLink="/admin/suit-file" routerLinkActive="active" class="nested-submenu-link">
                 <span>Suit File Info</span>
               </a>
+              -->
               <a routerLink="/admin/enrollments" routerLinkActive="active" class="nested-submenu-link">
                 <span>Enrollments</span>
               </a>
+              <!-- PHASE 2
               <a routerLink="/admin/self-chits-entry" routerLinkActive="active" class="nested-submenu-link">
                 <span>Self Chits Entry</span>
               </a>
@@ -58,9 +63,11 @@
               <a routerLink="/admin/business-agent-transfer" routerLinkActive="active" class="nested-submenu-link">
                 <span>Business/Collection Agent Transfer</span>
               </a>
+              -->
 
             </div>
           </div>
+          <!-- PHASE 2
           <div class="submenu-item">
             <button class="submenu-link" [class.expanded]="accountsSectionExpanded" (click)="toggleAccountsSection()">
               <span>Accounts</span>
@@ -88,10 +95,12 @@
               </a>
             </div>
           </div>
+          -->
         </div>
       </div>
 
       <!-- Security -->
+      <!-- PHASE 2
       <div class="menu-item">
         <button class="menu-link" [class.expanded]="securityMenuExpanded" (click)="toggleSecurityMenu()">
           <img src="assets/images/icons/ouline-globe.png" alt="Security Icon" class="menu-icon" />
@@ -112,7 +121,6 @@
         </div>
       </div>
 
-      <!-- Consolidation -->
       <div class="menu-item">
         <button class="menu-link" [class.expanded]="consolidationMenuExpanded" (click)="toggleConsolidationMenu()">
           <img src="assets/images/icons/ouline-globe.png" alt="Consolidation Icon" class="menu-icon" />
@@ -193,6 +201,7 @@
           </div>
         </div>
       </div>
+      -->
 
       <!-- Transactions -->
       <div class="menu-item">
@@ -221,18 +230,22 @@
               <a routerLink="/admin/check-management" routerLinkActive="active" class="nested-submenu-link">
                 <span>Cheque Management</span>
               </a>
+              <!-- PHASE 2
               <a routerLink="/admin/re-auction" routerLinkActive="active" class="nested-submenu-link">
                 <span>Re-Auction</span>
               </a>
+              -->
               <a routerLink="/admin/receipts" routerLinkActive="active" class="nested-submenu-link">
                 <span>Receipts</span>
               </a>
               <a routerLink="/admin/member-management" routerLinkActive="active" class="nested-submenu-link">
                 <span>Member Management</span>
               </a>
+              <!-- PHASE 2
               <a routerLink="/admin/creditors-debtors-closing" routerLinkActive="active" class="nested-submenu-link">
                 <span>Creditors/Debtors Closing</span>
               </a>
+              -->
             </div>
           </div>
           <div class="submenu-item">
@@ -245,21 +258,26 @@
               <a routerLink="/admin/bid-payments" routerLinkActive="active" class="nested-submenu-link">
                 <span>Bid Payments</span>
               </a>
+              <!-- PHASE 2
               <a routerLink="/admin/bid-advance" routerLinkActive="active" class="nested-submenu-link">
                 <span>Bid Advance</span>
               </a>
               <a routerLink="/admin/credit-balance-return" routerLinkActive="active" class="nested-submenu-link">
                 <span>Credit Balance Return</span>
               </a>
+              -->
               <a routerLink="/admin/surety-entry" routerLinkActive="active" class="nested-submenu-link">
                 <span>Surety Entry</span>
               </a>
+              <!-- PHASE 2
               <a routerLink="/admin/payments-removal-members" routerLinkActive="active" class="nested-submenu-link">
                 <span>Payments to Removal Members</span>
               </a>
+              -->
             </div>
           </div>
           <!-- Agents submenu under Transactions -->
+          <!-- PHASE 2 
           <div class="submenu-item">
             <button class="submenu-link" [class.expanded]="agentsSubmenuExpanded" (click)="toggleAgentsSubmenu()">
               <span>Agents</span>
@@ -275,7 +293,9 @@
               </a>
             </div>
           </div>
+          -->
           <!-- Accounts submenu under Transactions -->
+          <!-- PHASE 2
           <div class="submenu-item">
             <button class="submenu-link" [class.expanded]="accountsTransactionSubmenuExpanded"
               (click)="toggleAccountsTransactionSubmenu()">
@@ -295,15 +315,19 @@
               </a>
             </div>
           </div>
+          -->
           <!-- Suit File link under Transactions -->
+          <!-- PHASE 2
           <a routerLink="/admin/suit-filed-receipt" routerLinkActive="active" class="nested-submenu-link">
             <span>Suit File</span>
           </a>
+          -->
         </div>
       </div>
 
 
       <!-- Utilities -->
+      <!-- PHASE 2
       <div class="menu-item">
         <button class="menu-link" [class.expanded]="utilitiesMenuExpanded" (click)="toggleUtilitiesMenu()">
           <img src="assets/images/icons/ouline-globe.png" alt="Utilities Icon" class="menu-icon" />
@@ -353,8 +377,10 @@
           </a>
         </div>
       </div>
+      -->
 
       <!-- Reports -->
+      <!-- PHASE 2
       <div class="menu-item">
         <button class="menu-link" [class.expanded]="reportsMenuExpanded" (click)="toggleReportsMenu()">
           <img src="assets/images/icons/ouline-globe.png" alt="Reports Icon" class="menu-icon" />
@@ -458,14 +484,17 @@
           </div>
         </div>
       </div>
+      -->
 
       <!-- Settings -->
+      <!-- PHASE 2
       <div class="menu-item">
         <a routerLink="/admin/settings" routerLinkActive="active" class="menu-link">
           <img src="assets/images/icons/ouline-globe.png" alt="Dashboard Icon" class="menu-icon" />
           <span>Settings</span>
         </a>
       </div>
+      -->
     </nav>
 
     <!-- Sidebar Footer -->
