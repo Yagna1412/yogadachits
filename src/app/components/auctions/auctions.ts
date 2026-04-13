@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 import {
   AuctionsService,
@@ -15,100 +15,88 @@ import {
 } from '../../service/auction.service';
 
 interface AuctionItem {
-  id: number;
-  auctionNumber: number;
-  groupName: string;
-  auctionDate: string;
-  chitGroupId: number;
-  chitAmount: number;
-  maxMembers: number;
-  commissionPct: number;
-  winningBidId?: number;
+  id              : number;
+  auctionNumber   : number;
+  groupName       : string;
+  auctionDate     : string;
+  chitGroupId     : number;
+  chitAmount      : number;
+  maxMembers      : number;  
+  commissionPct   : number;  
+  winningBidId   ?: number;
   winningBidAmount?: number;
-  bidLossAmount?: number;
+  bidLossAmount  ?: number;
   dividendPerMember?: number;
-  netPayable?: number;
-  status: string;
-  totalBidsParticipant?: number;
+  netPayable     ?: number;
+  status          : string;
 }
 
 interface BidRow {
-  ticketNumber: string;
-  enrollmentId: number;
-  subscriber: string;
-  bidAmount: number;
-  bidId: number | null;
-  isWinning: boolean;
-  channel: string;
-  status: 'No Bid' | 'Bid Paid' | 'Highest Bid';
+  ticketNumber : string;
+  enrollmentId : number;
+  subscriber   : string;
+  bidAmount    : number;
+  bidId        : number | null;
+  isWinning    : boolean;
+  channel      : string;
+  status       : 'No Bid' | 'Bid Paid' | 'Highest Bid';
 }
 
 interface Header {
-  auctionNumber: number;
-  groupName: string;
-  currentAuction: number;
-  totalAuctions: number;
-  auctionDate: string;
-  totalMembers: number;
-  maxMembers: number;
-  status: string;
+  auctionNumber  : number;
+  groupName      : string;
+  currentAuction : number;
+  totalAuctions  : number;
+  auctionDate    : string;
+  totalMembers   : number;
+  maxMembers     : number; 
 }
 
 interface Calc {
-  chitAmount: number;
-  winningBid: number;
-  bidLoss: number;
-  commissionPct: number;
-  commissionAmount: number;
-  dividendPerMember: number;
-  netPayable: number;
-}
-
-interface LiveBanner {
-  label: string;
-  summary: string;
-  variant: 'selected' | 'group' | 'global';
+  chitAmount          : number;
+  winningBid          : number;
+  bidLoss             : number;
+  commissionPct       : number;
+  commissionAmount    : number;
+  dividendPerMember   : number;
+  netPayable          : number;
 }
 
 @Component({
-  selector: 'app-auctions',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './auctions.html',
-  styleUrl: './auctions.scss',
+  selector    : 'app-auctions',
+  standalone  : true,
+  imports     : [CommonModule, FormsModule],
+  templateUrl : './auctions.html',
+  styleUrl    : './auctions.scss',
 })
 export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  isLoading = false;
-  isDetailLoading = false;
-  isSubmittingBid = false;
+  isLoading          = false;
+  isSubmittingBid    = false;
   isConfirmingWinner = false;
-  showConfirmModal = false;
-  showSuccessModal = false;
-  errorMessage = '';
-  activePanel: 'none' | 'details' = 'none';
+  showConfirmModal   = false;
+  showSuccessModal   = false;
+  errorMessage       = '';
 
   // Data arrays
-  chitGroups: ChitGroupDto[] = [];
-  allAuctions: AuctionItem[] = [];
-  groupAuctions: AuctionItem[] = [];
-  bids: BidRow[] = [];
-
+  chitGroups      : ChitGroupDto[] = [];
+  allAuctions     : AuctionItem[] = [];
+  groupAuctions   : AuctionItem[] = []; 
+  bids            : BidRow[]      = [];
+  
   // Timer state
   timerValue: number = 180; // 3 minutes in seconds
   timerInterval: any;
   isTimerRunning = false;
   auctionLocked = false;
-  currentSession: AuctionSessionResponse | null = null;
 
   // Selections
-  selectedGroupId: number | null = null;
-  selectedAuctionId: number | null = null;
-  selected: AuctionItem | null = null;
+  selectedGroupId : number | null = null;
+  selected        : AuctionItem | null = null;
 
   header: Header = {
     auctionNumber: 0, groupName: '', currentAuction: 0,
-    totalAuctions: 0, auctionDate: '', totalMembers: 0, maxMembers: 0, status: ''
+    totalAuctions: 0, auctionDate: '', totalMembers: 0, maxMembers: 0
   };
 
   calc: Calc = {
@@ -119,270 +107,15 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get highestBid(): BidRow | undefined { return this.bids.find(b => b.status === 'Highest Bid'); }
 
-  get globalLiveAuction(): AuctionItem | undefined {
-    return this.allAuctions.find(a => this.isLiveAuctionStatus(a.status));
-  }
-
-
-  get liveAuctionBanner(): LiveBanner | null {
-    const selectedAuction = this.getSelectedAuction();
-    if (selectedAuction && this.isLiveAuctionStatus(selectedAuction.status)) {
-      return {
-        label: 'Selected Auction is Live',
-        summary: `Auction #${selectedAuction.auctionNumber} - ${selectedAuction.groupName}`,
-        variant: 'selected',
-      };
-    }
-
-    const groupLiveAuction = this.groupAuctions.find(item => this.isLiveAuctionStatus(item.status)) ?? null;
-    if (groupLiveAuction) {
-      return {
-        label: this.selectedGroupId ? 'Live Auction in Selected Group' : 'Live Auction in Current Group',
-        summary: `Auction #${groupLiveAuction.auctionNumber} - ${groupLiveAuction.groupName}`,
-        variant: 'group',
-      };
-    }
-
-    const liveAuction = this.allAuctions.find(item => this.isLiveAuctionStatus(item.status)) ?? null;
-    if (liveAuction) {
-      return {
-        label: 'Live Auction Running',
-        summary: `Auction #${liveAuction.auctionNumber} - ${liveAuction.groupName}`,
-        variant: 'global',
-      };
-    }
-
-    return null;
-  }
-
-  constructor(private svc: AuctionsService, private cdr: ChangeDetectorRef) { }
+  constructor(private svc: AuctionsService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    this.loadAuctionWorkspace();
+    this.loadPage();
   }
 
   ngOnDestroy(): void {
     this.stopLocalTimer();
     this.svc.disconnectFromAuction();
-  }
-
-  private loadAuctionWorkspace(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.cdr.detectChanges();
-
-    this.svc.clearChitGroupsCache();
-    this.svc.clearAuctionsCache();
-    this.svc.clearEnrollmentsCache();
-
-    forkJoin({
-      groups: this.svc.listChitGroups(),
-      auctions: this.svc.listAuctions(),
-    }).subscribe({
-      next: ({ groups, auctions }) => {
-        const groupsData: any[] = (groups as any)?.data ?? (groups as any) ?? [];
-        const auctionsData: any[] = (auctions as any)?.data ?? (auctions as any) ?? [];
-
-        this.chitGroups = Array.isArray(groupsData) ? groupsData : [];
-        this.allAuctions = Array.isArray(auctionsData)
-          ? auctionsData.map((a: AuctionResponse): AuctionItem => ({
-            id: a.id,
-            auctionNumber: a.auctionNumber,
-            groupName: a.groupName ?? `Group #${a.chitGroupId}`,
-            auctionDate: a.auctionDate,
-            chitGroupId: a.chitGroupId,
-            chitAmount: a.chitAmount ?? 0,
-            maxMembers: a.maxMembers ?? 0,
-            commissionPct: a.companyCommissionPct ?? 5,
-            winningBidId: a.winningBidId,
-            winningBidAmount: a.winningBidAmount,
-            bidLossAmount: a.bidLossAmount,
-            dividendPerMember: a.dividendPerMember,
-            netPayable: a.netPayable,
-            status: a.status,
-          }))
-          : [];
-
-        if (!this.chitGroups.length && this.allAuctions.length) {
-          const groupMap = new Map<number, ChitGroupDto>();
-          this.allAuctions.forEach((item) => {
-            if (!groupMap.has(item.chitGroupId)) {
-              groupMap.set(item.chitGroupId, {
-                id: item.chitGroupId,
-                groupName: item.groupName || `Group #${item.chitGroupId}`,
-                chitAmount: item.chitAmount || 0,
-              });
-            }
-          });
-          this.chitGroups = [...groupMap.values()];
-        }
-
-        this.selectedGroupId = this.chitGroups[0]?.id ?? null;
-        this.filterAuctionsByGroup();
-        this.selectedAuctionId = this.groupAuctions[0]?.id ?? null;
-        this.resetAuctionViewState(false);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.errorMessage = 'Failed to load data. Please check the backend.';
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-    });
-  }
-
-  private legacyViewAuction(): void {
-    const item = this.getSelectedAuction();
-    if (!item) {
-      this.errorMessage = 'Select a chit group and auction month first.';
-      return;
-    }
-
-    this.errorMessage = '';
-    this.loadAuctionDetails(item);
-  }
-
-  onGroupSelect(groupId: number | string | null): void {
-    this.selectedGroupId = groupId === null || groupId === undefined ? null : Number(groupId);
-    this.filterAuctionsByGroup();
-    this.selectedAuctionId = this.groupAuctions[0]?.id ?? null;
-    this.errorMessage = '';
-    this.activePanel = 'none';
-    this.resetAuctionViewState(false);
-  }
-
-  onAuctionSelect(auctionId?: number | string | null): void {
-    this.selectedAuctionId = auctionId === undefined || auctionId === null ? null : Number(auctionId);
-    this.errorMessage = '';
-    this.activePanel = 'none';
-    this.resetAuctionViewState(false);
-  }
-
-  get canViewAuction(): boolean {
-    return !this.isDetailLoading && !!this.getSelectedAuction();
-  }
-
-  private resetAuctionViewState(isDetailLoading: boolean): void {
-    this.stopLocalTimer();
-    this.svc.disconnectFromAuction();
-    this.selected = null;
-    this.bids = [];
-    this.currentSession = null;
-    this.showConfirmModal = false;
-    this.showSuccessModal = false;
-    this.isTimerRunning = false;
-    this.auctionLocked = false;
-    this.isDetailLoading = isDetailLoading;
-    this.timerValue = 180;
-    this.header = {
-      auctionNumber: 0,
-      groupName: '',
-      currentAuction: 0,
-      totalAuctions: 0,
-      auctionDate: '',
-      totalMembers: 0,
-      maxMembers: 0,
-      status: '',
-    };
-    this.calc = {
-      chitAmount: 0,
-      winningBid: 0,
-      bidLoss: 0,
-      commissionPct: 5,
-      commissionAmount: 0,
-      dividendPerMember: 0,
-      netPayable: 0,
-    };
-  }
-
-  private getSelectedAuction(): AuctionItem | null {
-    if (this.selectedAuctionId === null) {
-      return null;
-    }
-    return this.groupAuctions.find(a => a.id === this.selectedAuctionId)
-      ?? this.allAuctions.find(a => a.id === this.selectedAuctionId)
-      ?? null;
-  }
-
-  private mergeAuctionItem(base: AuctionItem, detail: Partial<AuctionResponse> | null): AuctionItem {
-    if (!detail) {
-      return base;
-    }
-
-    return {
-      ...base,
-      groupName: detail.groupName ?? base.groupName,
-      auctionDate: detail.auctionDate ?? base.auctionDate,
-      chitAmount: detail.chitAmount ?? base.chitAmount,
-      maxMembers: detail.maxMembers ?? base.maxMembers,
-      commissionPct: detail.companyCommissionPct ?? base.commissionPct,
-      winningBidId: detail.winningBidId ?? base.winningBidId,
-      winningBidAmount: detail.winningBidAmount ?? base.winningBidAmount,
-      bidLossAmount: detail.bidLossAmount ?? base.bidLossAmount,
-      dividendPerMember: detail.dividendPerMember ?? base.dividendPerMember,
-      netPayable: detail.netPayable ?? base.netPayable,
-      status: detail.status ?? base.status,
-    };
-  }
-
-  private loadAuctionDetails(item: AuctionItem): void {
-    this.resetAuctionViewState(true);
-    this.selected = item;
-    this.setHeader(item, this.groupAuctions.length);
-    this.setCalcBase(item);
-    this.cdr.detectChanges();
-
-    // Use pipe(catchError) on all calls to ensure forkJoin doesn't fail silently if one fails
-    forkJoin({
-      auction: this.svc.getAuctionById(item.id).pipe(catchError(() => of({ success: false, data: null }))),
-      bids: this.svc.listBids(item.id).pipe(catchError(() => of({ success: false, data: [] }))),
-      enrollments: this.svc.getEnrollments(item.chitGroupId).pipe(catchError(() => of({ success: false, data: [] }))),
-      session: this.svc.getAuctionSession(item.id).pipe(catchError(() => of({ success: false, data: null }))),
-    }).subscribe({
-      next: ({ auction, bids, enrollments, session }) => {
-        const auctionData = ((auction as any)?.data ?? (auction as any) ?? null) as Partial<AuctionResponse> | null;
-        const bidData = ((bids as any)?.data ?? (Array.isArray(bids) ? bids : [])) as AuctionBidResponse[];
-        const enrollData = ((enrollments as any)?.data ?? (Array.isArray(enrollments) ? enrollments : [])) as EnrollmentResponse[];
-
-        const merged = this.mergeAuctionItem(item, auctionData);
-        this.selected = merged;
-
-        this.setHeader(merged, this.groupAuctions.length);
-        this.setCalcBase(merged);
-        this.bids = this.buildRows(enrollData, bidData);
-        this.header.totalMembers = this.bids.length;
-
-        if (bidData.length) {
-          this.recalculate();
-        }
-
-        this.svc.connectToAuction(
-          merged.id,
-          (sessionUpdate) => this.handleSessionUpdate(sessionUpdate),
-          (bid) => this.handleBidUpdate(bid)
-        );
-
-        if (session && (session as any).data) {
-          this.handleSessionUpdate((session as any).data);
-        } else {
-          this.isTimerRunning = false;
-          this.auctionLocked = false;
-        }
-
-        this.isDetailLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error loading auction details:', err);
-        this.errorMessage = 'Failed to load selected auction details. Showing local data.';
-        this.selected = item; // Fallback to provided item
-        this.setHeader(item, this.groupAuctions.length);
-        this.setCalcBase(item);
-        this.isDetailLoading = false;
-        this.cdr.detectChanges();
-      },
-    });
   }
 
   startAuction(): void {
@@ -396,54 +129,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  viewAuction(): void {
-    const item = this.getSelectedAuction();
-    if (!item) {
-      this.errorMessage = 'Select a chit group and auction month first.';
-      return;
-    }
-
-    this.errorMessage = '';
-    this.activePanel = 'details';
-    this.loadAuctionDetails(item);
-
-    setTimeout(() => {
-      const stage = document.getElementById('auction-stage');
-      stage?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-  }
-
-
-
-  goBack(): void {
-    this.activePanel = 'none';
-    this.resetAuctionViewState(false);
-  }
-
-  onHeaderActionClick(): void {
-    const live = this.globalLiveAuction;
-    if (live) {
-      if (this.activePanel === 'details' && this.selected?.id === live.id) {
-         return; // Already viewing it
-      }
-      this.selectedGroupId = live.chitGroupId;
-      this.onGroupSelect(live.chitGroupId);
-      this.selectedAuctionId = live.id;
-      this.viewAuction();
-    } else {
-      if (this.activePanel === 'details' && this.selected) {
-         this.startAuction();
-      } else if (this.selectedAuctionId) {
-         this.viewAuction();
-         setTimeout(() => {
-           if (this.selected) this.startAuction();
-         }, 500); 
-      } else {
-         this.errorMessage = 'Please select a chit group and auction month first.';
-      }
-    }
-  }
-
   stopAuction(): void {
     this.stopLocalTimer();
     this.isTimerRunning = false;
@@ -452,56 +137,50 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   handleSessionUpdate(session: AuctionSessionResponse): void {
-    this.currentSession = session;
-    const sessionIsLive = this.isLiveAuctionStatus(session.sessionStatus);
-    this.header = {
-      ...this.header,
-      status: sessionIsLive ? 'LIVE' : (session.sessionStatus || this.header.status || 'CLOSED'),
-    };
-    if (sessionIsLive) {
-      this.timerValue = session.remainingSeconds;
-      this.isTimerRunning = true;
-      this.auctionLocked = false;
-      this.startLocalTimer();
-    } else {
-      this.timerValue = session.remainingSeconds; // might be 0
-      this.isTimerRunning = false;
-      this.auctionLocked = true;
-      this.stopLocalTimer();
-    }
-    this.cdr.detectChanges();
+      if (session.sessionStatus === 'live') {
+          this.timerValue = session.remainingSeconds;
+          this.isTimerRunning = true;
+          this.auctionLocked = false;
+          this.startLocalTimer();
+      } else {
+          this.timerValue = session.remainingSeconds; // might be 0
+          this.isTimerRunning = false;
+          this.auctionLocked = true;
+          this.stopLocalTimer();
+      }
+      this.cdr.detectChanges();
   }
 
   handleBidUpdate(bid: AuctionBidResponse): void {
-    const row = this.bids.find(b => b.enrollmentId === bid.enrollmentId);
-    if (row) {
-      row.bidAmount = bid.bidAmount;
-      row.bidId = bid.id;
-      row.channel = bid.channel;
-      this.recalculate();
-    }
+      const row = this.bids.find(b => b.enrollmentId === bid.enrollmentId);
+      if (row) {
+          row.bidAmount = bid.bidAmount;
+          row.bidId = bid.id;
+          row.channel = bid.channel;
+          this.recalculate();
+      }
   }
 
   private startLocalTimer(): void {
-    this.stopLocalTimer();
-    this.timerInterval = setInterval(() => {
-      if (this.timerValue > 0) {
-        this.timerValue--;
-        this.cdr.detectChanges();
-      } else {
-        this.stopLocalTimer();
-        this.isTimerRunning = false;
-        this.auctionLocked = true;
-        this.cdr.detectChanges();
-      }
-    }, 1000);
+      this.stopLocalTimer();
+      this.timerInterval = setInterval(() => {
+          if (this.timerValue > 0) {
+              this.timerValue--;
+              this.cdr.detectChanges();
+          } else {
+              this.stopLocalTimer();
+              this.isTimerRunning = false;
+              this.auctionLocked = true;
+              this.cdr.detectChanges();
+          }
+      }, 1000);
   }
 
   private stopLocalTimer(): void {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
+      if (this.timerInterval) {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+      }
   }
 
   get formattedTimer(): string {
@@ -521,51 +200,35 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Fetch BOTH Chit Groups and Auctions
     forkJoin({
-      groups: this.svc.listChitGroups(),
+      groups  : this.svc.listChitGroups(),
       auctions: this.svc.listAuctions()
     }).pipe(
       switchMap(({ groups, auctions }) => {
-        const groupsData: any[] = (groups as any)?.data ?? (groups as any) ?? [];
-        const auctionsData: any[] = (auctions as any)?.data ?? (auctions as any) ?? [];
-        this.chitGroups = Array.isArray(groupsData) ? groupsData : [];
-        const aList = Array.isArray(auctionsData) ? auctionsData : [];
+        this.chitGroups = groups.data ?? [];
+        const aList = auctions.data ?? [];
 
         if (!aList.length) {
           return of({ items: [] as AuctionItem[], bids: [] as AuctionBidResponse[], enrollments: [] as EnrollmentResponse[], first: null });
         }
 
         const items: AuctionItem[] = aList.map((a: AuctionResponse): AuctionItem => ({
-          id: a.id,
-          auctionNumber: a.auctionNumber,
-          groupName: a.groupName ?? `Group #${a.chitGroupId}`,
-          auctionDate: a.auctionDate,
-          chitGroupId: a.chitGroupId,
-          chitAmount: a.chitAmount ?? 0,
-          maxMembers: a.maxMembers ?? 0,
-          commissionPct: a.companyCommissionPct ?? 5,
-          winningBidId: a.winningBidId,
+          id              : a.id,
+          auctionNumber   : a.auctionNumber,
+          groupName       : a.groupName ?? `Group #${a.chitGroupId}`,
+          auctionDate     : a.auctionDate,
+          chitGroupId     : a.chitGroupId,
+          chitAmount      : a.chitAmount ?? 0,
+          maxMembers      : a.maxMembers ?? 0,
+          commissionPct   : a.companyCommissionPct ?? 5,
+          winningBidId    : a.winningBidId,
           winningBidAmount: a.winningBidAmount,
-          bidLossAmount: a.bidLossAmount,
+          bidLossAmount   : a.bidLossAmount,
           dividendPerMember: a.dividendPerMember,
-          netPayable: a.netPayable,
-          status: a.status,
+          netPayable      : a.netPayable,
+          status          : a.status,
         }));
 
         this.allAuctions = items;
-
-        if (!this.chitGroups.length && items.length) {
-          const groupMap = new Map<number, ChitGroupDto>();
-          items.forEach((item) => {
-            if (!groupMap.has(item.chitGroupId)) {
-              groupMap.set(item.chitGroupId, {
-                id: item.chitGroupId,
-                groupName: item.groupName || `Group #${item.chitGroupId}`,
-                chitAmount: item.chitAmount || 0,
-              });
-            }
-          });
-          this.chitGroups = [...groupMap.values()];
-        }
 
         if (this.chitGroups.length > 0) {
           this.selectedGroupId = this.chitGroups[0].id;
@@ -575,17 +238,17 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         const first = this.groupAuctions.length > 0 ? this.groupAuctions[0] : items[0];
 
         if (!first) {
-          return of({ items, bids: [], enrollments: [], first: null });
+           return of({ items, bids: [], enrollments: [], first: null });
         }
 
         return forkJoin({
-          bids: this.svc.listBids(first.id),
+          bids       : this.svc.listBids(first.id),
           enrollments: this.svc.getEnrollments(first.chitGroupId),
         }).pipe(
           switchMap(({ bids, enrollments }) => of({
             items,
-            bids: ((bids as any)?.data ?? (bids as any) ?? []) as AuctionBidResponse[],
-            enrollments: ((enrollments as any)?.data ?? (enrollments as any) ?? []) as EnrollmentResponse[],
+            bids       : bids.data ?? [] as AuctionBidResponse[],
+            enrollments: enrollments.data ?? [] as EnrollmentResponse[],
             first,
           }))
         );
@@ -602,17 +265,17 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
           this.bids = this.buildRows(enrollments, bids);
           this.header.totalMembers = this.bids.length;
-
+          
           if (bids.length) { this.recalculate(); }
-
+          
           this.svc.connectToAuction(
-            first.id,
-            (session) => this.handleSessionUpdate(session),
-            (bid) => this.handleBidUpdate(bid)
+              first.id,
+              (session) => this.handleSessionUpdate(session),
+              (bid) => this.handleBidUpdate(bid)
           );
-
+          
           this.svc.getAuctionSession(first.id).subscribe(res => {
-            if (res.data) this.handleSessionUpdate(res.data);
+              if (res.data) this.handleSessionUpdate(res.data);
           });
         }
         this.isLoading = false;
@@ -628,14 +291,23 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ── Selections & Filtering ──────────────────────────────────────────────────
 
-  private legacyOnGroupSelect(event: Event): void {
+  onGroupSelect(event: Event): void {
     const groupId = Number((event.target as HTMLSelectElement).value);
-    this.onGroupSelect(groupId);
+    this.selectedGroupId = groupId;
+    this.filterAuctionsByGroup();
+    
+    if (this.groupAuctions.length > 0) {
+      this.switchTo(this.groupAuctions[0]);
+    } else {
+      this.selected = null;
+      this.bids = [];
+    }
   }
 
-  private legacyOnAuctionSelect(event: Event): void {
+  onAuctionSelect(event: Event): void {
     const id = Number((event.target as HTMLSelectElement).value);
-    this.onAuctionSelect(id);
+    const item = this.allAuctions.find(a => a.id === id);
+    if (item && item.id !== this.selected?.id) { this.switchTo(item); }
   }
 
   private filterAuctionsByGroup(): void {
@@ -648,32 +320,30 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private switchTo(item: AuctionItem): void {
     this.isLoading = true;
-    this.bids = [];
-    this.selected = item;
-
+    this.bids      = [];
+    this.selected  = item;
+    
     this.setHeader(item, this.groupAuctions.length);
     this.setCalcBase(item);
     this.cdr.detectChanges();
 
     forkJoin({
-      bids: this.svc.listBids(item.id),
+      bids       : this.svc.listBids(item.id),
       enrollments: this.svc.getEnrollments(item.chitGroupId),
     }).subscribe({
       next: ({ bids, enrollments }) => {
-        const bidData = (bids as any)?.data ?? (bids as any) ?? [];
-        const enrollData = (enrollments as any)?.data ?? (enrollments as any) ?? [];
-        this.bids = this.buildRows(enrollData, bidData);
+        this.bids = this.buildRows(enrollments.data ?? [], bids.data ?? []);
         this.header.totalMembers = this.bids.length;
-        if ((Array.isArray(bidData) ? bidData : []).length) { this.recalculate(); }
+        if ((bids.data ?? []).length) { this.recalculate(); }
 
         this.svc.connectToAuction(
-          item.id,
-          (session) => this.handleSessionUpdate(session),
-          (bid) => this.handleBidUpdate(bid)
+            item.id,
+            (session) => this.handleSessionUpdate(session),
+            (bid) => this.handleBidUpdate(bid)
         );
 
         this.svc.getAuctionSession(item.id).subscribe(res => {
-          if (res.data) this.handleSessionUpdate(res.data);
+            if (res.data) this.handleSessionUpdate(res.data);
         });
 
         this.isLoading = false;
@@ -694,13 +364,13 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     this.isSubmittingBid = true;
-    this.errorMessage = '';
+    this.errorMessage    = '';
 
     this.svc.createBid({
-      auctionId: this.selected.id,
+      auctionId   : this.selected.id,
       enrollmentId: bid.enrollmentId,
-      bidAmount: bid.bidAmount,
-      channel: 'offline',
+      bidAmount   : bid.bidAmount,
+      channel     : 'offline',
     }).subscribe({
       next: (res: ApiResponse<AuctionBidResponse>) => {
         this.isSubmittingBid = false;
@@ -712,7 +382,7 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: () => {
         this.isSubmittingBid = false;
-        this.errorMessage = 'Failed to submit bid.';
+        this.errorMessage    = 'Failed to submit bid.';
       },
     });
   }
@@ -726,7 +396,7 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.bids.forEach(b => {
       if (b.bidAmount > 0) {
         b.isWinning = b.bidAmount === highest;
-        b.status = b.isWinning ? 'Highest Bid' : 'Bid Paid';
+        b.status    = b.isWinning ? 'Highest Bid' : 'Bid Paid';
       } else {
         b.status = 'No Bid';
       }
@@ -736,20 +406,20 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.bids = [...this.bids].sort((a, b) => b.bidAmount - a.bidAmount);
     this.cdr.detectChanges(); // Force immediate repaint so highest row jumps to top instantly
 
-    const chit = this.calc.chitAmount;
-    const pct = this.calc.commissionPct;
-    const members = this.header.maxMembers || this.header.totalMembers || placed.length || 1;
-    const bidLoss = chit - highest;
+    const chit       = this.calc.chitAmount;
+    const pct        = this.calc.commissionPct;
+    const members    = this.header.maxMembers || this.header.totalMembers || placed.length || 1;
+    const bidLoss    = chit - highest;
     const commission = (chit * pct) / 100;
-    const dividend = members > 0 ? (bidLoss - commission) / members : 0;
+    const dividend   = members > 0 ? (bidLoss - commission) / members : 0;
 
     this.calc = {
       ...this.calc,
-      winningBid: highest,
+      winningBid       : highest,
       bidLoss,
-      commissionAmount: commission,
+      commissionAmount : commission,
       dividendPerMember: dividend,
-      netPayable: highest - commission + dividend,
+      netPayable       : highest - commission + dividend,
     };
   }
 
@@ -768,16 +438,16 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.errorMessage = '';
       this.isSubmittingBid = true;
       this.svc.createBid({
-        auctionId: this.selected!.id,
+        auctionId   : this.selected!.id,
         enrollmentId: this.highestBid.enrollmentId,
-        bidAmount: this.highestBid.bidAmount,
-        channel: 'offline',
+        bidAmount   : this.highestBid.bidAmount,
+        channel     : 'offline',
       }).subscribe({
         next: (res: ApiResponse<AuctionBidResponse>) => {
           this.isSubmittingBid = false;
           if (res.data) {
             this.highestBid!.bidId = res.data.id;
-            this.errorMessage = '';
+            this.errorMessage     = '';
             this.showConfirmModal = true;
             this.cdr.detectChanges();
           } else {
@@ -787,14 +457,14 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         error: () => {
           this.isSubmittingBid = false;
-          this.errorMessage = 'Failed to submit bid. Please try manually.';
+          this.errorMessage    = 'Failed to submit bid. Please try manually.';
           this.cdr.detectChanges();
         }
       });
       return;
     }
 
-    this.errorMessage = '';
+    this.errorMessage     = '';
     this.showConfirmModal = true;
   }
 
@@ -814,41 +484,41 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     this.isConfirmingWinner = true;
-    this.errorMessage = '';
+    this.errorMessage       = '';
 
     this.svc.selectWinner(this.selected.id, bidId).subscribe({
       next: (res: ApiResponse<AuctionResponse>) => {
         this.isConfirmingWinner = false;
         if (res.data) {
           const idx = this.allAuctions.findIndex(a => a.id === this.selected!.id);
-          if (idx >= 0) {
-            const updated = {
-              ...this.allAuctions[idx],
-              winningBidId: res.data.winningBidId,
-              winningBidAmount: res.data.winningBidAmount,
-              netPayable: res.data.netPayable,
-            };
-            this.allAuctions[idx] = updated;
-            const groupIndex = this.groupAuctions.findIndex(a => a.id === updated.id);
-            if (groupIndex >= 0) { this.groupAuctions[groupIndex] = updated; }
-            this.selected = updated;
-            this.setHeader(updated, this.groupAuctions.length);
-            this.setCalcBase(updated);
-            this.refreshSelectedAuction();
-          }
-          this.showConfirmModal = false;
-          this.showSuccessModal = true;
-          this.cdr.detectChanges();
+        if (idx >= 0) {
+          const updated = {
+            ...this.allAuctions[idx],
+            winningBidId    : res.data.winningBidId,
+            winningBidAmount: res.data.winningBidAmount,
+            netPayable      : res.data.netPayable,
+          };
+          this.allAuctions[idx] = updated;
+          const groupIndex = this.groupAuctions.findIndex(a => a.id === updated.id);
+          if (groupIndex >= 0) { this.groupAuctions[groupIndex] = updated; }
+          this.selected = updated;
+          this.setHeader(updated, this.groupAuctions.length);
+          this.setCalcBase(updated);
+          this.refreshSelectedAuction();
+        }
+        this.showConfirmModal = false;
+        this.showSuccessModal = true;
+        this.cdr.detectChanges();
           setTimeout(() => { this.showSuccessModal = false; this.cdr.detectChanges(); }, 3000);
         } else {
-          this.errorMessage = res.message ?? 'Could not confirm winner.';
+          this.errorMessage     = res.message ?? 'Could not confirm winner.';
           this.showConfirmModal = false;
         }
       },
       error: () => {
         this.isConfirmingWinner = false;
-        this.showConfirmModal = false;
-        this.errorMessage = 'Failed to confirm winner.';
+        this.showConfirmModal   = false;
+        this.errorMessage       = 'Failed to confirm winner.';
       },
     });
   }
@@ -904,7 +574,7 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
     <div>
       <h1>Auction Report</h1>
-      <p class="sub">Generated on ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+      <p class="sub">Generated on ${new Date().toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })}</p>
     </div>
     <button onclick="window.print()" style="padding:8px 20px;background:#003366;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨 Print / Save PDF</button>
   </div>
@@ -953,42 +623,27 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     return '₹' + (n ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
 
-  formatHistoryStatus(status?: string | null): string {
-    const value = (status ?? 'CLOSED').toString().trim();
-    return value ? value.replace(/_/g, ' ').toUpperCase() : 'CLOSED';
-  }
-
-  formatDisplayDate(date: string): string {
-    return this.fmtDate(date);
-  }
-
   private setHeader(item: AuctionItem, total: number): void {
     this.header = {
-      auctionNumber: item.auctionNumber,
-      groupName: item.groupName,
+      auctionNumber : item.auctionNumber,
+      groupName     : item.groupName,
       currentAuction: item.auctionNumber,
-      totalAuctions: total,
-      auctionDate: this.fmtDate(item.auctionDate),
-      totalMembers: 0,
-      maxMembers: item.maxMembers,
-      status: item.status || 'CLOSED',
+      totalAuctions : total,
+      auctionDate   : this.fmtDate(item.auctionDate),
+      totalMembers  : 0,
+      maxMembers    : item.maxMembers, 
     };
-  }
-
-  isLiveAuctionStatus(status?: string | null): boolean {
-    const normalized = (status ?? '').trim().toLowerCase();
-    return normalized === 'live' || normalized === 'active' || normalized === 'running';
   }
 
   private setCalcBase(item: AuctionItem): void {
     this.calc = {
-      chitAmount: item.chitAmount,
-      winningBid: item.winningBidAmount ?? 0,
-      bidLoss: item.bidLossAmount ?? 0,
-      commissionPct: item.commissionPct,
-      commissionAmount: 0,
-      dividendPerMember: item.dividendPerMember ?? 0,
-      netPayable: item.netPayable ?? 0,
+      chitAmount       : item.chitAmount,
+      winningBid       : item.winningBidAmount    ?? 0,
+      bidLoss          : item.bidLossAmount        ?? 0,
+      commissionPct    : item.commissionPct, 
+      commissionAmount : 0,
+      dividendPerMember: item.dividendPerMember    ?? 0,
+      netPayable       : item.netPayable           ?? 0,
     };
   }
 
@@ -1002,12 +657,12 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         return {
           ticketNumber: `T${String(e.ticketNo).padStart(3, '0')}`,
           enrollmentId: e.id,
-          subscriber: e.subscriberName || `Member #${e.id}`,
-          bidAmount: bid?.bidAmount ?? 0,
-          bidId: bid?.id ?? null,
-          isWinning: bid ? bid.bidAmount === highest : false,
-          channel: bid?.channel ?? 'offline',
-          status: bid ? (bid.bidAmount === highest ? 'Highest Bid' : 'Bid Paid') : 'No Bid',
+          subscriber  : e.subscriberName || `Member #${e.id}`,
+          bidAmount   : bid?.bidAmount ?? 0,
+          bidId       : bid?.id        ?? null,
+          isWinning   : bid ? bid.bidAmount === highest : false,
+          channel     : bid?.channel ?? 'offline',
+          status      : bid ? (bid.bidAmount === highest ? 'Highest Bid' : 'Bid Paid') : 'No Bid',
         };
       });
     }
@@ -1015,12 +670,12 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     return existingBids.map((b, i): BidRow => ({
       ticketNumber: `T${String(i + 1).padStart(3, '0')}`,
       enrollmentId: b.enrollmentId,
-      subscriber: `Member #${b.enrollmentId}`,
-      bidAmount: b.bidAmount,
-      bidId: b.id,
-      isWinning: b.bidAmount === highest,
-      channel: b.channel,
-      status: b.bidAmount === highest ? 'Highest Bid' : 'Bid Paid',
+      subscriber  : `Member #${b.enrollmentId}`,
+      bidAmount   : b.bidAmount,
+      bidId       : b.id,
+      isWinning   : b.bidAmount === highest,
+      channel     : b.channel,
+        status      : b.bidAmount === highest ? 'Highest Bid' : 'Bid Paid',
     }));
   }
 
@@ -1028,13 +683,11 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.selected) { return; }
 
     forkJoin({
-      bids: this.svc.listBids(this.selected.id),
+      bids       : this.svc.listBids(this.selected.id),
       enrollments: this.svc.getEnrollments(this.selected.chitGroupId),
     }).subscribe({
       next: ({ bids, enrollments }) => {
-        const bidData = (bids as any)?.data ?? (Array.isArray(bids) ? bids : []);
-        const enrollData = (enrollments as any)?.data ?? (Array.isArray(enrollments) ? enrollments : []);
-        this.bids = this.buildRows(enrollData, bidData);
+        this.bids = this.buildRows(enrollments.data ?? [], bids.data ?? []);
         this.header.totalMembers = this.bids.length;
         if ((bids.data ?? []).length) { this.recalculate(); }
         this.cdr.detectChanges();

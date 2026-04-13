@@ -128,8 +128,17 @@ export class AuctionsService {
 
         if (!isPlatformBrowser(this.platformId)) return;
 
+        let connectHeaders: { [key: string]: string } = {};
+        const token = localStorage.getItem('authToken')
+            || localStorage.getItem('token')
+            || localStorage.getItem('auth_token');
+        if (token) {
+            connectHeaders['Authorization'] = `Bearer ${token}`;
+        }
+
         this.stompClient = new Client({
             brokerURL: WS_BASE,
+            connectHeaders: connectHeaders,
             reconnectDelay: 5000,
             onConnect: () => {
                 // Subscribe to Session Updates
@@ -153,10 +162,10 @@ export class AuctionsService {
                 });
             },
             onStompError: (frame) => {
-               console.error('STOMP error:', frame.headers['message'], frame.body);
+                console.error('STOMP error:', frame.headers['message'], frame.body);
             }
         });
-        
+
         this.stompClient.activate();
     }
 

@@ -17,8 +17,8 @@
 
 .timer-badge {
   display: flex; align-items: center; gap: 8px;
-  padding: 10px 24px; background: #f3f4f6; border-radius: 40px;
-  color: #111827; font-weight: 700; font-size: 1.8rem; font-family: 'Courier New', Courier, monospace;
+  padding: 6px 14px; background: #f3f4f6; border-radius: 30px;
+  color: #111827; font-weight: 700; font-size: 1.1rem; font-family: 'Courier New', Courier, monospace;
   &.timer-alert { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; animation: pulse 1s infinite alternate; }
 }
 
@@ -27,318 +27,16 @@
 .start-btn { min-width: 140px; height: 38px; border-radius: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
 /* selector */
-.auction-controls {
-  display: flex;
-  justify-content: center;
-  padding: 40px 20px;
-  background: #f8fafc;
-  border-radius: 16px;
-  margin-bottom: 24px;
-
-  &.is-loading {
-    align-items: flex-start;
-  }
-}
-
-.auction-form-container {
-  width: 100%;
-  max-width: 480px;
-  background: white;
-  padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,.05);
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  border: 1px solid #e2e8f0;
-}
-
-.auction-loading-note {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  color: #1e3a8a;
-  font-size: 0.92rem;
-  font-weight: 500;
-}
-
-.live-auction-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #9a3412;
-
-  &.is-selected {
-    background: #fef2f2;
-    border-color: #fca5a5;
-    color: #7f1d1d;
-  }
-
-  &.is-group {
-    background: #fff7ed;
-    border-color: #fed7aa;
-    color: #9a3412;
-  }
-
-  &.is-global {
-    background: #eff6ff;
-    border-color: #bfdbfe;
-    color: #1d4ed8;
-  }
-}
-
-.live-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #ef4444;
-  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.14);
-  flex-shrink: 0;
-}
-
-.live-auction-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.live-auction-label {
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.live-auction-copy strong {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: inherit;
-}
-
-.live-auction-banner.is-selected .live-dot {
-  background: #dc2626;
-  box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.14);
-}
-
-.live-auction-banner.is-group .live-dot {
-  background: #ef4444;
-  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.14);
-}
-
-.live-auction-banner.is-global .live-dot {
-  background: #2563eb;
-  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.14);
-}
-
-.spinner-inline {
-  width: 18px;
-  height: 18px;
-  border-width: 2px;
-  flex-shrink: 0;
-}
-
-.auction-view-actions {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-.view-btn {
-  min-width: 120px;
-  height: 42px;
-
-  @media (max-width: 1024px) {
-    width: 100%;
-  }
-}
-
-.auction-stage {
-  min-height: 320px;
-}
-
-.auction-workspace {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.auction-detail-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 20px 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-}
-
-.detail-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.detail-kicker {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #dbeafe;
-  color: #1e3a8a;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.detail-heading h2 {
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.detail-heading p {
-  margin: 0;
-  color: #64748b;
-  font-size: 0.95rem;
-}
-
-.back-btn {
-  min-width: 160px;
-  height: 42px;
-  white-space: nowrap;
-}
-
-.auction-placeholder {
-  min-height: 420px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f7fbfe;
-  border: 1px dashed #dbe4ee;
-  border-radius: 12px;
-  padding: 24px;
-}
-
-.placeholder-card {
-  width: 100%;
-  max-width: 640px;
-  text-align: center;
-  background: white;
-  border-radius: 14px;
-  padding: 32px 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.08);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
-}
-
-.placeholder-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #dbeafe;
-  color: #003366;
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.placeholder-note {
-  color: #6b7280;
-  font-size: .85rem;
-}
-
 .auction-selector-bar {
-  display: flex; 
-  flex-direction: column;
-  align-items: flex-start; 
-  gap: 8px; 
-  padding: 0; 
-  margin: 0;
-  
-  .selector-label { 
-    font-size: .9rem; 
-    font-weight: 600; 
-    color: #475569; 
-  }
-  
+  display: flex; align-items: center; gap: 12px; padding: 12px 0; margin-bottom: 8px;
+  .selector-label { font-size: .875rem; font-weight: 600; color: #374151; white-space: nowrap; }
   .auction-select {
-    width: 100%; 
-    padding: 12px 16px;
-    border: 1px solid #cbd5e1; 
-    border-radius: 8px; 
-    font-size: .95rem;
-    color: #1e293b; 
-    background: #fcfcfc; 
-    cursor: pointer; 
-    outline: none;
-    transition: all 0.2s;
-    
-    &:focus { 
-      border-color: #003366; 
-      background: white;
-      box-shadow: 0 0 0 4px rgba(0,51,102,.1); 
-    }
+    flex: 1; max-width: 420px; padding: 8px 12px;
+    border: 1px solid #d1d5db; border-radius: 6px; font-size: .875rem;
+    color: #111827; background: white; cursor: pointer; outline: none;
+    &:focus { border-color: #003366; box-shadow: 0 0 0 3px rgba(0,51,102,.1); }
   }
 }
-
-.btn-back {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 8px 16px;
-  color: #003366;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0,0,0,.02);
-
-  &:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-    transform: translateX(-4px);
-  }
-
-  .back-icon {
-    font-size: 1.2rem;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
 
 /* error */
 .error-banner {
@@ -373,26 +71,8 @@
 }
 .auction-number-badge {
   width: 100px; min-height: 100px; background: #E1E5ED; flex-shrink: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;
+  display: flex; align-items: center; justify-content: center;
   .badge-number { font-size: 2rem; font-weight: 700; color: #0A2962; }
-  
-  &.is-live {
-    background: #fef2f2;
-    border-right: 1px solid #fecaca;
-    .badge-number { color: #dc2626; }
-  }
-
-  .live-indicator {
-    font-size: 0.70rem;
-    font-weight: 800;
-    color: white;
-    background-color: #ef4444;
-    padding: 2px 8px;
-    border-radius: 12px;
-    letter-spacing: 1px;
-    margin-top: 4px;
-    animation: pulse 1.5s infinite alternate;
-  }
 }
 .auction-header-grid {
   display: grid; grid-template-columns: repeat(4,1fr); gap: 0; flex: 1; padding: 16px 24px;
@@ -485,8 +165,6 @@
 .section-title { font-size: 1.1rem; font-weight: 600; color: #111827; margin: 0 0 12px; }
 .table-wrapper { overflow-x: auto; }
 
-
-
 .table {
   width: 100%; border-collapse: collapse; font-size: .875rem;
   th {
@@ -525,13 +203,43 @@
   background: white; border-radius: 12px; max-height: 90vh; overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0,0,0,.2);
   &.confirm-modal { width: 100%; max-width: 540px; }
-  &.success-modal {
-    .success-icon  { font-size: 4rem; margin-bottom: 12px; }
-    .success-title { font-size: 1.1rem; font-weight: 600; margin: 0 0 24px; color: #111827; }
+  &.success-modal { width: 100%; max-width: 400px; text-align: center; padding: 32px 24px; }
+}
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px; border-bottom: 1px solid #e5e7eb;
+  h2 { margin: 0; font-size: 1.2rem; font-weight: 600; color: #111827; }
+  .modal-close {
+    background: #f3f4f6; border: none; width: 32px; height: 32px; font-size: 1.4rem;
+    border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280;
+  }
+}
+.modal-body   { padding: 16px 24px; display: flex; flex-direction: column; gap: 16px; }
+.modal-footer { display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid #e5e7eb; .btn { flex: 1; } }
+
+.winner-card {
+  background: linear-gradient(135deg, #001f3f, #003366);
+  border-radius: 12px; padding: 16px; color: white;
+  display: flex; flex-direction: column; gap: 14px;
+  h3 { margin: 0; font-size: .95rem; opacity: .9; }
+  .winner-details   { display: flex; align-items: center; gap: 10px; }
+  .winner-name      { font-size: 1rem; }
+  .winner-divider   { border: none; border-top: 1px solid rgba(255,255,255,.2); }
+  .winner-amount-section { display: flex; justify-content: space-between; align-items: center; }
+  .amount-label { font-size: .875rem; opacity: .85; }
+  .amount-value { font-size: 1.25rem; font-weight: 700; }
+}
+
+.net-payable-section {
+  display: flex; flex-direction: column; gap: 6px;
+  label { font-size: .875rem; font-weight: 600; color: #374151; }
+  .net-payable-input {
+    padding: 12px 16px; background: #f9fafb; border: 1px solid #e5e7eb;
+    border-radius: 8px; font-size: 1rem; font-weight: 700; color: #003366;
   }
 }
 
-@keyframes pulse {
-  from { opacity: 1; transform: scale(1); }
-  to   { opacity: 0.8; transform: scale(1.05); }
+.success-modal {
+  .success-icon  { font-size: 4rem; margin-bottom: 12px; }
+  .success-title { font-size: 1.1rem; font-weight: 600; margin: 0 0 24px; color: #111827; }
 }
