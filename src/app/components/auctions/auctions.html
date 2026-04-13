@@ -9,6 +9,42 @@
       <span class="breadcrumb-item active">Auctions</span>
     </nav>
   </div>
+<<<<<<< HEAD
+=======
+  <div class="header-right">
+    <div class="auction-timer-controls">
+      <div class="timer-badge" [class.timer-alert]="timerValue < 30">
+        <i class="timer-icon">🕒</i>
+        <span class="timer-text">{{ formattedTimer }}</span>
+      </div>
+      <button class="btn btn-primary btn-sm start-btn" 
+              (click)="startAuction()" 
+              [disabled]="isTimerRunning">
+        {{ isTimerRunning ? 'Auction Live' : 'Start Auction' }}
+      </button>
+    </div>
+  </div>
+>>>>>>> 6d24d4beb90b39619bf92886c291a5a1b3fcc8fd
+</div>
+
+<div class="auction-selector-bar" style="margin-bottom: 15px;" *ngIf="!isLoading && chitGroups.length > 0">
+  <label class="selector-label">Select Chit Group</label>
+  <select class="auction-select" [(ngModel)]="selectedGroupId" (change)="onGroupSelect($event)">
+    <option *ngFor="let group of chitGroups" [value]="group.id">
+      {{ group.groupName }} (Amount: {{ formatCurrency(group.chitAmount) }})
+    </option>
+  </select>
+</div>
+
+<div class="auction-selector-bar" *ngIf="!isLoading && groupAuctions.length > 0">
+  <label class="selector-label">Select Auction Month</label>
+  <select class="auction-select" (change)="onAuctionSelect($event)">
+    <option *ngFor="let item of groupAuctions"
+      [value]="item.id"
+      [selected]="item.id === selected?.id">
+      Auction #{{ item.auctionNumber }} — Date: {{ item.auctionDate }}
+    </option>
+  </select>
 </div>
 
 <div class="error-banner" *ngIf="errorMessage">
@@ -16,6 +52,7 @@
   <button class="error-close" (click)="errorMessage = ''">x</button>
 </div>
 
+<<<<<<< HEAD
 <ng-container *ngIf="selected; else noLiveAuctionState">
   <div class="auction-stage" id="auction-stage">
     <div class="auction-workspace">
@@ -54,10 +91,163 @@
           <div class="header-item">
             <span class="header-label">Total Members</span>
             <span class="header-value">{{ header.totalMembers || '-' }}</span>
+=======
+<div class="loading-state" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <span>Loading auction data…</span>
+</div>
+
+<div *ngIf="!isLoading && !selected && !errorMessage" class="empty-state">
+  No auctions have been generated for this Chit Group yet.
+</div>
+
+<div class="auction-main" *ngIf="!isLoading && selected">
+
+  <div class="auction-header-section">
+    <div class="auction-number-badge">
+      <span class="badge-number">#{{ header.auctionNumber }}</span>
+    </div>
+    <div class="auction-header-grid">
+      <div class="header-item">
+        <span class="header-label">Group Name</span>
+        <span class="header-value">{{ header.groupName }}</span>
+      </div>
+      <div class="header-item">
+        <span class="header-label">Auction Number</span>
+        <span class="header-value-with-total">
+          <span class="current">{{ header.currentAuction }}</span>
+          <span class="total">of {{ header.totalAuctions }}</span>
+        </span>
+      </div>
+      <div class="header-item">
+        <span class="header-label">Auction Date</span>
+        <span class="header-value">{{ header.auctionDate }}</span>
+      </div>
+      <div class="header-item">
+        <span class="header-label">Total Members</span>
+        <span class="header-value">{{ header.totalMembers }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="auction-content-section">
+    <div class="auction-content-wrapper">
+
+      <div class="auction-left-panel">
+
+        <div class="highest-bid-card">
+          <h3 class="card-title">Current Highest Bid</h3>
+          <div class="bidder-info" *ngIf="highestBid; else noBidTpl">
+            <span class="bidder-icon"><img src="assets/images/icons/user1.png" alt="user" /></span>
+            <span class="bidder-name">{{ highestBid.subscriber }}</span>
+          </div>
+          <ng-template #noBidTpl>
+            <div class="bidder-info">
+              <span class="bidder-name" style="opacity:.7">No bids placed yet</span>
+            </div>
+          </ng-template>
+          <div class="bid-divider"></div>
+          <div class="winning-bid-section">
+            <span class="winning-label">Winning Bid</span>
+            <span class="winning-amount">{{ highestBid ? formatCurrency(highestBid.bidAmount) : '—' }}</span>
+          </div>
+        </div>
+
+        <div class="calculation-card">
+          <div class="calc-icon"><span>₹</span></div>
+          <h3 class="card-title">Calculation Summary</h3>
+          <div class="calculation-items">
+            <div class="calc-item">
+              <span class="calc-label">Chit Amount</span>
+              <span class="calc-value">{{ formatCurrency(calc.chitAmount) }}</span>
+            </div>
+            <div class="calc-item">
+              <span class="calc-label">Winning Bid</span>
+              <span class="calc-value">{{ formatCurrency(calc.winningBid) }}</span>
+            </div>
+            <div class="calc-item">
+              <span class="calc-label">Bid Loss</span>
+              <span class="calc-value">{{ formatCurrency(calc.bidLoss) }}</span>
+            </div>
+            <div class="calc-item">
+              <span class="calc-label">Commission ({{ calc.commissionPct }}%)</span>
+              <span class="calc-value">{{ formatCurrency(calc.commissionAmount) }}</span>
+            </div>
+            <div class="calc-item">
+              <span class="calc-label">Dividend per Member</span>
+              <span class="calc-value">{{ formatCurrency(calc.dividendPerMember) }}</span>
+            </div>
+            <div class="calc-item total-item">
+              <span class="calc-label">Net Payable</span>
+              <span class="calc-value">{{ formatCurrency(calc.netPayable) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-secondary" (click)="downloadDetails()">Download Detail</button>
+          <button class="btn btn-primary"
+            [disabled]="!highestBid || isConfirmingWinner || !!selected!.winningBidId"
+            (click)="openConfirmModal()">
+            {{ selected!.winningBidId ? 'Winner Confirmed' : 'Confirm Winner' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="auction-right-panel">
+        <div class="bid-table-section">
+          <h3 class="section-title">Bid Entry</h3>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Ticket No.</th>
+                  <th>Subscriber</th>
+                  <th>Bid Amount (₹)</th>
+                  <th>Action</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let bid of bids" [class.highest-bid-row]="bid.status === 'Highest Bid'">
+                  <td>{{ bid.ticketNumber }}</td>
+                  <td>{{ bid.subscriber }}</td>
+                  <td>
+                    <input type="number" class="bid-input"
+                      [(ngModel)]="bid.bidAmount"
+                      (ngModelChange)="recalculate()"
+                      placeholder="Enter bid"
+                      [disabled]="!!selected!.winningBidId || (timerValue === 0 && !isTimerRunning)" />
+                  </td>
+                  <td>
+                    <button
+                      *ngIf="!selected!.winningBidId && (isTimerRunning || timerValue > 0)"
+                      class="btn btn-sm btn-primary"
+                      [disabled]="bid.bidAmount <= 0 || isSubmittingBid"
+                      (click)="submitBid(bid)">
+                      {{ isSubmittingBid ? '…' : 'Submit' }}
+                    </button>
+                    <span *ngIf="bid.bidId !== null" class="submitted-mark">✔</span>
+                  </td>
+                  <td>
+                    <span class="status-badge"
+                      [class.bid-paid]="bid.status === 'Bid Paid'"
+                      [class.highest-bid]="bid.status === 'Highest Bid'">
+                      {{ bid.status }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="bids.length === 0">
+                  <td colspan="5" class="no-data">No members found for this auction.</td>
+                </tr>
+              </tbody>
+            </table>
+>>>>>>> 6d24d4beb90b39619bf92886c291a5a1b3fcc8fd
           </div>
         </div>
       </div>
 
+<<<<<<< HEAD
       <div class="auction-main">
         <div class="auction-content-section">
           <div class="auction-content-wrapper">
@@ -176,3 +366,49 @@
     </div>
   </div>
 </ng-template>
+=======
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showConfirmModal" (click)="closeConfirmModal()">
+  <div class="modal-content confirm-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Confirm Winner</h2>
+      <button class="modal-close" (click)="closeConfirmModal()">×</button>
+    </div>
+    <div class="modal-body" *ngIf="highestBid">
+      <div class="winner-card">
+        <h3>Winning Bid</h3>
+        <div class="winner-details">
+          <span class="winner-icon"><img src="assets/images/icons/user1.png" alt="user" /></span>
+          <span class="winner-name">{{ highestBid.subscriber }}</span>
+        </div>
+        <div class="winner-divider"></div>
+        <div class="winner-amount-section">
+          <span class="amount-label">Highest Bid</span>
+          <span class="amount-value">{{ formatCurrency(highestBid.bidAmount) }}</span>
+        </div>
+      </div>
+      <div class="net-payable-section">
+        <label>Net Payable</label>
+        <div class="net-payable-input">{{ formatCurrency(calc.netPayable) }}</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeConfirmModal()">Cancel</button>
+      <button class="btn btn-primary" [disabled]="isConfirmingWinner" (click)="confirmWinner()">
+        {{ isConfirmingWinner ? 'Confirming…' : 'Confirm Winner' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+  <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+    <div class="success-icon">🏆</div>
+    <h2 class="success-title">{{ highestBid?.subscriber }} Won the Auction!</h2>
+    <button class="btn btn-primary btn-large" (click)="closeSuccessModal()">Continue</button>
+  </div>
+</div>
+>>>>>>> 6d24d4beb90b39619bf92886c291a5a1b3fcc8fd
