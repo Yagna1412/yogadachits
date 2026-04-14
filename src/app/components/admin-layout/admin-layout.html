@@ -64,7 +64,7 @@
               <img src="assets/images/icons/up.png" alt="Expand" class="expand-icon" [class.rotated]="accountsSubmenuExpanded" />
             </button>
             <div class="nested-submenu" *ngIf="accountsSubmenuExpanded">
-              <a *ngIf="isVisible('/admin/auctions')" routerLink="/admin/auctions" routerLinkActive="active" class="nested-submenu-link">
+              <a *ngIf="isVisible('/admin/auctions')" routerLink="/admin/auctions" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nested-submenu-link">
                 <span>Auctions</span>
               </a>
               <a *ngIf="isVisible('/admin/check-management')" routerLink="/admin/check-management" routerLinkActive="active" class="nested-submenu-link">

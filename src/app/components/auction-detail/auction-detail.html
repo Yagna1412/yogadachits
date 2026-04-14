@@ -1,242 +1,226 @@
-<div class="auction-detail-page">
-
+<div class="auction-detail-container">
   <!-- Page Header -->
-  <div class="page-header">
-    <div class="header-left">
-      <h1 class="page-title">Auction List</h1>
-      <nav class="breadcrumb">
-        <span class="breadcrumb-item">Transactions</span>
-        <span class="breadcrumb-separator">›</span>
-        <span class="breadcrumb-item">Members</span>
-        <span class="breadcrumb-separator">›</span>
-        <span class="breadcrumb-item active">Auctions</span>
-      </nav>
-    </div>
-
-    <div class="header-right">
-      <div class="auction-timer-controls">
-        <div class="timer-badge" [class.timer-alert]="timerValue < 30 && isTimerRunning">
-          <span class="timer-icon">T</span>
-          <span class="timer-text">{{ formattedTimer }}</span>
-        </div>
-        <button class="btn btn-primary start-btn" type="button" (click)="onHeaderAction()">
-          {{ headerActionLabel }}
-        </button>
+  <header class="page-header-section">
+    <div class="header-content">
+      <div class="header-left-box">
+        <nav class="breadcrumb-nav">
+          <ol>
+            <li><a routerLink="/admin/dashboard">Transactions</a></li>
+            <li><i class="breadcrumb-sep">›</i></li>
+            <li><a routerLink="/admin/members">Members</a></li>
+            <li><i class="breadcrumb-sep">›</i></li>
+            <li class="active">Auctions</li>
+          </ol>
+        </nav>
+        <h1 class="page-title">Auction Details</h1>
       </div>
     </div>
-  </div>
+  </header>
 
-  <!-- Error / Empty -->
-  <div class="error-banner" *ngIf="errorMessage">{{ errorMessage }}</div>
-
-  <div class="auction-controls" [class.is-loading]="isLoadingSelectors">
-    <div class="auction-form-container">
-      <div class="auction-loading-note" *ngIf="isLoadingSelectors">
-        <div class="spinner spinner-inline"></div>
-        <span>Loading available chit groups and auction months...</span>
+  <!-- Selection Controls -->
+  <section class="selection-section" [class.is-loading]="isLoadingSelectors">
+    <div class="selection-card">
+      <div class="loading-overlay" *ngIf="isLoadingSelectors">
+        <div class="spinner"></div>
+        <span>Loading auction data...</span>
       </div>
 
-      <div class="auction-selector-bar">
-        <label class="selector-label">Select Chit Group</label>
-        <select
-          class="auction-select"
-          [(ngModel)]="selectedGroupId"
-          (ngModelChange)="onGroupSelect($event)"
-          [disabled]="!chitGroups.length">
-          <option [ngValue]="null" *ngIf="isLoadingSelectors">Loading chit groups...</option>
-          <option [ngValue]="null" *ngIf="!isLoadingSelectors && !chitGroups.length">No chit groups available</option>
-          <option *ngFor="let group of chitGroups" [ngValue]="group.id">
-            {{ group.groupName }} (Amount: {{ formatCurrency(group.chitAmount) }})
-          </option>
-        </select>
-      </div>
-
-      <div class="auction-selector-bar">
-        <label class="selector-label">Select Auction Month</label>
-        <select
-          class="auction-select"
-          [(ngModel)]="selectedAuctionId"
-          (ngModelChange)="onAuctionSelect($event)"
-          [disabled]="!groupAuctions.length">
-          <option [ngValue]="null" *ngIf="isLoadingSelectors">Loading auctions...</option>
-          <option [ngValue]="null" *ngIf="!isLoadingSelectors && !groupAuctions.length">No auctions available</option>
-          <option *ngFor="let item of groupAuctions" [ngValue]="item.id">
-            {{ item.status === 'LIVE' ? 'LIVE - ' : '' }}Auction #{{ item.auctionNumber }} - Date: {{ item.auctionDate }}
-          </option>
-        </select>
-      </div>
-
-      <div class="auction-view-actions">
-        <button class="btn btn-primary view-btn" type="button" [disabled]="!selectedAuctionId" (click)="viewSelectedAuctionDetail()">
-          View Auction Detail
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <ng-container *ngIf="selected; else emptyState">
-
-    <!-- Sub Header -->
-    <div class="detail-subheader">
-      <div class="subheader-left">
-        <h2 class="detail-title">{{ selected.groupName }} - Auction #{{ selected.auctionNumber }}</h2>
-        <p class="detail-subtitle">Read-only auction detail view based on the selected chit group and month.</p>
-      </div>
-      <a routerLink="/admin/auctions" class="btn btn-secondary back-btn">Back to Selection</a>
-    </div>
-
-    <!-- Auction Info Strip -->
-    <div class="auction-info-strip">
-      <div class="auction-number-badge" [class.is-live]="selected.status === 'LIVE'">
-        <span class="badge-number">#{{ header.auctionNumber }}</span>
-        <span class="live-tag" *ngIf="selected.status === 'LIVE'">LIVE</span>
-      </div>
-
-      <div class="info-strip-grid">
-        <div class="info-item">
-          <span class="info-label">Group Name</span>
-          <span class="info-value">{{ header.groupName }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Auction Number</span>
-          <div class="info-value-fraction">
-            <span class="fraction-current">{{ header.currentAuction }}</span>
-            <span class="fraction-total">of {{ header.totalAuctions }}</span>
+      <div class="selection-grid">
+        <div class="control-group">
+          <label>Chit Group</label>
+          <div class="select-wrapper">
+            <select [(ngModel)]="selectedGroupId" (ngModelChange)="onGroupSelect($event)" [disabled]="!chitGroups.length">
+              <option [ngValue]="null" disabled>Select Group</option>
+              <option *ngFor="let group of chitGroups" [ngValue]="group.id">
+                {{ group.groupName }} ({{ formatCurrency(group.chitAmount) }})
+              </option>
+            </select>
           </div>
         </div>
-        <div class="info-item">
-          <span class="info-label">Auction Date</span>
-          <span class="info-value">{{ header.auctionDate }}</span>
+
+        <div class="control-group">
+          <label>Auction Month</label>
+          <div class="select-wrapper">
+            <select [(ngModel)]="selectedAuctionId" (ngModelChange)="onAuctionSelect($event)" [disabled]="!groupAuctions.length">
+              <option [ngValue]="null" disabled>Select Month</option>
+              <option *ngFor="let item of groupAuctions" [ngValue]="item.id">
+                Auction #{{ item.auctionNumber }} - {{ item.auctionDate }}
+              </option>
+            </select>
+          </div>
         </div>
-        <div class="info-item">
-          <span class="info-label">Total Members</span>
-          <span class="info-value">{{ header.totalMembers }}</span>
+
+        <div class="control-actions">
+          <button class="btn-view" [disabled]="!selectedAuctionId" (click)="reload()">
+            <i class="icon-refresh"></i> View Details
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Area -->
+  <ng-container *ngIf="selected; else emptyState">
+
+    <!-- Detail Heading Card -->
+    <div class="auction-detail-header">
+      <div class="detail-heading">
+        <h2>{{ header.groupName }} - Auction #{{ header.auctionNumber }}</h2>
+        <p>Read-only auction detail view based on the selected chit group and month.</p>
+      </div>
+    </div>
+
+    <!-- Info Strip -->
+    <div class="auction-header-section">
+      <div class="auction-number-badge" [class.is-live]="selected.status === 'LIVE'">
+        <span class="badge-number">#{{ header.auctionNumber }}</span>
+        <span class="live-indicator" *ngIf="selected.status === 'LIVE'">LIVE</span>
+      </div>
+      <div class="auction-header-grid">
+        <div class="header-item">
+          <span class="header-label">Group Name</span>
+          <span class="header-value">{{ header.groupName }}</span>
+        </div>
+        <div class="header-item">
+          <span class="header-label">Auction Number</span>
+          <div class="header-value-with-total">
+            <span class="current">{{ header.currentAuction }}</span>
+            <span class="total">of {{ header.totalAuctions }}</span>
+          </div>
+        </div>
+        <div class="header-item">
+          <span class="header-label">Auction Date</span>
+          <span class="header-value">{{ header.auctionDate }}</span>
+        </div>
+        <div class="header-item">
+          <span class="header-label">Total Members</span>
+          <span class="header-value">{{ header.totalMembers }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="detail-main">
-
-      <!-- LEFT COLUMN -->
-      <div class="detail-left">
-
-        <!-- Highest Bid Card -->
+    <div class="dashboard-grid">
+      <!-- Left Column: Summary & Controls -->
+      <aside class="dashboard-sidebar">
+        <!-- Current Highest Bid (dark navy) -->
         <div class="highest-bid-card">
-          <h3 class="card-title">Current Highest Bid</h3>
-          <div class="bidder-row" *ngIf="highestBid; else noBidder">
-            <span class="bidder-avatar">
-              <img src="assets/images/icons/user1.png" alt="user" onerror="this.style.display='none'" />
-            </span>
+          <p class="card-title">CURRENT HIGHEST BID</p>
+          <div class="bidder-info" *ngIf="highestBid; else noBidder">
+            <div class="avatar-circle"><img src="assets/images/icons/user1.png" alt="user" /></div>
             <span class="bidder-name">{{ highestBid.subscriber }}</span>
           </div>
           <ng-template #noBidder>
-            <div class="bidder-row">
-              <span class="bidder-name no-bid-text">No bids placed yet</span>
+            <div class="bidder-info">
+              <div class="avatar-circle"><img src="assets/images/icons/user1.png" alt="user" /></div>
+              <span class="bidder-name">No bids yet</span>
             </div>
           </ng-template>
-          <div class="bid-divider"></div>
-          <div class="winning-row">
+          <hr class="bid-divider" />
+          <div class="winning-bid-section">
             <span class="winning-label">Winning Bid</span>
-            <span class="winning-amount">{{ highestBid ? formatCurrency(highestBid.bidAmount) : '-' }}</span>
+            <span class="winning-amount">{{ highestBid ? formatCurrency(highestBid.bidAmount) : formatCurrency(0) }}</span>
           </div>
         </div>
 
         <!-- Calculation Summary -->
         <div class="calculation-card">
-          <div class="calc-icon-wrap">
-            <span class="calc-icon">₹</span>
-          </div>
-          <h3 class="card-title">Calculation Summary</h3>
-          <div class="calc-list">
-            <div class="calc-row">
+          <div class="calc-icon"><span>i</span></div>
+          <p class="card-title">CALCULATION SUMMARY</p>
+          <div class="calculation-items">
+            <div class="calc-item">
               <span class="calc-label">Chit Amount</span>
               <span class="calc-value">{{ formatCurrency(calc.chitAmount) }}</span>
             </div>
-            <div class="calc-row">
+            <div class="calc-item">
               <span class="calc-label">Winning Bid</span>
               <span class="calc-value">{{ formatCurrency(calc.winningBid) }}</span>
             </div>
-            <div class="calc-row">
+            <div class="calc-item">
               <span class="calc-label">Bid Loss</span>
               <span class="calc-value">{{ formatCurrency(calc.bidLoss) }}</span>
             </div>
-            <div class="calc-row">
+            <div class="calc-item">
               <span class="calc-label">Commission ({{ calc.commissionPct }}%)</span>
               <span class="calc-value">{{ formatCurrency(calc.commissionAmount) }}</span>
             </div>
-            <div class="calc-row">
+            <div class="calc-item">
               <span class="calc-label">Dividend per Member</span>
               <span class="calc-value">{{ formatCurrency(calc.dividendPerMember) }}</span>
             </div>
-            <div class="calc-row total-row">
+            <div class="calc-item total-item">
               <span class="calc-label">Net Payable</span>
               <span class="calc-value">{{ formatCurrency(calc.netPayable) }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="detail-actions">
-          <button class="btn btn-secondary" type="button" (click)="goBack()">Back to Live Auction</button>
+        <!-- Action Controls -->
+        <div class="controls-card">
+          <div class="auction-controls-actions">
+            <button class="btn btn-secondary" (click)="downloadDetails()">Download details</button>
+          </div>
         </div>
-      </div>
+      </aside>
 
-      <!-- RIGHT COLUMN: Bid Entry Table -->
-      <div class="detail-right">
-        <div class="bid-table-section">
-          <h3 class="section-title">Bid Details (Read Only)</h3>
-          <div class="table-wrapper">
-            <table class="bid-table">
+      <!-- Right Column: Bid Table -->
+      <main class="dashboard-main">
+        <div class="bid-table-card">
+          <div class="card-header">
+            <h3>Bid Entry</h3>
+            <div class="table-actions">
+              <span class="bid-count">{{ bids.length }} Participants</span>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="modern-table">
               <thead>
                 <tr>
                   <th>Ticket No.</th>
                   <th>Subscriber</th>
                   <th>Bid Amount</th>
-                  <th>Action</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let bid of bids"
-                    [class.highest-bid-row]="bid.isWinning">
-                  <td>{{ bid.ticketNumber }}</td>
-                  <td>{{ bid.subscriber }}</td>
-                  <td class="bid-amount-cell">
-                    {{ bid.bidAmount > 0 ? bid.bidAmount : 0 }}
+                <tr *ngFor="let bid of bids" [class.is-winning]="bid.isWinning">
+                  <td class="tkt-col">
+                    <span class="tkt-badge">{{ bid.ticketNumber }}</span>
                   </td>
-                  <td class="action-cell">
-                    <span *ngIf="bid.bidId !== null" class="submitted-mark">✔</span>
-                    <span *ngIf="bid.bidId === null" class="no-action">—</span>
+                  <td class="subscriber-col">
+                    <div class="user-cell">
+                      <span>{{ bid.subscriber }}</span>
+                    </div>
                   </td>
-                  <td>
-                    <span class="status-badge"
-                          [class.highest-bid]="bid.status === 'Highest Bid'"
-                          [class.bid-paid]="bid.status === 'Bid Paid'"
-                          [class.no-bid]="bid.status === 'No Bid'">
+                  <td class="amount-col">
+                    <div class="bid-input-group">
+                      <span class="currency-symbol">₹</span>
+                      <span class="bid-amount-value">{{ bid.bidAmount }}</span>
+                    </div>
+                  </td>
+                  <td class="status-col">
+                    <span class="status-tag" [ngClass]="bid.status.toLowerCase().replace(' ', '-')">
                       {{ bid.status }}
                     </span>
                   </td>
-                </tr>
-                <tr *ngIf="!bids.length">
-                  <td colspan="5" class="no-data">No bids available.</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-      </div>
-
+      </main>
     </div>
   </ng-container>
 
   <ng-template #emptyState>
-    <div class="empty-card">
-      <div class="empty-icon">A</div>
-      <h2>Auction not found</h2>
-      <p>We could not load the auction record. Please go back and select another auction.</p>
-      <a routerLink="/admin/auctions" class="btn btn-primary">Back to Auctions</a>
+    <div class="empty-state-card">
+      <div class="empty-illustration">
+        <img src="assets/images/icons/info.png" alt="No data" />
+      </div>
+      <h2>Select an Auction to view details</h2>
+      <p>Use the dropdowns above to choose a chit group and its corresponding auction month.</p>
+      <a routerLink="/admin/auctions" class="btn-back">
+        <img src="assets/images/icons/arrow-left.png" alt="" /> Back to Auctions
+      </a>
     </div>
   </ng-template>
-
 </div>

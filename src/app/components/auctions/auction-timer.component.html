@@ -1,0 +1,10 @@
+<div class="auction-timer-controls" role="region" aria-label="Auction timer">
+  <div class="timer-badge" [class.timer-alert]="timerValue < 30 && isRunning" [class.timer-live]="isRunning">
+    <span class="timer-icon" aria-hidden="true">⏱</span>
+    <span class="timer-text" aria-live="polite">{{ formatTimer() }}</span>
+  </div>
+  <div class="status-badge" [class.status-live]="isRunning" [class.status-no-live]="!isRunning">
+    <span class="live-dot" *ngIf="isRunning"></span>
+    {{ isRunning ? 'Viewing Live' : 'No Live' }}
+  </div>
+</div>

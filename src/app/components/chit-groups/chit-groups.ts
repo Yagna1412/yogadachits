@@ -284,6 +284,16 @@ export class ChitGroupsComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges();
   }
 
+  onAuctionTimeFromChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).value; // "HH:MM"
+    if (!value) { this.newGroup.auctionTimeTo = ''; return; }
+    const [h, m] = value.split(':').map(Number);
+    const totalMinutes = h * 60 + m + 5;
+    const toH = Math.floor(totalMinutes / 60) % 24;
+    const toM = totalMinutes % 60;
+    this.newGroup.auctionTimeTo = `${String(toH).padStart(2, '0')}:${String(toM).padStart(2, '0')}`;
+  }
+
   createGroup(): void {
     if (this.isFormValid()) {
       const monthlyAmount =
