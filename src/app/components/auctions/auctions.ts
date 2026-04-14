@@ -65,19 +65,11 @@ interface Calc {
 }
 
 @Component({
-<<<<<<< HEAD
   selector: 'app-auctions',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './auctions.html',
   styleUrl: './auctions.scss',
-=======
-  selector    : 'app-auctions',
-  standalone  : true,
-  imports     : [CommonModule, FormsModule],
-  templateUrl : './auctions.html',
-  styleUrl    : './auctions.scss',
->>>>>>> 6d24d4beb90b39619bf92886c291a5a1b3fcc8fd
 })
 export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -103,10 +95,15 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   // Selections
   selectedGroupId : number | null = null;
   selected        : AuctionItem | null = null;
+  selectedAuctionId: number | null = null;
+  activePanel: 'none' | 'details' = 'none';
+  isDetailLoading = false;
+  currentSession: any = null;
 
   header: Header = {
     auctionNumber: 0, groupName: '', currentAuction: 0,
-    totalAuctions: 0, auctionDate: '', totalMembers: 0, maxMembers: 0
+    totalAuctions: 0, auctionDate: '', totalMembers: 0, maxMembers: 0,
+    status: ''
   };
 
   calc: Calc = {
@@ -115,155 +112,13 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     dividendPerMember: 0, netPayable: 0,
   };
 
+  isLiveAuctionStatus(status: string): boolean {
+    return status === 'LIVE' || status === 'STARTED';
+  }
+
   get highestBid(): BidRow | undefined { return this.bids.find(b => b.status === 'Highest Bid'); }
 
-<<<<<<< HEAD
-  get globalLiveAuction(): AuctionItem | undefined {
-    return this.allAuctions.find(a => this.isLiveAuctionStatus(a.status));
-  }
-
-  get headerActionLabel(): string {
-    return this.globalLiveAuction ? 'View' : 'Start Auction';
-  }
-
-  get auctionListRouteId(): number {
-    return this.globalLiveAuction?.id ?? this.allAuctions[0]?.id ?? 10100;
-  }
-
-
-  // --- MOCK DATA FOR UI TESTING ---
-  private readonly MOCK_GROUPS: ChitGroupDto[] = [
-    { id: 101, groupName: 'T1-GOLD-100K', chitAmount: 100000 },
-    { id: 102, groupName: 'T2-PREMIUM-500K', chitAmount: 500000 },
-    { id: 103, groupName: 'T3-SAVINGS-200K', chitAmount: 200000 },
-    { id: 104, groupName: 'A1-EXPRESS-50K', chitAmount: 50000 },
-    { id: 105, groupName: 'B1-PLATINUM-1M', chitAmount: 1000000 },
-    { id: 106, groupName: 'C1-SILVER-150K', chitAmount: 150000 },
-    { id: 107, groupName: 'D1-BRONZE-75K', chitAmount: 75000 },
-    { id: 108, groupName: 'E1-MERCURY-300K', chitAmount: 300000 },
-    { id: 109, groupName: 'F1-VENUS-400K', chitAmount: 400000 },
-    { id: 110, groupName: 'G1-MARS-250K', chitAmount: 250000 },
-    { id: 111, groupName: 'H1-JUPITER-600K', chitAmount: 600000 },
-    { id: 112, groupName: 'I1-SATURN-800K', chitAmount: 800000 },
-    { id: 113, groupName: 'J1-URANUS-120K', chitAmount: 120000 },
-    { id: 114, groupName: 'K1-NEPTUNE-90K', chitAmount: 90000 },
-    { id: 115, groupName: 'L1-PLUTO-30K', chitAmount: 30000 }
-  ];
-
-  private readonly MOCK_AUCTIONS_LIST: AuctionItem[] = [
-    // --- Group 101: 24 Months of History ---
-    ...Array.from({ length: 24 }, (_, i) => ({
-      id: 10100 + i,
-      auctionNumber: i + 1,
-      groupName: 'T1-GOLD-100K',
-      auctionDate: `2024-${(i % 12 + 1).toString().padStart(2, '0')}-10`,
-      chitGroupId: 101,
-      chitAmount: 100000,
-      maxMembers: 50,
-      commissionPct: 5,
-      status: i < 5 ? 'CLOSED' : (i === 5 ? 'LIVE' : 'ACTIVE'),
-      winningBidAmount: i < 5 ? 70000 + (i * 1000) : undefined,
-      netPayable: i < 5 ? 72000 + (i * 1100) : undefined
-    })),
-    // --- Group 102: 12 Months ---
-    ...Array.from({ length: 12 }, (_, i) => ({
-      id: 10200 + i,
-      auctionNumber: i + 1,
-      groupName: 'T2-PREMIUM-500K',
-      auctionDate: `2024-${(i % 12 + 1).toString().padStart(2, '0')}-15`,
-      chitGroupId: 102,
-      chitAmount: 500000,
-      maxMembers: 30,
-      commissionPct: 5,
-      status: i < 3 ? 'CLOSED' : 'ACTIVE',
-      winningBidAmount: i < 3 ? 400000 + (i * 5000) : undefined
-    })),
-    // --- Group 105: High Value ---
-    ...Array.from({ length: 12 }, (_, i) => ({
-      id: 10500 + i,
-      auctionNumber: i + 1,
-      groupName: 'B1-PLATINUM-1M',
-      auctionDate: `2024-${(i % 12 + 1).toString().padStart(2, '0')}-25`,
-      chitGroupId: 105,
-      chitAmount: 1000000,
-      maxMembers: 20,
-      commissionPct: 5,
-      status: 'ACTIVE'
-    })),
-    // --- Mix for other groups ---
-    { id: 7, auctionNumber: 1, groupName: 'A1-EXPRESS-50K', auctionDate: '2025-01-05', chitGroupId: 104, chitAmount: 50000, maxMembers: 25, commissionPct: 5, status: 'ACTIVE' },
-    { id: 9, auctionNumber: 1, groupName: 'C1-SILVER-150K', auctionDate: '2025-01-12', chitGroupId: 106, chitAmount: 150000, maxMembers: 40, commissionPct: 5, status: 'ACTIVE' },
-    { id: 10, auctionNumber: 1, groupName: 'D1-BRONZE-75K', auctionDate: '2025-01-18', chitGroupId: 107, chitAmount: 75000, maxMembers: 50, commissionPct: 3, status: 'ACTIVE' }
-  ];
-
-  private readonly MOCK_MEMBERS: EnrollmentResponse[] = [
-    { id: 1, ticketNo: 1, subscriberName: 'Ramesh Kumar', chitGroupId: 101, subscriberId: 1001, status: 'Active' },
-    { id: 2, ticketNo: 2, subscriberName: 'Sneha Reddy', chitGroupId: 101, subscriberId: 1002, status: 'Active' },
-    { id: 3, ticketNo: 3, subscriberName: 'Mohan Lal', chitGroupId: 101, subscriberId: 1003, status: 'Active' },
-    { id: 4, ticketNo: 4, subscriberName: 'Anita Devi', chitGroupId: 101, subscriberId: 1004, status: 'Active' },
-    { id: 5, ticketNo: 5, subscriberName: 'Prakash Raj', chitGroupId: 101, subscriberId: 1005, status: 'Active' },
-    { id: 6, ticketNo: 6, subscriberName: 'Kavitha S.', chitGroupId: 101, subscriberId: 1006, status: 'Active' },
-    { id: 7, ticketNo: 7, subscriberName: 'Sanjay Dutt', chitGroupId: 101, subscriberId: 1007, status: 'Active' },
-    { id: 8, ticketNo: 8, subscriberName: 'Lakshmi N.', chitGroupId: 101, subscriberId: 1008, status: 'Active' },
-    { id: 9, ticketNo: 9, subscriberName: 'Prashanth V.', chitGroupId: 101, subscriberId: 1009, status: 'Active' },
-    { id: 10, ticketNo: 10, subscriberName: 'Deepak Chopra', chitGroupId: 101, subscriberId: 1010, status: 'Active' },
-    { id: 11, ticketNo: 11, subscriberName: 'Meera Jasmine', chitGroupId: 101, subscriberId: 1011, status: 'Active' },
-    { id: 12, ticketNo: 12, subscriberName: 'Arjun Das', chitGroupId: 101, subscriberId: 1012, status: 'Active' },
-    { id: 13, ticketNo: 13, subscriberName: 'Bhavana P.', chitGroupId: 101, subscriberId: 1013, status: 'Active' },
-    { id: 14, ticketNo: 14, subscriberName: 'Chiranjeevi K.', chitGroupId: 101, subscriberId: 1014, status: 'Active' },
-    { id: 15, ticketNo: 15, subscriberName: 'Dhanush R.', chitGroupId: 101, subscriberId: 1015, status: 'Active' },
-    { id: 16, ticketNo: 16, subscriberName: 'Eshwar Rao', chitGroupId: 101, subscriberId: 1016, status: 'Active' },
-    { id: 17, ticketNo: 17, subscriberName: 'Farhan Akhtar', chitGroupId: 101, subscriberId: 1017, status: 'Active' },
-    { id: 18, ticketNo: 18, subscriberName: 'Ganesh H.', chitGroupId: 101, subscriberId: 1018, status: 'Active' },
-    { id: 19, ticketNo: 19, subscriberName: 'Harini M.', chitGroupId: 101, subscriberId: 1019, status: 'Active' },
-    { id: 20, ticketNo: 20, subscriberName: 'Ishaan K.', chitGroupId: 101, subscriberId: 1020, status: 'Active' },
-    { id: 21, ticketNo: 21, subscriberName: 'Jyothi S.', chitGroupId: 101, subscriberId: 1021, status: 'Active' },
-    { id: 22, ticketNo: 22, subscriberName: 'Kishore J.', chitGroupId: 101, subscriberId: 1022, status: 'Active' },
-    { id: 23, ticketNo: 23, subscriberName: 'Latha G.', chitGroupId: 101, subscriberId: 1023, status: 'Active' },
-    { id: 24, ticketNo: 24, subscriberName: 'Manoj B.', chitGroupId: 101, subscriberId: 1024, status: 'Active' },
-    { id: 25, ticketNo: 25, subscriberName: 'Nandini R.', chitGroupId: 101, subscriberId: 1025, status: 'Active' },
-    { id: 26, ticketNo: 26, subscriberName: 'Omprakash L.', chitGroupId: 101, subscriberId: 1026, status: 'Active' },
-    { id: 27, ticketNo: 27, subscriberName: 'Pallavi D.', chitGroupId: 101, subscriberId: 1027, status: 'Active' },
-    { id: 28, ticketNo: 28, subscriberName: 'Qamar S.', chitGroupId: 101, subscriberId: 1028, status: 'Active' },
-    { id: 29, ticketNo: 29, subscriberName: 'Ravi Teja', chitGroupId: 101, subscriberId: 1029, status: 'Active' },
-    { id: 30, ticketNo: 30, subscriberName: 'Suresh Raina', chitGroupId: 101, subscriberId: 1030, status: 'Active' }
-  ];
-
-  get liveAuctionBanner(): LiveBanner | null {
-    const selectedAuction = this.getSelectedAuction();
-    if (selectedAuction && this.isLiveAuctionStatus(selectedAuction.status)) {
-      return {
-        label: 'Selected Auction is Live',
-        summary: `Auction #${selectedAuction.auctionNumber} - ${selectedAuction.groupName}`,
-        variant: 'selected',
-      };
-    }
-
-    const groupLiveAuction = this.groupAuctions.find(item => this.isLiveAuctionStatus(item.status)) ?? null;
-    if (groupLiveAuction) {
-      return {
-        label: this.selectedGroupId ? 'Live Auction in Selected Group' : 'Live Auction in Current Group',
-        summary: `Auction #${groupLiveAuction.auctionNumber} - ${groupLiveAuction.groupName}`,
-        variant: 'group',
-      };
-    }
-
-    const liveAuction = this.allAuctions.find(item => this.isLiveAuctionStatus(item.status)) ?? null;
-    if (liveAuction) {
-      return {
-        label: 'Live Auction Running',
-        summary: `Auction #${liveAuction.auctionNumber} - ${liveAuction.groupName}`,
-        variant: 'global',
-      };
-    }
-
-    return null;
-  }
-
   constructor(private svc: AuctionsService, private cdr: ChangeDetectorRef, private router: Router) { }
-=======
-  constructor(private svc: AuctionsService, private cdr: ChangeDetectorRef) {}
->>>>>>> 6d24d4beb90b39619bf92886c291a5a1b3fcc8fd
 
   ngOnInit(): void {
     this.loadPage();
@@ -274,203 +129,11 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.svc.disconnectFromAuction();
   }
 
-<<<<<<< HEAD
-  private loadAuctionWorkspace(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.cdr.detectChanges();
-
-    // Immediate local data assignment
-    this.chitGroups = [...this.MOCK_GROUPS];
-    this.allAuctions = [...this.MOCK_AUCTIONS_LIST];
-
-    this.selectedGroupId = this.chitGroups[0]?.id ?? null;
-    this.filterAuctionsByGroup();
-    const liveAuction = this.globalLiveAuction ?? null;
-    if (liveAuction) {
-      this.selectedAuctionId = liveAuction.id;
-      this.loadAuctionDetails(liveAuction);
-      this.activePanel = 'details';
-    } else {
-      this.selectedAuctionId = this.groupAuctions[0]?.id ?? null;
-      this.resetAuctionViewState(false);
-      this.activePanel = 'none';
-    }
-    this.isLoading = false;
-    this.cdr.detectChanges();
-  }
-
-  private legacyViewAuction(): void {
-    const item = this.getSelectedAuction();
-    if (!item) {
-      this.errorMessage = 'Select a chit group and auction month first.';
-      return;
-    }
-
-    this.errorMessage = '';
-    this.loadAuctionDetails(item);
-  }
-
-  onGroupSelect(groupId: number | string | null): void {
-    this.selectedGroupId = groupId === null || groupId === undefined ? null : Number(groupId);
-    this.filterAuctionsByGroup();
-    this.selectedAuctionId = this.groupAuctions[0]?.id ?? null;
-    this.errorMessage = '';
-    this.activePanel = 'none';
-    this.resetAuctionViewState(false);
-  }
-
-  onAuctionSelect(auctionId?: number | string | null): void {
-    this.selectedAuctionId = auctionId === undefined || auctionId === null ? null : Number(auctionId);
-    this.errorMessage = '';
-    this.activePanel = 'none';
-    this.resetAuctionViewState(false);
-  }
-
-  get canViewAuction(): boolean {
-    return !this.isDetailLoading && !!this.getSelectedAuction();
-  }
-
-  private resetAuctionViewState(isDetailLoading: boolean): void {
-    this.stopLocalTimer();
-    this.svc.disconnectFromAuction();
-    this.selected = null;
-    this.bids = [];
-    this.currentSession = null;
-    this.showConfirmModal = false;
-    this.showSuccessModal = false;
-    this.isTimerRunning = false;
-    this.auctionLocked = false;
-    this.isDetailLoading = isDetailLoading;
-    this.timerValue = 180;
-    this.header = {
-      auctionNumber: 0,
-      groupName: '',
-      currentAuction: 0,
-      totalAuctions: 0,
-      auctionDate: '',
-      totalMembers: 0,
-      maxMembers: 0,
-      status: '',
-    };
-    this.calc = {
-      chitAmount: 0,
-      winningBid: 0,
-      bidLoss: 0,
-      commissionPct: 5,
-      commissionAmount: 0,
-      dividendPerMember: 0,
-      netPayable: 0,
-    };
-  }
-
-  private getSelectedAuction(): AuctionItem | null {
-    if (this.selectedAuctionId === null || this.selectedAuctionId === undefined) {
-      return null;
-    }
-    const idToFind = Number(this.selectedAuctionId);
-    return this.groupAuctions.find(a => a.id === idToFind)
-      ?? this.allAuctions.find(a => a.id === idToFind)
-      ?? null;
-  }
-
-  private mergeAuctionItem(base: AuctionItem, detail: Partial<AuctionResponse> | null): AuctionItem {
-    if (!detail) {
-      return base;
-    }
-
-    return {
-      ...base,
-      groupName: detail.groupName ?? base.groupName,
-      auctionDate: detail.auctionDate ?? base.auctionDate,
-      chitAmount: detail.chitAmount ?? base.chitAmount,
-      maxMembers: detail.maxMembers ?? base.maxMembers,
-      commissionPct: detail.companyCommissionPct ?? base.commissionPct,
-      winningBidId: detail.winningBidId ?? base.winningBidId,
-      winningBidAmount: detail.winningBidAmount ?? base.winningBidAmount,
-      bidLossAmount: detail.bidLossAmount ?? base.bidLossAmount,
-      dividendPerMember: detail.dividendPerMember ?? base.dividendPerMember,
-      netPayable: detail.netPayable ?? base.netPayable,
-      status: detail.status ?? base.status,
-    };
-  }
-
-  private loadAuctionDetails(item: AuctionItem): void {
-    this.resetAuctionViewState(true);
-    this.selected = item;
-    this.setHeader(item, this.groupAuctions.length);
-    this.setCalcBase(item);
-
-    // Immediate local data assignment for auction details
-    this.bids = this.buildRows(this.MOCK_MEMBERS, []);
-    this.header.totalMembers = this.bids.length;
-
-    this.isDetailLoading = false;
-    this.cdr.detectChanges();
-  }
-
   startAuction(id?: number): void {
     const targetId = id ?? this.selected?.id;
     if (this.isTimerRunning || !targetId) return;
 
-    // Simulate start locally
-    this.isTimerRunning = true;
-    this.timerValue = 180;
-    this.header.status = 'LIVE';
-    this.startLocalTimer();
-    this.cdr.detectChanges();
-  }
-
-  goBack(): void {
-    this.activePanel = 'none';
-    this.resetAuctionViewState(false);
-  }
-
-  viewAuction(): void {
-    const item = this.getSelectedAuction();
-    if (!item) {
-      this.errorMessage = 'Select a chit group and auction month first.';
-      return;
-    }
-
-    this.errorMessage = '';
-    // Navigate to the separate Auction Detail page
-    this.router.navigate(['/admin/auctions/view', item.id]);
-  }
-
-  viewSelectedAuctionFromForm(): void {
-    this.viewAuction();
-  }
-
-  viewLiveAuctionFromHeader(): void {
-    const live = this.globalLiveAuction;
-    if (live) {
-      // User says: "View when there is auction" and "no need of showing live auction details"
-      // So we navigate to the separate Auction List page
-      this.router.navigate(['/admin/auctions/view', live.id]);
-    } else {
-      // Logic for "Start Auction" when nothing is live
-      if (!this.selectedAuctionId) {
-        this.errorMessage = 'Please select a chit group and auction month first.';
-        return;
-      }
-
-      const targetId = Number(this.selectedAuctionId);
-      this.startAuction(targetId);
-
-      // Show the management panel (bidding interface) for the newly started auction
-      const item = this.getSelectedAuction();
-      if (item) {
-        this.activePanel = 'details';
-        this.loadAuctionDetails(item);
-      }
-    }
-  }
-
-=======
-  startAuction(): void {
-    if (this.isTimerRunning || !this.selected) return;
-    this.svc.startAuction(this.selected.id).subscribe({
+    this.svc.startAuction(targetId).subscribe({
       next: (res) => {
         if (res.data) {
           this.handleSessionUpdate(res.data);
@@ -478,8 +141,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
   }
-
->>>>>>> 6d24d4beb90b39619bf92886c291a5a1b3fcc8fd
   stopAuction(): void {
     this.stopLocalTimer();
     this.isTimerRunning = false;
@@ -717,19 +378,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isSubmittingBid = true;
     this.errorMessage    = '';
 
-<<<<<<< HEAD
-    // Simulate bid submission locally
-    setTimeout(() => {
-      this.isSubmittingBid = false;
-      const index = this.bids.findIndex(b => b.enrollmentId === bid.enrollmentId);
-      if (index >= 0) {
-        this.bids[index].bidAmount = bid.bidAmount;
-        this.bids[index].channel = 'offline';
-        this.recalculate();
-      }
-      this.cdr.detectChanges();
-    }, 400);
-=======
     this.svc.createBid({
       auctionId   : this.selected.id,
       enrollmentId: bid.enrollmentId,
@@ -749,7 +397,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.errorMessage    = 'Failed to submit bid.';
       },
     });
->>>>>>> 6d24d4beb90b39619bf92886c291a5a1b3fcc8fd
   }
 
   recalculate(): void {
@@ -852,32 +499,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isConfirmingWinner = true;
     this.errorMessage       = '';
 
-<<<<<<< HEAD
-    // Simulate local success
-    setTimeout(() => {
-      this.isConfirmingWinner = false;
-      const idx = this.allAuctions.findIndex(a => a.id === this.selected!.id);
-      if (idx >= 0) {
-        const updated = {
-          ...this.allAuctions[idx],
-          winningBidId: 999,
-          winningBidAmount: winnerBid.bidAmount,
-          netPayable: winnerBid.bidAmount - (this.calc.chitAmount * 0.05),
-          status: 'CLOSED'
-        };
-        this.allAuctions[idx] = updated;
-        const groupIndex = this.groupAuctions.findIndex(a => a.id === updated.id);
-        if (groupIndex >= 0) { this.groupAuctions[groupIndex] = updated; }
-        this.selected = updated;
-        this.setHeader(updated, this.groupAuctions.length);
-        this.setCalcBase(updated);
-      }
-      this.showConfirmModal = false;
-      this.showSuccessModal = true;
-      this.cdr.detectChanges();
-      setTimeout(() => { this.showSuccessModal = false; this.cdr.detectChanges(); }, 2000);
-    }, 600);
-=======
     this.svc.selectWinner(this.selected.id, bidId).subscribe({
       next: (res: ApiResponse<AuctionResponse>) => {
         this.isConfirmingWinner = false;
@@ -913,7 +534,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.errorMessage       = 'Failed to confirm winner.';
       },
     });
->>>>>>> 6d24d4beb90b39619bf92886c291a5a1b3fcc8fd
   }
 
   closeSuccessModal(): void { this.showSuccessModal = false; }
@@ -1073,10 +693,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private refreshSelectedAuction(): void {
-<<<<<<< HEAD
-    // Local refresh logic
-    this.cdr.detectChanges();
-=======
     if (!this.selected) { return; }
 
     forkJoin({
@@ -1093,7 +709,6 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.detectChanges();
       },
     });
->>>>>>> 6d24d4beb90b39619bf92886c291a5a1b3fcc8fd
   }
 
   private fmtDate(d: string): string {
