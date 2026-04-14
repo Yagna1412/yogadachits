@@ -475,7 +475,10 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
           this.filterAuctionsByGroup();
         }
 
-        const first = this.groupAuctions.length > 0 ? this.groupAuctions[0] : items[0];
+        // Prefer any auction that is currently live/active; fallback to first
+        const liveInGroup = this.groupAuctions.find(a => this.isLiveAuctionStatus(a.status));
+        const liveInAll = items.find(a => this.isLiveAuctionStatus(a.status));
+        const first = liveInGroup ?? (this.groupAuctions.length > 0 ? this.groupAuctions[0] : liveInAll ?? items[0]);
 
         if (!first) {
           return of({ items, bids: [], enrollments: [], first: null });
@@ -726,8 +729,9 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     const members = this.header.maxMembers || this.header.totalMembers || placed.length || 1;
     const commission = (chit * commissionPct) / 100;
     const bidLoss = chit - winningAmount;
-    const installment = members > 0 ? chit / members : 0;
     const dividend = members > 0 ? bidLoss / members : 0;
+    // Net payable to winner = winning bid amount minus organiser's commission
+    const netPayable = winningAmount - commission;
 
     this.calc = {
       ...this.calc,
@@ -736,7 +740,7 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
       commissionAmount: commission,
       bidLoss: (this.lockedWinnerBid || this.winningBidConfirmed) ? bidLoss : 0,
       dividendPerMember: (this.lockedWinnerBid || this.winningBidConfirmed) ? dividend : 0,
-      netPayable: (this.lockedWinnerBid || this.winningBidConfirmed) ? installment - commission : 0,
+      netPayable: (this.lockedWinnerBid || this.winningBidConfirmed) ? netPayable : 0,
     };
 
     this.winningBidFlash = true;
@@ -807,8 +811,12 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const winnerBid = this.highestBid ?? this.bids.find(b => b.isWinning);
-    const bidId = winnerBid?.bidId;
+    // Use the locked snapshot's bidId when available so a late WebSocket update
+    // cannot swap in a different bid ID after admin has already locked a winner.
+    const winnerBid = this.lockedWinnerBid ?? this.highestBid ?? this.bids.find(b => b.isWinning);
+    // Prefer the live row's bidId (updated by createBid response) over the snapshot
+    const liveRow = this.bids.find(b => b.enrollmentId === winnerBid?.enrollmentId);
+    const bidId = liveRow?.bidId ?? winnerBid?.bidId;
 
     if (!winnerBid) {
       this.errorMessage = 'Cannot confirm: no winning bid found.';
