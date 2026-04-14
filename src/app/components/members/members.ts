@@ -2,7 +2,8 @@ import { Component, OnInit, ChangeDetectorRef, PLATFORM_ID, Inject } from '@angu
 import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MemberService, MemberResponse, MemberKpiSummary } from '../../service/member.service'; 
+import { MemberService, MemberResponse, MemberKpiSummary } from '../../service/member.service';
+import { EnrollmentsService, EnrollmentResponse } from '../../service/enrollments.service';
 
 @Component({
   selector: 'app-members',
@@ -31,8 +32,8 @@ export class MembersComponent implements OnInit {
 
   currentStep: number = 1;
   totalSteps: number = 8;
-  newMember: any = {}; 
-  selectedFiles: { [key: string]: File } = {}; 
+  newMember: any = {};
+  selectedFiles: { [key: string]: File } = {};
   isEditMode: boolean = false;
   editingMemberId: number | null = null;
 
@@ -64,6 +65,7 @@ export class MembersComponent implements OnInit {
 
   constructor(
     private memberService: MemberService,
+    private enrollmentsService: EnrollmentsService,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
@@ -81,7 +83,7 @@ export class MembersComponent implements OnInit {
   loadKpis(): void {
     this.memberService.getKpiSummary().subscribe({
       next: (data) => {
-        if(data) this.memberStats = data;
+        if (data) this.memberStats = data;
         this.cdr.detectChanges();
       },
       error: (err) => console.error('Error loading KPIs', err)
@@ -94,7 +96,7 @@ export class MembersComponent implements OnInit {
       next: (data) => {
         // Merge API data with mock data, or fallback if API is empty
         if (data && data.length > 0) {
-           this.allMembers = data;
+          this.allMembers = data;
         }
         this.filterMembers();
         this.isLoading = false;
@@ -150,7 +152,7 @@ export class MembersComponent implements OnInit {
   updatePagination(): void {
     this.totalPages = Math.ceil(this.filteredMembers.length / this.pageSize) || 1;
     if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
-    
+
     const startIndex = (this.currentPage - 1) * this.pageSize;
     this.paginatedMembers = this.filteredMembers.slice(startIndex, startIndex + this.pageSize);
   }
@@ -215,11 +217,57 @@ export class MembersComponent implements OnInit {
     this.allSelected = this.selectedMembers.length === this.filteredMembers.length && this.filteredMembers.length > 0;
   }
 
+  showDetailsModal = false;
+  viewingMember: MemberResponse | null = null;
+  isDetailLoading = false;
+  memberEnrollments: EnrollmentResponse[] = [];
+
   viewMember(id: number): void {
-    const member = this.allMembers.find(m => m.id === id);
-    if (member) {
-      alert(`Member Details:\nID: ${member.id}\nName: ${member.name}\nCity: ${member.city}\nStatus: ${member.status}`);
-    }
+    console.log('viewMember called for ID:', id);
+    this.isDetailLoading = true;
+    this.showDetailsModal = true;
+    this.viewingMember = null;
+    this.memberEnrollments = [];
+    this.cdr.detectChanges(); // Force render modal immediately
+
+    // Fetch Member Details
+    this.memberService.getMemberById(id).subscribe({
+      next: (data) => {
+        console.log('Member details received:', data);
+        this.viewingMember = data;
+        
+        // Fetch Enrollments for this member
+        this.enrollmentsService.getEnrollments().subscribe({
+          next: (response) => {
+            if (response && response.data) {
+              this.memberEnrollments = response.data.filter(e => e.memberId === id);
+            }
+            this.isDetailLoading = false;
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            console.error('Error fetching enrollments', err);
+            this.isDetailLoading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error fetching member details', err);
+        // Fallback: show data we already have from the list
+        const localMember = this.allMembers.find(m => m.id === id);
+        if (localMember) {
+          this.viewingMember = localMember;
+        }
+        this.isDetailLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  closeDetailsModal(): void {
+    this.showDetailsModal = false;
+    this.viewingMember = null;
   }
 
   editMember(id: number): void {
@@ -227,7 +275,7 @@ export class MembersComponent implements OnInit {
     if (member) {
       this.isEditMode = true;
       this.editingMemberId = id;
-      
+
       // Map the member response back to the form structure (newMember)
       this.newMember = {
         fullName: member.name,
@@ -237,7 +285,7 @@ export class MembersComponent implements OnInit {
         // Since MemberResponse is simplified, we might only have these fields
         // In a real app, you'd fetch the full details from the API first
       };
-      
+
       this.showAddMemberModal = true;
       this.currentStep = 1;
     }
@@ -265,12 +313,12 @@ export class MembersComponent implements OnInit {
       address: this.newMember.address || null,
       maritalStatus: this.newMember.maritalStatus || null,
       introducedAs: this.newMember.spouseName || null,
-      
+
       // Temporarily null until file upload API is built
-      photoUrl: null, 
+      photoUrl: null,
       signatureUrl: null,
       passbookUrl: null,
-      
+
       bankAccountNumber: this.newMember.accountNumber || null,
       bankAccountHolderName: this.newMember.accountHolderName || null,
       bankName: this.newMember.bankName || null,
@@ -311,7 +359,7 @@ export class MembersComponent implements OnInit {
     saveObservable.subscribe({
       next: () => {
         alert(this.isEditMode ? 'Member updated successfully!' : 'Member added successfully!');
-        this.loadMembers(); 
+        this.loadMembers();
         this.loadKpis();
         this.closeAddMemberModal();
       },
@@ -325,23 +373,23 @@ export class MembersComponent implements OnInit {
 
   resetForm(): void {
     this.newMember = {};
-    this.selectedFiles = {}; 
+    this.selectedFiles = {};
     this.isEditMode = false;
     this.editingMemberId = null;
     this.steps.forEach(step => step.completed = false);
   }
 
-  nextStep(): void { 
+  nextStep(): void {
     if (!this.validateCurrentStep()) {
       return;
     }
 
-    if (this.currentStep < this.totalSteps) { 
-      this.steps[this.currentStep - 1].completed = true; 
-      this.currentStep++; 
-    } 
+    if (this.currentStep < this.totalSteps) {
+      this.steps[this.currentStep - 1].completed = true;
+      this.currentStep++;
+    }
   }
-  
+
   validateCurrentStep(): boolean {
     if (this.currentStep === 1) {
       if (!this.newMember.fullName || !this.newMember.spouseOrFatherName || !this.newMember.registrationDate || !this.newMember.mobileNumber) {
@@ -349,41 +397,41 @@ export class MembersComponent implements OnInit {
         return false;
       }
     }
-    
+
     // Add more step validations as needed
     // if (this.currentStep === 2) { ... }
 
     return true;
   }
-  
-  previousStep(): void { 
-    if (this.currentStep > 1) { 
-      this.steps[this.currentStep - 1].completed = false; 
-      this.currentStep--; 
-    } 
+
+  previousStep(): void {
+    if (this.currentStep > 1) {
+      this.steps[this.currentStep - 1].completed = false;
+      this.currentStep--;
+    }
   }
-  
-  goToStep(step: number): void { 
-    this.currentStep = step; 
+
+  goToStep(step: number): void {
+    this.currentStep = step;
   }
-  
-  closeAddMemberModal(): void { 
-    this.showAddMemberModal = false; 
-    this.resetForm(); 
+
+  closeAddMemberModal(): void {
+    this.showAddMemberModal = false;
+    this.resetForm();
   }
-  
-  openAddMemberModal(): void { 
-    this.showAddMemberModal = true; 
-    this.currentStep = 1; 
-    this.resetForm(); 
+
+  openAddMemberModal(): void {
+    this.showAddMemberModal = true;
+    this.currentStep = 1;
+    this.resetForm();
   }
-  
+
   deleteMember(id: number): void {
     if (confirm('Delete member?')) {
       this.memberService.deleteMember(id).subscribe({
-        next: () => { 
-          this.loadMembers(); 
-          this.loadKpis(); 
+        next: () => {
+          this.loadMembers();
+          this.loadKpis();
         }
       });
     }

@@ -1,12 +1,12 @@
 <div class="page-header">
   <div class="header-left">
-    <h1 class="page-title">Member Receipts</h1>
+    <h1 class="page-title">Receipts</h1>
     <nav class="breadcrumb">
       <span class="breadcrumb-item">Transactions</span>
       <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
       <span class="breadcrumb-item">Members</span>
       <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
-      <span class="breadcrumb-item active">Member Receipts</span>
+      <span class="breadcrumb-item active">Receipts</span>
     </nav>
   </div>
 </div>
@@ -14,15 +14,17 @@
 <div class="bid-entry-container">
   <div class="bid-entry-wrapper">
     <div class="bid-entry-form">
-      <h2 class="section-title">Member Receipt Entry</h2>
-      
+      <h2 class="section-title">Receipt Entry</h2>
+
       <div class="form-grid">
         <div class="form-group">
           <label class="form-label">Select Enrollment (Member + Chit Group)</label>
-          <select class="form-control" [(ngModel)]="newReceipt.enrollmentId" (ngModelChange)="onEnrollmentSelected($event)">
+          <select class="form-control" [(ngModel)]="newReceipt.enrollmentId"
+            (ngModelChange)="onEnrollmentSelected($event)">
             <option [ngValue]="null">-- Select --</option>
             <option *ngFor="let e of enrollments" [ngValue]="e.id">
-              {{ e.memberName || getMemberName(e.memberId) || 'Unknown member' }} - {{ e.chitGroupName || getGroupName(e.chitGroupId) || 'Unknown group' }} - T{{ e.ticketNo || '-' }}
+              {{ e.memberName || getMemberName(e.memberId) || 'Unknown member' }} - {{ e.chitGroupName ||
+              getGroupName(e.chitGroupId) || 'Unknown group' }} - T{{ e.ticketNo || '-' }}
             </option>
           </select>
           <div class="helper-text" *ngIf="isLoadingEnrollments || isLoadingMembers || isLoadingChitGroups">
@@ -46,7 +48,7 @@
 
         <div class="form-group">
           <label class="form-label">Payment Mode</label>
-          <select class="form-control" [(ngModel)]="newReceipt.paymentMode">
+          <select class="form-control" [(ngModel)]="newReceipt.paymentMode" (ngModelChange)="onPaymentModeChange($event)">
             <option value="Cash">Cash</option>
             <option value="UPI">UPI</option>
             <option value="Cheque">Cheque</option>
@@ -61,7 +63,8 @@
           </div>
           <div class="form-group">
             <label class="form-label">Cheque No</label>
-            <input type="text" class="form-control" placeholder="6-digit Cheque No" [(ngModel)]="newReceipt.instrumentNo" />
+            <input type="text" class="form-control" placeholder="6-digit Cheque No"
+              [(ngModel)]="newReceipt.instrumentNo" />
           </div>
           <div class="form-group">
             <label class="form-label">Cheque Date</label>
@@ -73,15 +76,18 @@
       <div class="member-details" *ngIf="selectedEnrollment">
         <div class="detail-item">
           <span class="detail-label">Member</span>
-          <span class="detail-value">{{ selectedEnrollment.memberName || getMemberName(selectedEnrollment.memberId) || 'Unknown' }}</span>
+          <span class="detail-value">{{ selectedEnrollment.memberName || getMemberName(selectedEnrollment.memberId) ||
+            'Unknown' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Group</span>
-          <span class="detail-value">{{ selectedEnrollment.chitGroupName || getGroupName(selectedEnrollment.chitGroupId) || 'Unknown' }}</span>
+          <span class="detail-value">{{ selectedEnrollment.chitGroupName || getGroupName(selectedEnrollment.chitGroupId)
+            || 'Unknown' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Ticket Number</span>
-          <span class="detail-value">{{ selectedEnrollment.ticketNo ? ('T' + selectedEnrollment.ticketNo) : 'N/A' }}</span>
+          <span class="detail-value">{{ selectedEnrollment.ticketNo ? ('T' + selectedEnrollment.ticketNo) : 'N/A'
+            }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Net Due</span>
@@ -107,7 +113,7 @@
 
     <div class="today-collection">
       <h2 class="section-title">Today's Collection</h2>
-      
+
       <div class="collection-amount">
         <span class="currency-symbol">₹</span>
         <span class="amount-value">{{ todayKpi.totalCollection | number:'1.2-2' }}</span>
@@ -138,13 +144,14 @@
 <div class="bid-entry-table-section">
   <div class="bid-inner">
     <div class="table-header">
-      <h2 class="section-title">Member Receipt List</h2>
+      <h2 class="section-title">Receipt List</h2>
       <div class="table-controls">
         <div class="search-box">
           <span class="search-icon">
             <img src="assets/images/icons/Search.png" alt="Search" />
           </span>
-          <input type="text" class="search-input" placeholder="Search receipts" [(ngModel)]="searchTerm" (input)="filterReceipts()" />
+          <input type="text" class="search-input" placeholder="Search receipts" [(ngModel)]="searchTerm"
+            (input)="filterReceipts()" />
           <span class="search-shortcut">Ctrl Shift K</span>
         </div>
       </div>
@@ -155,22 +162,28 @@
         <thead>
           <tr>
             <th class="sortable" (click)="toggleSort('receiptNo')">
-              Receipt ID <span class="sort-icon" *ngIf="sortColumn === 'receiptNo'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+              Receipt ID <span class="sort-icon" *ngIf="sortColumn === 'receiptNo'">{{sortDirection === 'asc' ? '↑' :
+                '↓'}}</span>
             </th>
             <th class="sortable" (click)="toggleSort('memberName')">
-              Member <span class="sort-icon" *ngIf="sortColumn === 'memberName'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+              Member <span class="sort-icon" *ngIf="sortColumn === 'memberName'">{{sortDirection === 'asc' ? '↑' :
+                '↓'}}</span>
             </th>
             <th class="sortable" (click)="toggleSort('groupName')">
-              Group <span class="sort-icon" *ngIf="sortColumn === 'groupName'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+              Group <span class="sort-icon" *ngIf="sortColumn === 'groupName'">{{sortDirection === 'asc' ? '↑' :
+                '↓'}}</span>
             </th>
             <th class="sortable" (click)="toggleSort('amount')">
-              Amount <span class="sort-icon" *ngIf="sortColumn === 'amount'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+              Amount <span class="sort-icon" *ngIf="sortColumn === 'amount'">{{sortDirection === 'asc' ? '↑' :
+                '↓'}}</span>
             </th>
             <th class="sortable" (click)="toggleSort('paymentMode')">
-              Payment Mode <span class="sort-icon" *ngIf="sortColumn === 'paymentMode'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+              Payment Mode <span class="sort-icon" *ngIf="sortColumn === 'paymentMode'">{{sortDirection === 'asc' ? '↑'
+                : '↓'}}</span>
             </th>
             <th class="sortable" (click)="toggleSort('entryDate')">
-              Date <span class="sort-icon" *ngIf="sortColumn === 'entryDate'">{{sortDirection === 'asc' ? '↑' : '↓'}}</span>
+              Date <span class="sort-icon" *ngIf="sortColumn === 'entryDate'">{{sortDirection === 'asc' ? '↑' :
+                '↓'}}</span>
             </th>
             <th>Actions</th>
           </tr>
@@ -201,7 +214,8 @@
     <!-- Pagination -->
     <div class="pagination-container" *ngIf="filteredReceipts.length > 0">
       <div class="pagination-info">
-        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredReceipts.length) }} of {{ filteredReceipts.length }} receipts
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredReceipts.length)
+        }} of {{ filteredReceipts.length }} receipts
       </div>
       <div class="pagination-controls">
         <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(1)">
@@ -211,10 +225,8 @@
           <span>‹</span> Previous
         </button>
         <div class="page-numbers">
-          <button *ngFor="let page of getVisiblePages()" 
-                  class="page-number" 
-                  [class.active]="currentPage === page"
-                  (click)="goToPage(page)">
+          <button *ngFor="let page of getVisiblePages()" class="page-number" [class.active]="currentPage === page"
+            (click)="goToPage(page)">
             {{ page }}
           </button>
         </div>

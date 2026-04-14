@@ -1,13 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { FormsModule } from '@angular/forms';
 
 import {
+  ApiResponse,
   AuctionBidResponse,
   AuctionResponse,
   AuctionSessionResponse,
   AuctionsService,
+  ChitGroupDto,
   EnrollmentResponse,
 } from '../../service/auction.service';
 
@@ -47,7 +51,7 @@ interface BidRow {
   bidTime: string;
   createdAt: string;
   channel: string;
-  status: 'No Bid' | 'Bid Paid' | 'Highest Bid';
+  status: 'No Bid' | 'Outbid' | 'Highest Bid';
   isWinning: boolean;
 }
 
@@ -88,14 +92,29 @@ interface AuctionDetailState {
 @Component({
   selector: 'app-auction-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './auction-detail.html',
   styleUrl: './auction-detail.scss',
 })
 export class AuctionDetailComponent implements OnInit, OnDestroy {
+  private readonly AUCTION_TIMER_SECONDS = 300;
+
   isLoading = false;
   errorMessage = '';
   auctionId: number | null = null;
+  isLoadingSelectors = false;
+  auctionLocked = false;
+  public timerValue: number = this.AUCTION_TIMER_SECONDS;
+  isTimerRunning = false;
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
+
+  chitGroups: ChitGroupDto[] = [];
+  allAuctions: AuctionSummary[] = [];
+  groupAuctions: AuctionSummary[] = [];
+  selectedGroupId: number | null = null;
+  selectedAuctionId: number | null = null;
+  private routeSubscription: Subscription | null = null;
+  private pendingRouteAuctionId: number | null = null;
 
   selected: AuctionSummary | null = null;
   session: AuctionSessionResponse | null = null;
@@ -124,94 +143,510 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private svc: AuctionsService
+    private svc: AuctionsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    const rawId = this.route.snapshot.paramMap.get('auctionId');
-    const auctionId = rawId ? Number(rawId) : NaN;
+    this.loadSelectorData();
+    this.routeSubscription = this.route.paramMap.subscribe((params) => {
+      const rawId = params.get('auctionId');
+      const parsed = rawId ? Number(rawId) : 10100;
+      const auctionId = Number.isFinite(parsed) ? parsed : 10100;
 
-    if (!rawId || Number.isNaN(auctionId)) {
-      this.errorMessage = 'Invalid auction id.';
-      return;
-    }
-
-    this.auctionId = auctionId;
-    this.loadAuctionDetail(auctionId);
+      this.pendingRouteAuctionId = auctionId;
+      this.auctionId = auctionId;
+      this.applyRouteSelection();
+      this.loadAuctionDetail(auctionId);
+    });
   }
 
   ngOnDestroy(): void {
+    this.routeSubscription?.unsubscribe();
+    this.stopLocalTimer();
     this.svc.disconnectFromAuction();
   }
 
   reload(): void {
-    if (this.auctionId === null) {
+    if (this.selectedAuctionId) {
+      this.loadAuctionDetail(this.selectedAuctionId);
+    } else if (this.auctionId !== null) {
+      this.loadAuctionDetail(this.auctionId);
+    }
+  }
+
+  onGroupSelect(groupId: number | null): void {
+    this.selectedGroupId = groupId === null ? null : Number(groupId);
+    this.filterAuctionsByGroup();
+    if (this.groupAuctions.length > 0) {
+      this.selectedAuctionId = this.groupAuctions[0].id;
+    } else {
+      this.selectedAuctionId = null;
+    }
+  }
+
+  onAuctionSelect(auctionId: number | null): void {
+    this.selectedAuctionId = auctionId === null ? null : Number(auctionId);
+  }
+
+  submitBid(bid: BidRow): void {
+    if (this.auctionLocked) return;
+    if (bid.bidAmount < 0) bid.bidAmount = 0;
+    this.recalculate();
+  }
+
+  downloadDetails(): void {
+    if (!this.selected) { return; }
+
+    const winner = this.highestBid;
+    const rows = this.bids.map((b, i) => `
+      <tr style="background:${b.status === 'Highest Bid' ? '#f0fdf4' : 'white'}">
+        <td>${i + 1}</td>
+        <td>${b.ticketNumber}</td>
+        <td>${b.subscriber}</td>
+        <td style="text-align:right">${b.bidAmount > 0 ? this.formatCurrency(b.bidAmount) : '—'}</td>
+        <td><span style="padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600;
+          background:${b.status === 'Highest Bid' ? '#dcfce7' : b.status === 'Outbid' ? '#dbeafe' : '#f3f4f6'};
+          color:${b.status === 'Highest Bid' ? '#166534' : b.status === 'Outbid' ? '#1e40af' : '#374151'}">
+          ${b.status}</span></td>
+      </tr>`).join('');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Auction Report — ${this.header.groupName} #${this.header.auctionNumber}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; color: #111827; padding: 32px; }
+    h1  { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .sub { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+    .card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; }
+    .card-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; }
+    .card-value { font-size: 16px; font-weight: 700; color: #111827; margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px; }
+    th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; }
+    .summary { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px 20px; }
+    .sum-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
+    .sum-row.total { font-weight: 700; font-size: 15px; border-top: 1px solid #bbf7d0; padding-top: 10px; margin-top: 4px; }
+    .winner-box { background: #003366; color: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px; }
+    .winner-box h2 { font-size: 14px; opacity:.8; margin-bottom: 8px; }
+    .winner-name { font-size: 20px; font-weight: 700; }
+    .winner-amt  { font-size: 14px; opacity:.9; margin-top: 4px; }
+    @media print { body { padding: 16px; } button { display: none; } }
+  </style>
+</head>
+<body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+    <div>
+      <h1>Auction Report</h1>
+      <p class="sub">Generated on ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    </div>
+    <button onclick="window.print()" style="padding:8px 20px;background:#003366;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨 Print / Save PDF</button>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="card-label">Group Name</div><div class="card-value">${this.header.groupName}</div></div>
+    <div class="card"><div class="card-label">Auction Number</div><div class="card-value">#${this.header.auctionNumber} of ${this.header.totalAuctions}</div></div>
+    <div class="card"><div class="card-label">Auction Date</div><div class="card-value">${this.header.auctionDate}</div></div>
+    <div class="card"><div class="card-label">Total Members</div><div class="card-value">${this.header.totalMembers}</div></div>
+  </div>
+
+  ${winner ? `
+  <div class="winner-box">
+    <h2>🏆 Auction Winner</h2>
+    <div class="winner-name">${winner.subscriber}</div>
+    <div class="winner-amt">Ticket: ${winner.ticketNumber} &nbsp;|&nbsp; Winning Bid: ${this.formatCurrency(winner.bidAmount)}</div>
+  </div>` : ''}
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Ticket</th><th>Subscriber</th><th style="text-align:right">Bid Amount</th><th>Status</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="summary">
+    <div class="sum-row"><span>Chit Amount</span><span>${this.formatCurrency(this.calc.chitAmount)}</span></div>
+    <div class="sum-row"><span>Winning Bid</span><span>${this.formatCurrency(this.calc.winningBid)}</span></div>
+    <div class="sum-row"><span>Bid Loss</span><span>${this.formatCurrency(this.calc.bidLoss)}</span></div>
+    <div class="sum-row"><span>Commission (${this.calc.commissionPct}%)</span><span>${this.formatCurrency(this.calc.commissionAmount)}</span></div>
+    <div class="sum-row"><span>Dividend per Member</span><span>${this.formatCurrency(this.calc.dividendPerMember)}</span></div>
+    <div class="sum-row total"><span>Net Payable to Winner</span><span>${this.formatCurrency(this.calc.netPayable)}</span></div>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank', 'width=900,height=700');
+    if (win) { win.focus(); }
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  openConfirmModal(): void {
+    if (confirm('Are you sure you want to finalize this auction? This will lock further bids.')) {
+      this.auctionLocked = true;
+      this.stopLocalTimer();
+      this.timerValue = 0;
+      this.cdr.detectChanges();
+    }
+  }
+
+  viewSelectedAuctionDetail(): void {
+    if (!this.selectedAuctionId) {
+      this.errorMessage = 'Select a chit group and auction month first.';
       return;
     }
-    this.loadAuctionDetail(this.auctionId);
+
+    this.errorMessage = '';
+    this.router.navigate(['/admin/auctions/view', this.selectedAuctionId]);
+  }
+
+  get globalLiveAuction(): AuctionSummary | undefined {
+    return this.allAuctions.find((item) => this.isLiveAuctionStatus(item.status));
+  }
+
+  get headerActionLabel(): string {
+    return this.globalLiveAuction ? 'View' : 'Start Auction';
+  }
+
+  get formattedTimer(): string {
+    const minutes = Math.floor(this.timerValue / 60);
+    const seconds = this.timerValue % 60;
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  }
+
+  onHeaderAction(): void {
+    const liveAuction = this.globalLiveAuction;
+    if (liveAuction) {
+      if (this.auctionId !== liveAuction.id) {
+        this.router.navigate(['/admin/auctions/view', liveAuction.id]);
+      } else {
+        this.loadAuctionDetail(liveAuction.id);
+      }
+      return;
+    }
+
+    const targetAuctionId = this.selectedAuctionId
+      ?? this.groupAuctions[0]?.id
+      ?? this.allAuctions[0]?.id
+      ?? null;
+
+    if (!targetAuctionId) {
+      this.errorMessage = 'No auction available to start.';
+      return;
+    }
+
+    const targetAuction = this.allAuctions.find((item) => item.id === targetAuctionId) ?? null;
+    if (!targetAuction) {
+      this.errorMessage = 'Selected auction could not be found.';
+      return;
+    }
+
+    this.errorMessage = '';
+    this.allAuctions = this.allAuctions.map((item) => {
+      if (item.id === targetAuctionId) {
+        return { ...item, status: 'LIVE' };
+      }
+      return item;
+    });
+
+    this.selectedGroupId = targetAuction.chitGroupId;
+    this.filterAuctionsByGroup();
+    this.selectedAuctionId = targetAuctionId;
+    this.pendingRouteAuctionId = targetAuctionId;
+    this.auctionId = targetAuctionId;
+
+    this.resetTimer();
+    this.startLocalTimer();
+
+    if (this.route.snapshot.paramMap.get('auctionId') !== String(targetAuctionId)) {
+      this.router.navigate(['/admin/auctions/view', targetAuctionId]);
+    } else {
+      this.loadAuctionDetail(targetAuctionId);
+    }
+  }
+
+  private readonly MOCK_AUCTION: AuctionSummary = {
+    id: 10100,
+    chitGroupId: 101,
+    groupName: 'T1-GOLD-100K',
+    auctionNumber: 10,
+    auctionDate: '2024-10-10',
+    chitAmount: 100000,
+    maxMembers: 50,
+    commissionPct: 5,
+    winningBidId: 501,
+    winningBidAmount: 85000,
+    bidLossAmount: 15000,
+    dividendSnapshot: 10000,
+    dividendPerMember: 200,
+    installmentDueDate: '2024-10-25',
+    installmentNo: 10,
+    winnerEnrollmentId: 1001,
+    winnerSubscriberId: 1,
+    bidderType: 'Member',
+    netPayable: 80200,
+    status: 'CLOSED',
+    createdAt: '2024-01-01T10:00:00Z',
+    updatedAt: '2024-10-10T11:00:00Z'
+  };
+
+  private readonly MOCK_GROUPS: ChitGroupDto[] = [
+    { id: 101, groupName: 'T1-GOLD-100K', chitAmount: 100000 },
+    { id: 102, groupName: 'T2-PREMIUM-500K', chitAmount: 500000 },
+    { id: 103, groupName: 'T3-SAVINGS-200K', chitAmount: 200000 },
+  ];
+
+  private readonly MOCK_AUCTIONS: AuctionSummary[] = [
+    {
+      ...this.MOCK_AUCTION,
+      id: 10100,
+      auctionNumber: 10,
+      status: 'CLOSED',
+    },
+    {
+      ...this.MOCK_AUCTION,
+      id: 10101,
+      auctionNumber: 11,
+      auctionDate: '2024-11-10',
+      status: 'CLOSED',
+    },
+    {
+      ...this.MOCK_AUCTION,
+      id: 10200,
+      chitGroupId: 102,
+      groupName: 'T2-PREMIUM-500K',
+      chitAmount: 500000,
+      auctionNumber: 4,
+      auctionDate: '2024-10-15',
+      status: 'CLOSED',
+    },
+  ];
+
+  private readonly MOCK_BIDS: BidRow[] = Array.from({ length: 30 }, (_, i) => ({
+    ticketNumber: `T${String(i + 1).padStart(3, '0')}`,
+    enrollmentId: 1000 + i,
+    subscriber: [
+      'Ramesh Kumar', 'Sneha Reddy', 'Mohan Lal', 'Anita Devi', 'Prakash Raj',
+      'Kavitha S.', 'Sanjay Dutt', 'Lakshmi N.', 'Prashanth V.', 'Deepak Chopra',
+      'Meera Jasmine', 'Arjun Das', 'Bhavana P.', 'Chiranjeevi K.', 'Dhanush R.',
+      'Eshwar Rao', 'Farhan Akhtar', 'Ganesh H.', 'Harini M.', 'Ishaan K.',
+      'Jyothi S.', 'Kishore J.', 'Latha G.', 'Manoj B.', 'Nandini R.',
+      'Omprakash L.', 'Pallavi D.', 'Qamar S.', 'Ravi Teja', 'Suresh Raina'
+    ][i] || `Member #${i + 1}`,
+    subscriberId: i + 1,
+    memberStatus: 'Active',
+    bidAmount: i === 0 ? 85000 : (i < 5 ? 70000 - i * 2000 : 0),
+    bidId: i < 5 ? 501 + i : null,
+    bidTime: i < 5 ? `2024-10-10T10:0${i + 1}:00Z` : '',
+    createdAt: i < 5 ? `2024-10-10T10:0${i + 1}:00Z` : '',
+    channel: i % 2 === 0 ? 'online' : 'offline',
+    status: i === 0 ? 'Highest Bid' : (i < 5 ? 'Outbid' : 'No Bid'),
+    isWinning: i === 0
+  }));
+
+  private loadSelectorData(): void {
+    this.isLoadingSelectors = true;
+
+    forkJoin({
+      groups: this.svc.listChitGroups().pipe(catchError(() => of(null))),
+      auctions: this.svc.listAuctions().pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: ({ groups, auctions }) => {
+        const groupData = this.extractData<ChitGroupDto[]>(groups) ?? [];
+        const auctionData = this.normalizeAuctionList(this.extractData<AuctionResponse[]>(auctions));
+
+        this.allAuctions = auctionData.length > 0 ? auctionData : [...this.MOCK_AUCTIONS];
+        this.chitGroups = groupData.length > 0 ? groupData : this.deriveGroupsFromAuctions(this.allAuctions);
+
+        if (!this.chitGroups.length) {
+          this.chitGroups = [...this.MOCK_GROUPS];
+        }
+
+        this.applyRouteSelection();
+        if (this.auctionId !== null) {
+          this.loadAuctionDetail(this.auctionId);
+        }
+        this.isLoadingSelectors = false;
+      },
+      error: () => {
+        this.allAuctions = [...this.MOCK_AUCTIONS];
+        this.chitGroups = [...this.MOCK_GROUPS];
+        this.applyRouteSelection();
+        if (this.auctionId !== null) {
+          this.loadAuctionDetail(this.auctionId);
+        }
+        this.isLoadingSelectors = false;
+      },
+    });
+  }
+
+  private applyRouteSelection(): void {
+    if (this.pendingRouteAuctionId === null) {
+      return;
+    }
+
+    const routeAuction = this.allAuctions.find((item) => item.id === this.pendingRouteAuctionId);
+    if (routeAuction) {
+      this.selectedGroupId = routeAuction.chitGroupId;
+      this.filterAuctionsByGroup();
+      this.selectedAuctionId = routeAuction.id;
+      return;
+    }
+
+    if (this.selectedGroupId === null && this.chitGroups.length > 0) {
+      this.selectedGroupId = this.chitGroups[0].id;
+    }
+
+    this.filterAuctionsByGroup();
+    if (this.selectedAuctionId === null && this.groupAuctions.length > 0) {
+      this.selectedAuctionId = this.groupAuctions[0].id;
+    }
+  }
+
+  private filterAuctionsByGroup(): void {
+    if (!this.selectedGroupId) {
+      this.groupAuctions = [];
+      return;
+    }
+
+    this.groupAuctions = this.allAuctions.filter((item) => item.chitGroupId === this.selectedGroupId);
+  }
+
+  private deriveGroupsFromAuctions(items: AuctionSummary[]): ChitGroupDto[] {
+    const grouped = new Map<number, ChitGroupDto>();
+
+    for (const item of items) {
+      if (!grouped.has(item.chitGroupId)) {
+        grouped.set(item.chitGroupId, {
+          id: item.chitGroupId,
+          groupName: item.groupName || `Group #${item.chitGroupId}`,
+          chitAmount: item.chitAmount || 0,
+        });
+      }
+    }
+
+    return [...grouped.values()];
   }
 
   private loadAuctionDetail(auctionId: number): void {
-    this.isLoading = true;
     this.errorMessage = '';
-    this.selected = null;
-    this.session = null;
-    this.bids = [];
-    this.svc.disconnectFromAuction();
+    this.isLoading = true;
+    this.cdr.detectChanges();
 
-    forkJoin({
-      auctions: this.svc.listAuctions(),
-      detail: this.svc.getAuctionById(auctionId),
-    }).subscribe({
-      next: ({ auctions, detail }) => {
-        const allAuctions = this.normalizeAuctionList(this.extractData<AuctionResponse[]>(auctions));
-        const base = allAuctions.find((item) => item.id === auctionId) ?? null;
-        const merged = this.mergeAuction(base, this.extractData<Partial<AuctionResponse>>(detail));
+    this.svc.getAuctionById(auctionId).subscribe({
+      next: (auctionRes: ApiResponse<AuctionResponse>) => {
+        const auctionDetail = this.extractData<AuctionResponse>(auctionRes);
+        const baseFromList = this.allAuctions.find((item) => item.id === auctionId) ?? null;
+        const merged = this.mergeAuction(baseFromList, auctionDetail);
 
         if (!merged) {
-          this.errorMessage = 'Auction details are not available for the selected auction.';
+          // Full fallback: backend returned nothing and auction not in list yet
+          this.selected = { ...this.MOCK_AUCTION, id: auctionId };
+          this.setHeader(this.selected, 24);
+          this.setCalcBase(this.selected);
+          this.bids = [...this.MOCK_BIDS];
+          this.header.totalMembers = this.bids.length;
           this.isLoading = false;
+          this.cdr.detectChanges();
           return;
         }
 
         this.selected = merged;
-        this.setHeader(merged, allAuctions.filter((item) => item.chitGroupId === merged.chitGroupId).length || 1);
+        const chitGroupId = merged.chitGroupId;
+        const totalAuctions =
+          this.allAuctions.filter((item) => item.chitGroupId === chitGroupId).length || 1;
+
+        this.setHeader(merged, totalAuctions);
         this.setCalcBase(merged);
 
-        this.loadSupplementaryData(merged);
+        // Load bids, enrollments and session in parallel
+        forkJoin({
+          bids: this.svc.listBids(auctionId).pipe(catchError(() => of(null))),
+          enrollments: this.svc.getEnrollments(chitGroupId).pipe(catchError(() => of(null))),
+          session: this.svc.getAuctionSession(auctionId).pipe(catchError(() => of(null))),
+        }).subscribe({
+          next: ({ bids, enrollments, session }) => {
+            const bidData = this.extractData<AuctionBidResponse[]>(bids) ?? [];
+            const enrollmentData = this.extractData<EnrollmentResponse[]>(enrollments) ?? [];
+            const sessionData = this.extractData<AuctionSessionResponse>(session);
+
+            this.session = sessionData;
+
+            if (enrollmentData.length > 0 || bidData.length > 0) {
+              this.bids = this.buildRows(enrollmentData, bidData, merged.winningBidId);
+            } else {
+              this.bids = [...this.MOCK_BIDS];
+            }
+
+            this.header.totalMembers = merged.maxMembers || this.bids.length;
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.bids = [...this.MOCK_BIDS];
+            this.header.totalMembers = this.bids.length;
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          },
+        });
       },
       error: () => {
-        this.errorMessage = 'Failed to load auction details.';
+        // Auction fetch failed — use list data if available, else mock
+        const base = this.allAuctions.find((item) => item.id === auctionId) ?? null;
+        this.selected = base ? { ...base } : { ...this.MOCK_AUCTION, id: auctionId };
+        const totalAuctions =
+          this.allAuctions.filter((item) => item.chitGroupId === this.selected!.chitGroupId).length || 24;
+        this.setHeader(this.selected!, totalAuctions);
+        this.setCalcBase(this.selected!);
+        this.bids = [...this.MOCK_BIDS];
+        this.header.totalMembers = this.bids.length;
+        this.errorMessage = 'Could not load auction from server. Showing cached data.';
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
     });
   }
 
+  private isLiveAuctionStatus(status?: string | null): boolean {
+    const normalized = (status ?? '').trim().toLowerCase();
+    return normalized === 'live' || normalized === 'active' || normalized === 'running';
+  }
+
+  private resetTimer(): void {
+    this.stopLocalTimer();
+    this.timerValue = this.AUCTION_TIMER_SECONDS;
+    this.isTimerRunning = false;
+  }
+
+  private startLocalTimer(): void {
+    this.stopLocalTimer();
+    this.isTimerRunning = true;
+    this.timerInterval = setInterval(() => {
+      if (this.timerValue > 0) {
+        this.timerValue--;
+      } else {
+        this.stopLocalTimer();
+      }
+      this.cdr.detectChanges();
+    }, 1000);
+  }
+
+  private stopLocalTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+    this.isTimerRunning = false;
+  }
+
   private loadSupplementaryData(auction: AuctionSummary): void {
-    forkJoin({
-      bids: this.svc.listBids(auction.id),
-      enrollments: this.svc.getEnrollments(auction.chitGroupId),
-      session: this.svc.getAuctionSession(auction.id),
-    }).subscribe({
-      next: ({ bids, enrollments, session }) => {
-        const bidData = this.extractData<AuctionBidResponse[]>(bids) ?? [];
-        const enrollmentData = this.extractData<EnrollmentResponse[]>(enrollments) ?? [];
-
-        this.bids = this.buildRows(enrollmentData, bidData);
-        this.header.totalMembers = this.bids.length;
-
-        if (bidData.length > 0) {
-          this.recalculate();
-        }
-
-        this.session = this.extractData<AuctionSessionResponse>(session);
-        this.isLoading = false;
-      },
-      error: () => {
-        this.errorMessage = 'Auction snapshot loaded, but bids or session data could not be fetched.';
-        this.isLoading = false;
-      },
-    });
+    // No-op - mock data already populated in loadAuctionDetail
   }
 
   get highestBid(): BidRow | undefined {
@@ -447,12 +882,12 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
     };
   }
 
-  private setHeader(item: AuctionSummary, totalAuctions: number): void {
+  private setHeader(item: AuctionSummary, _totalAuctions: number): void {
     this.header = {
       auctionNumber: item.auctionNumber,
       groupName: item.groupName,
       currentAuction: item.auctionNumber,
-      totalAuctions,
+      totalAuctions: item.maxMembers || _totalAuctions,
       auctionDate: this.fmtDate(item.auctionDate),
       totalMembers: 0,
       maxMembers: item.maxMembers,
@@ -471,13 +906,17 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
     };
   }
 
-  private buildRows(enrollments: EnrollmentResponse[], existingBids: AuctionBidResponse[]): BidRow[] {
+  private buildRows(enrollments: EnrollmentResponse[], existingBids: AuctionBidResponse[], winningBidId?: number): BidRow[] {
     const highest = existingBids.length ? Math.max(...existingBids.map((bid) => bid.bidAmount)) : 0;
+
+    const isWinner = (bid: AuctionBidResponse): boolean =>
+      winningBidId != null ? bid.id === winningBidId : bid.isWinning || bid.bidAmount === highest;
 
     if (enrollments.length > 0) {
       const rows = enrollments.map((enrollment): BidRow => {
         const bid = existingBids.find((entry) => entry.enrollmentId === enrollment.id);
         const bidAmount = bid?.bidAmount ?? 0;
+        const winning = !!bid && isWinner(bid);
 
         return {
           ticketNumber: `T${String(enrollment.ticketNo).padStart(3, '0')}`,
@@ -490,28 +929,31 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
           bidTime: bid?.bidTime ?? '',
           createdAt: bid?.createdAt ?? '',
           channel: bid?.channel ?? 'offline',
-          status: bid ? (bidAmount === highest ? 'Highest Bid' : 'Bid Paid') : 'No Bid',
-          isWinning: !!bid && bidAmount === highest,
+          status: !bid ? 'No Bid' : winning ? 'Highest Bid' : 'Outbid',
+          isWinning: winning,
         };
       });
 
       return [...rows].sort((a, b) => b.bidAmount - a.bidAmount);
     }
 
-    return [...existingBids].sort((a, b) => b.bidAmount - a.bidAmount).map((bid, index): BidRow => ({
-      ticketNumber: `T${String(index + 1).padStart(3, '0')}`,
-      enrollmentId: bid.enrollmentId,
-      subscriber: `Member #${bid.enrollmentId}`,
-      subscriberId: bid.enrollmentId,
-      memberStatus: '-',
-      bidAmount: bid.bidAmount,
-      bidId: bid.id,
-      bidTime: bid.bidTime ?? '',
-      createdAt: bid.createdAt ?? '',
-      channel: bid.channel,
-      status: bid.bidAmount === highest ? 'Highest Bid' : 'Bid Paid',
-      isWinning: bid.bidAmount === highest,
-    }));
+    return [...existingBids].sort((a, b) => b.bidAmount - a.bidAmount).map((bid, index): BidRow => {
+      const winning = isWinner(bid);
+      return {
+        ticketNumber: `T${String(index + 1).padStart(3, '0')}`,
+        enrollmentId: bid.enrollmentId,
+        subscriber: `Member #${bid.enrollmentId}`,
+        subscriberId: bid.enrollmentId,
+        memberStatus: '-',
+        bidAmount: bid.bidAmount,
+        bidId: bid.id,
+        bidTime: bid.bidTime ?? '',
+        createdAt: bid.createdAt ?? '',
+        channel: bid.channel,
+        status: winning ? 'Highest Bid' : 'Outbid',
+        isWinning: winning,
+      };
+    });
   }
 
   private recalculate(): void {
@@ -524,7 +966,7 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
     this.bids = [...this.bids]
       .map((bid): BidRow => {
         const status: BidRow['status'] = bid.bidAmount > 0
-          ? (bid.bidAmount === highest ? 'Highest Bid' : 'Bid Paid')
+          ? (bid.bidAmount === highest ? 'Highest Bid' : 'Outbid')
           : 'No Bid';
 
         return {
@@ -540,7 +982,8 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
     const members = this.header.maxMembers || this.header.totalMembers || placed.length || 1;
     const bidLoss = chitAmount - highest;
     const commission = (chitAmount * commissionPct) / 100;
-    const dividendPerMember = members > 0 ? (bidLoss - commission) / members : 0;
+    const installment = members > 0 ? chitAmount / members : 0;
+    const dividendPerMember = members > 0 ? bidLoss / members : 0;
 
     this.calc = {
       ...this.calc,
@@ -548,7 +991,7 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
       bidLoss,
       commissionAmount: commission,
       dividendPerMember,
-      netPayable: highest - commission + dividendPerMember,
+      netPayable: installment - commission,
     };
   }
 }

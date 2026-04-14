@@ -172,12 +172,12 @@
           <div class="form-group">
             <label for="auctionTimeFrom">Auction Time From</label>
             <input id="auctionTimeFrom" type="time" [(ngModel)]="newGroup.auctionTimeFrom" name="auctionTimeFrom"
-              class="form-control" />
+              class="form-control" (change)="onAuctionTimeFromChange($event)" />
           </div>
           <div class="form-group">
             <label for="auctionTimeTo">Auction Time To</label>
             <input id="auctionTimeTo" type="time" [(ngModel)]="newGroup.auctionTimeTo" name="auctionTimeTo"
-              class="form-control" />
+              class="form-control" readonly style="background:#f3f4f6;cursor:not-allowed;" />
           </div>
         </div>
         <div class="form-row">
@@ -285,10 +285,15 @@
     </div>
   </div>
   <div class="groups-content" *ngIf="!showAddGroupForm">
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Loading groups...</p>
+    </div>
 
-
-    <div class="groups-grid" *ngIf="viewMode === 'grid'">
-      <div class="group-card" *ngFor="let group of paginatedGroups">
+    <div *ngIf="!isLoading">
+      <div class="groups-grid" *ngIf="viewMode === 'grid'">
+        <div class="group-card" *ngFor="let group of paginatedGroups">
         <div class="card-header">
           <h4 class="group-name">{{ group.name }}</h4>
           <button class="card-menu-btn">
@@ -333,12 +338,11 @@
         </div>
       </div>
     </div>
-
     <div class="table-wrapper" *ngIf="viewMode === 'list'">
       <table class="table">
         <thead>
           <tr>
-            <th><input type="checkbox" /></th>
+            <th><input type="checkbox" (change)="toggleAll($event)" [checked]="isAllSelected" /></th>
             <th (click)="sortBy('id')" style="cursor: pointer" class="sortable">Group ID <span *ngIf="sortColumn === 'id'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></th>
             <th (click)="sortBy('name')" style="cursor: pointer" class="sortable">Name <span *ngIf="sortColumn === 'name'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></th>
             <th>Chit Amount</th>
@@ -352,7 +356,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let group of paginatedGroups" class="table-row">
-            <td><input type="checkbox" /></td>
+            <td><input type="checkbox" (change)="toggleSelection(group.id)" [checked]="selectedGroupIds.has(group.id)" /></td>
             <td class="group-id">{{ group.id }}</td>
             <td class="group-name">{{ group.name }}</td>
             <td class="chit-amount">₹{{ formatCurrency(group.calculatedChitAmount) }}</td>
@@ -391,5 +395,6 @@
           </button>
         </div>
       </div>
+    </div>
   </div>
 </div>

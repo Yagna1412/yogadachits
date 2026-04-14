@@ -67,6 +67,9 @@ export class ChitGroupsComponent implements OnInit, AfterViewInit {
   viewMode: 'grid' | 'list' = 'grid';
   searchTerm = '';
   statusFilter = '';
+  isLoading = false;
+  selectedGroupIds: Set<number> = new Set();
+  isAllSelected = false;
 
   // Pagination & Sorting state
   currentPage = 1;
@@ -92,54 +95,65 @@ export class ChitGroupsComponent implements OnInit, AfterViewInit {
   }
 
   loadGroupsFromDatabase(): void {
+    this.isLoading = true;
     // 1. Fetch all Chit Groups
-    this.chitGroupService.getChitGroups().subscribe((response: any) => {
-      if (response && response.data) {
+    this.chitGroupService.getChitGroups().subscribe({
+      next: (response: any) => {
+        if (response && response.data) {
+          // 2. Fetch all Enrollments to calculate current members dynamically
+          this.enrollmentsService.getEnrollments().subscribe({
+            next: (enrollRes: any) => {
+              const allEnrollments = enrollRes?.data || [];
 
-        // 2. Fetch all Enrollments to calculate current members dynamically
-        this.enrollmentsService.getEnrollments().subscribe((enrollRes: any) => {
-          const allEnrollments = enrollRes?.data || [];
+              this.chitGroups = response.data.map((item: any) => {
+                const activeMembersCount = allEnrollments.filter((e: any) =>
+                  e.chitGroupId === item.id &&
+                  e.status?.toLowerCase() === 'active'
+                ).length;
 
-          this.chitGroups = response.data.map((item: any) => {
-            // Count how many active enrollments belong to this specific group
-            const activeMembersCount = allEnrollments.filter((e: any) =>
-              e.chitGroupId === item.id &&
-              e.status?.toLowerCase() === 'active'
-            ).length;
+                const maxMem = item.maxMembers || item.noOfInstallments || 0;
+                const monthly = item.installmentAmount || 0;
+                const commPct = item.companyCommissionPct || 0;
+                const calculatedChitAmount = maxMem * monthly;
+                const commissionValue = (calculatedChitAmount * commPct) / 100;
+                const netPrizeAmount = calculatedChitAmount - commissionValue;
 
-            const maxMem = item.maxMembers || item.noOfInstallments || 0;
-            const monthly = item.installmentAmount || 0;
-            const commPct = item.companyCommissionPct || 0;
-            const calculatedChitAmount = maxMem * monthly;
-            const commissionValue = (calculatedChitAmount * commPct) / 100;
-            const netPrizeAmount = calculatedChitAmount - commissionValue;
-
-            return {
-              ...item,
-              id: item.id,
-              name: item.groupName || 'Unnamed Group',
-              chitAmount: item.chitAmount || 0,
-              calculatedChitAmount,
-              commissionValue,
-              netPrizeAmount,
-              status: item.status || 'Active',
-              tenure: item.noOfInstallments || 0,
-              monthlyAmount: monthly,
-              commission: commPct,
-              maxMembers: maxMem,
-
-              // This fulfills your requirement! It automatically updates based on enrollments.
-              currentMembers: activeMembersCount,
-
-              auctionDay: item.auctionDay || 'N/A',
-              auctionSchedule: item.auctionDay ? `Day ${item.auctionDay}` : 'N/A'
-            };
+                return {
+                  ...item,
+                  id: item.id,
+                  name: item.groupName || 'Unnamed Group',
+                  chitAmount: item.chitAmount || 0,
+                  calculatedChitAmount,
+                  commissionValue,
+                  netPrizeAmount,
+                  status: item.status || 'Active',
+                  tenure: item.noOfInstallments || 0,
+                  monthlyAmount: monthly,
+                  commission: commPct,
+                  maxMembers: maxMem,
+                  currentMembers: activeMembersCount,
+                  auctionDay: item.auctionDay || 'N/A',
+                  auctionSchedule: item.auctionDay ? `Day ${item.auctionDay}` : 'N/A'
+                };
+              });
+              this.isLoading = false;
+              this.cdr.detectChanges();
+            },
+            error: (err) => {
+              console.error('Error fetching enrollments:', err);
+              this.isLoading = false;
+              this.cdr.detectChanges();
+            }
           });
-          
-          this.cdr.detectChanges(); // Synchronize DOM strictly after nested subscriptions compute
-        });
-      } else {
-         this.cdr.detectChanges();
+        } else {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching groups:', err);
+        this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -241,7 +255,43 @@ export class ChitGroupsComponent implements OnInit, AfterViewInit {
   }
 
   setViewMode(mode: 'grid' | 'list'): void {
+    console.log('Changing view mode to:', mode);
     this.viewMode = mode;
+    this.cdr.detectChanges();
+  }
+
+  toggleAll(event: any): void {
+    this.isAllSelected = event.target.checked;
+    if (this.isAllSelected) {
+      this.paginatedGroups.forEach(group => this.selectedGroupIds.add(group.id));
+    } else {
+      this.paginatedGroups.forEach(group => this.selectedGroupIds.delete(group.id));
+    }
+    this.cdr.detectChanges();
+  }
+
+  toggleSelection(groupId: number): void {
+    if (this.selectedGroupIds.has(groupId)) {
+      this.selectedGroupIds.delete(groupId);
+    } else {
+      this.selectedGroupIds.add(groupId);
+    }
+    
+    // Update isAllSelected state
+    const allOnPageSelected = this.paginatedGroups.every(group => this.selectedGroupIds.has(group.id));
+    this.isAllSelected = allOnPageSelected;
+    
+    this.cdr.detectChanges();
+  }
+
+  onAuctionTimeFromChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).value; // "HH:MM"
+    if (!value) { this.newGroup.auctionTimeTo = ''; return; }
+    const [h, m] = value.split(':').map(Number);
+    const totalMinutes = h * 60 + m + 5;
+    const toH = Math.floor(totalMinutes / 60) % 24;
+    const toM = totalMinutes % 60;
+    this.newGroup.auctionTimeTo = `${String(toH).padStart(2, '0')}:${String(toM).padStart(2, '0')}`;
   }
 
   createGroup(): void {

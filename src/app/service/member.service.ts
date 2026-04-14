@@ -22,8 +22,37 @@ export interface MemberResponse {
     id: number;
     title: string;
     name: string;
+    guardianName?: string;
+    dob?: string;
+    age?: number;
+    registrationDate?: string;
+    gender?: string;
     mobileNumber: string;
+    email?: string;
+    aadharNumber?: string;
+    address?: string;
+    maritalStatus?: string;
+    introducedAs?: string;
+    photoUrl?: string;
+    bankAccountNumber?: string;
+    bankAccountHolderName?: string;
+    bankName?: string;
+    bankBranch?: string;
+    bankIfsc?: string;
+    occupation?: string;
+    employeeType?: string;
+    organization?: string;
+    designation?: string;
+    doorNo?: string;
+    streetName?: string;
     city: string;
+    pincode?: string;
+    nomineeName?: string;
+    nomineeAge?: number;
+    nomineeRelation?: string;
+    nomineeAddress?: string;
+    nomineeMobileNumber?: string;
+    route?: string;
     status: string;
 }
 
@@ -64,6 +93,11 @@ export class MemberService {
 
     getMembers(): Observable<MemberResponse[]> {
         return this.http.get<ApiResponse<MemberResponse[]>>(this.apiUrl, this.getAuthHeaders())
+            .pipe(map(response => response.data));
+    }
+
+    getMemberById(id: number): Observable<MemberResponse> {
+        return this.http.get<ApiResponse<MemberResponse>>(`${this.apiUrl}/${id}`, this.getAuthHeaders())
             .pipe(map(response => response.data));
     }
 

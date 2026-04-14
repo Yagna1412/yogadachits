@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, shareReplay } from 'rxjs';
+import { Observable, of, shareReplay, BehaviorSubject } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Client } from '@stomp/stompjs';
 
@@ -93,6 +93,11 @@ export class AuctionsService {
     private _auctions$: Observable<ApiResponse<AuctionResponse[]>> | null = null;
     private _enrollments$: Map<number, Observable<ApiResponse<EnrollmentResponse[]>>> = new Map();
     private stompClient: Client | null = null;
+    // Timer/state for auction detail (single source of truth)
+    private _timerValue$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+    private _isTimerRunning$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+    private _isTimerComplete$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+    private _timerInterval: any = null;
 
     clearAuctionsCache() { this._auctions$ = null; }
     clearChitGroupsCache() { this._chitGroups$ = null; }
@@ -128,17 +133,8 @@ export class AuctionsService {
 
         if (!isPlatformBrowser(this.platformId)) return;
 
-        let connectHeaders: { [key: string]: string } = {};
-        const token = localStorage.getItem('authToken')
-            || localStorage.getItem('token')
-            || localStorage.getItem('auth_token');
-        if (token) {
-            connectHeaders['Authorization'] = `Bearer ${token}`;
-        }
-
         this.stompClient = new Client({
             brokerURL: WS_BASE,
-            connectHeaders: connectHeaders,
             reconnectDelay: 5000,
             onConnect: () => {
                 // Subscribe to Session Updates
@@ -248,4 +244,43 @@ export class AuctionsService {
             catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionResponse>))
         );
     }
+
+    // Timer/state accessors
+    get timerValue$() { return this._timerValue$.asObservable(); }
+    get isTimerRunning$() { return this._isTimerRunning$.asObservable(); }
+    get isTimerComplete$() { return this._isTimerComplete$.asObservable(); }
+
+    startLocalTimer(initialSeconds: number = 300): void {
+        if (!isPlatformBrowser(this.platformId)) return;
+        this.stopLocalTimer();
+        this._isTimerComplete$.next(false);
+        this._timerValue$.next(initialSeconds);
+        this._isTimerRunning$.next(true);
+        this._timerInterval = setInterval(() => {
+            const current = this._timerValue$.value;
+            if (current <= 1) {
+                this._timerValue$.next(0);
+                this._isTimerComplete$.next(true); // natural expiry only
+                this.stopLocalTimer();
+            } else {
+                this._timerValue$.next(current - 1);
+            }
+        }, 1000);
+    }
+
+    stopLocalTimer(): void {
+        if (this._timerInterval) {
+            clearInterval(this._timerInterval);
+            this._timerInterval = null;
+        }
+        this._isTimerRunning$.next(false);
+    }
+
+    resetTimerState(): void {
+        this.stopLocalTimer();
+        this._isTimerComplete$.next(false);
+        this._timerValue$.next(0);
+    }
+
+    setTimerSeconds(seconds: number): void { this._timerValue$.next(Math.max(0, Math.floor(seconds))); }
 }
