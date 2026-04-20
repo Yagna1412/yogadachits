@@ -131,20 +131,24 @@
         <!-- Pagination Footer -->
         <div class="pagination-footer" *ngIf="filteredEnrollments.length > itemsPerPage">
           <div class="pagination-info">
-            Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }} to 
-            {{ (currentPage * itemsPerPage) > filteredEnrollments.length ? filteredEnrollments.length : (currentPage * itemsPerPage) }} 
+            Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }} to
+            {{ (currentPage * itemsPerPage) > filteredEnrollments.length ? filteredEnrollments.length : (currentPage *
+            itemsPerPage) }}
             of {{ filteredEnrollments.length }} entries
           </div>
           <div class="pagination-controls">
-            <button class="btn-page" [disabled]="currentPage === 1" (click)="goToFirstPage()" *ngIf="totalPages > 2">First</button>
+            <button class="btn-page" [disabled]="currentPage === 1" (click)="goToFirstPage()"
+              *ngIf="totalPages > 2">First</button>
             <button class="btn-page" [disabled]="currentPage === 1" (click)="previousPage()">Previous</button>
-            
-            <button class="btn-page" *ngFor="let page of pages" [class.active]="currentPage === page" (click)="goToPage(page)">
+
+            <button class="btn-page" *ngFor="let page of pages" [class.active]="currentPage === page"
+              (click)="goToPage(page)">
               {{ page }}
             </button>
-            
+
             <button class="btn-page" [disabled]="currentPage === totalPages" (click)="nextPage()">Next</button>
-            <button class="btn-page" [disabled]="currentPage === totalPages" (click)="goToLastPage()" *ngIf="totalPages > 2">Last</button>
+            <button class="btn-page" [disabled]="currentPage === totalPages" (click)="goToLastPage()"
+              *ngIf="totalPages > 2">Last</button>
           </div>
         </div>
       </div>
@@ -175,7 +179,7 @@
                 <option [ngValue]="null" disabled>
                   {{ membersLoading ? 'Loading members...' : '-- Choose a Member --' }}
                 </option>
-                <option *ngFor="let member of membersList" [value]="member.id">
+                <option *ngFor="let member of membersList" [ngValue]="member.id">
                   {{ member.name }} (Mob: {{ member.mobileNumber }})
                 </option>
               </select>
@@ -211,7 +215,9 @@
           <button class="btn btn-secondary" (click)="closeAddModal()">
             Cancel
           </button>
-          <button class="btn btn-success" (click)="saveEnrollment()" [disabled]="!isFormValid() || saving" [style.opacity]="!isFormValid() ? 0.6 : 1" [style.cursor]="(!isFormValid() || saving) ? 'not-allowed' : 'pointer'">
+          <button class="btn btn-success" (click)="saveEnrollment()" [disabled]="!isFormValid() || saving"
+            [style.opacity]="!isFormValid() ? 0.6 : 1"
+            [style.cursor]="(!isFormValid() || saving) ? 'not-allowed' : 'pointer'">
             {{ saving ? 'Saving...' : 'Save Enrollment' }}
           </button>
         </div>

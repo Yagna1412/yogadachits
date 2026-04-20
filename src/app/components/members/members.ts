@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MemberService, MemberResponse, MemberKpiSummary } from '../../service/member.service'; 
+import { SubscriberService } from '../../service/subscriber.service'; // Added import
 
 @Component({
   selector: 'app-members',
@@ -27,7 +28,7 @@ export class MembersComponent implements OnInit {
 
   // Sorting
   sortColumn: string = 'id';
-  sortDirection: 'asc' | 'desc' = 'desc'; // Default to desc to show newest first if ID is sequential
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   currentStep: number = 1;
   totalSteps: number = 8;
@@ -48,22 +49,18 @@ export class MembersComponent implements OnInit {
   ];
 
   memberStats: MemberKpiSummary = {
-    totalMembers: { count: 104, label: 'Total Members', changePercent: 5 },
-    activeMembers: { count: 85, label: 'Active Members', changePercent: -2 },
-    enrolledMembers: { count: 18, label: 'Enrolled Members' },
-    pendingEnrollment: { count: 1, label: 'Pending Enrollment' }
+    totalMembers: { count: 0, label: 'Total Members' },
+    activeMembers: { count: 0, label: 'Active Members' },
+    enrolledMembers: { count: 0, label: 'Enrolled Members' },
+    pendingEnrollment: { count: 0, label: 'Pending Enrollment' }
   };
 
-  allMembers: MemberResponse[] = [
-    { id: 101, title: 'Mr.', name: 'Rajesh Kumar', mobileNumber: '9876543210', city: 'Chennai', status: 'Active' },
-    { id: 102, title: 'Ms.', name: 'Priya Sharma', mobileNumber: '9876543211', city: 'Bangalore', status: 'Active' },
-    { id: 103, title: 'Mr.', name: 'Amit Patel', mobileNumber: '9876543212', city: 'Mumbai', status: 'Upcoming' },
-    { id: 104, title: 'Mrs.', name: 'Sunita Devi', mobileNumber: '9876543213', city: 'Hyderabad', status: 'Inactive' }
-  ];
+  allMembers: MemberResponse[] = [];
   filteredMembers: MemberResponse[] = [];
 
   constructor(
     private memberService: MemberService,
+    private subscriberService: SubscriberService, // Injected the new service
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
@@ -92,7 +89,6 @@ export class MembersComponent implements OnInit {
     this.isLoading = true;
     this.memberService.getMembers().subscribe({
       next: (data) => {
-        // Merge API data with mock data, or fallback if API is empty
         if (data && data.length > 0) {
            this.allMembers = data;
         }
@@ -112,7 +108,6 @@ export class MembersComponent implements OnInit {
     const searchStr = (this.searchTerm || '').trim().toLowerCase();
     const statusStr = (this.statusFilter || '').trim().toLowerCase();
 
-    // 1. Filter
     let result = this.allMembers.filter(member => {
       const memberName = (member.name || '').toString().toLowerCase();
       const memberId = member.id?.toString() || '';
@@ -130,7 +125,6 @@ export class MembersComponent implements OnInit {
       return matchesSearch && matchesStatus;
     });
 
-    // 2. Sort
     result.sort((a: any, b: any) => {
       let valA = a[this.sortColumn];
       let valB = b[this.sortColumn];
@@ -228,14 +222,11 @@ export class MembersComponent implements OnInit {
       this.isEditMode = true;
       this.editingMemberId = id;
       
-      // Map the member response back to the form structure (newMember)
       this.newMember = {
         fullName: member.name,
         mobileNumber: member.mobileNumber,
         city: member.city,
         status: member.status,
-        // Since MemberResponse is simplified, we might only have these fields
-        // In a real app, you'd fetch the full details from the API first
       };
       
       this.showAddMemberModal = true;
@@ -253,20 +244,19 @@ export class MembersComponent implements OnInit {
   submitForm(): void {
     const payload = {
       title: this.newMember.title || null,
-      name: this.newMember.fullName, // Mandatory
+      name: this.newMember.fullName, 
       guardianName: this.newMember.spouseOrFatherName || null,
       dob: this.newMember.dateOfBirth || null,
       age: this.newMember.age ? Number(this.newMember.age) : null,
-      registrationDate: this.newMember.registrationDate || null, // Mandatory
+      registrationDate: this.newMember.registrationDate || null, 
       gender: this.newMember.gender ? this.newMember.gender.toLowerCase() : null,
-      mobileNumber: this.newMember.mobileNumber, // Mandatory
+      mobileNumber: this.newMember.mobileNumber, 
       email: this.newMember.emailAddress || null,
       aadharNumber: this.newMember.aadharNumber || null,
       address: this.newMember.address || null,
       maritalStatus: this.newMember.maritalStatus || null,
       introducedAs: this.newMember.spouseName || null,
       
-      // Temporarily null until file upload API is built
       photoUrl: null, 
       signatureUrl: null,
       passbookUrl: null,
@@ -298,22 +288,31 @@ export class MembersComponent implements OnInit {
       route: this.newMember.route || null
     };
 
-    // // Pre-flight check to ensure mandatory fields are filled
-    // if (!payload.name || !payload.mobileNumber || !payload.registrationDate) {
-    //   alert("Please fill in the mandatory fields: Name, Mobile Number, and Registration Date.");
-    //   return;
-    // }
-
     const saveObservable = this.isEditMode && this.editingMemberId
       ? this.memberService.updateMember(this.editingMemberId, payload)
       : this.memberService.createMember(payload);
 
     saveObservable.subscribe({
-      next: () => {
-        alert(this.isEditMode ? 'Member updated successfully!' : 'Member added successfully!');
-        this.loadMembers(); 
-        this.loadKpis();
-        this.closeAddMemberModal();
+      next: (response: MemberResponse) => {
+        // SECONDARY GUARANTEE: Chain the subscriber sync automatically after member is saved
+        const savedMemberId = response.id;
+        
+        this.subscriberService.syncSubscriber(savedMemberId).subscribe({
+            next: () => {
+                alert(this.isEditMode ? 'Member updated and subscriber synced successfully!' : 'Member added and subscriber synced successfully!');
+                this.loadMembers(); 
+                this.loadKpis();
+                this.closeAddMemberModal();
+            },
+            error: (syncErr) => {
+                console.error('Subscriber sync fallback failed:', syncErr);
+                // We still want to load/close because the Member save *was* successful
+                alert('Member saved successfully, but manual subscriber sync returned an error. Check console.');
+                this.loadMembers(); 
+                this.loadKpis();
+                this.closeAddMemberModal();
+            }
+        });
       },
       error: (err: any) => {
         console.error('Save failed:', err);
@@ -349,10 +348,6 @@ export class MembersComponent implements OnInit {
         return false;
       }
     }
-    
-    // Add more step validations as needed
-    // if (this.currentStep === 2) { ... }
-
     return true;
   }
   

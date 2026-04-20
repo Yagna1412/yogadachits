@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import {
   EnrollmentsService,
   EnrollmentResponse,
-  ApiResponse
+  ApiResponse,
+  EnrollmentPayload
 } from '../../service/enrollments.service';
 import { ChitGroupsService } from '../../service/chit-groups.service';
 import { MemberService, MemberResponse } from '../../service/member.service';
@@ -317,11 +318,43 @@ export class EnrollmentsComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const payload = {
-      subscriberId: this.memberId,
-      memberId: this.memberId,
-      chitGroupId: this.selectedGroupId,
-      // ticketNo is purposely completely omitted so the backend calculates it
+    const assignedMember = this.membersList.find(m => m.id === this.memberId);
+
+    if (!assignedMember) {
+      this.saveError = 'Selected Member could not be found.';
+      return;
+    }
+
+    // Auto-generate Subscriber if missing!
+    if (assignedMember.subscriberId === undefined || assignedMember.subscriberId === null) {
+      this.saving = true;
+      this.enrollmentsService.createSubscriberForMember(this.memberId, assignedMember.name).subscribe({
+        next: (subRes: any) => {
+          if (subRes && subRes.success && subRes.data) {
+            // Update the locally cached member to now hold the newly created subscriber ID
+            assignedMember.subscriberId = subRes.data.id;
+            this._proceedWithEnrollment(assignedMember.subscriberId);
+          } else {
+            this.saving = false;
+            this.saveError = subRes?.message || 'Failed to generate Subscriber ID automatically.';
+          }
+        },
+        error: (err: any) => {
+          this.saving = false;
+          this.saveError = err?.error?.message || 'Error generating Subscriber ID automatically.';
+        }
+      });
+      return;
+    }
+
+    this._proceedWithEnrollment(assignedMember.subscriberId);
+  }
+
+  private _proceedWithEnrollment(subscriberId: number): void {
+    const payload: EnrollmentPayload = {
+      subscriberId: subscriberId,
+      memberId: this.memberId!,
+      chitGroupId: this.selectedGroupId!,
       businessAgentId: this.businessAgentId || null,
       collectionAgentId: this.collectionAgentId || null
     };

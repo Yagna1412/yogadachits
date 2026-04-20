@@ -27,6 +27,14 @@ export interface EnrollmentResponse {
   createdAt?: string;
 }
 
+export interface EnrollmentPayload {
+  memberId: number;
+  subscriberId: number;
+  chitGroupId: number;
+  businessAgentId?: number | null;
+  collectionAgentId?: number | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -98,7 +106,7 @@ export class EnrollmentsService {
     );
   }
 
-  createEnrollment(payload: any): Observable<ApiResponse<EnrollmentResponse>> {
+  createEnrollment(payload: EnrollmentPayload): Observable<ApiResponse<EnrollmentResponse>> {
     return this.http.post<ApiResponse<EnrollmentResponse>>(
       this.apiUrl, payload, this.getHeaders()
     ).pipe(
@@ -107,6 +115,19 @@ export class EnrollmentsService {
         message: 'Failed to create enrollment',
         data: null
       } as ApiResponse<EnrollmentResponse>))
+    );
+  }
+
+  createSubscriberForMember(memberId: number, displayName: string): Observable<ApiResponse<any>> {
+    const payload = { subscriberType: "member", memberId: memberId, displayName: displayName };
+    return this.http.post<ApiResponse<any>>(
+      'http://3.108.194.139:8080/chitfunds/api/v1/subscribers', payload, this.getHeaders()
+    ).pipe(
+      catchError(() => of({
+        success: false,
+        message: 'Failed to create subscriber',
+        data: null
+      } as ApiResponse<any>))
     );
   }
 }

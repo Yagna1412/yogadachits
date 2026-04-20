@@ -18,17 +18,61 @@ export interface MemberKpiSummary {
     pendingEnrollment: KpiCard;
 }
 
+// Expanded to match the full backend DTO
 export interface MemberResponse {
     id: number;
+    subscriberId: number;
     title: string;
     name: string;
+    guardianName: string;
+    dob: string;
+    age: number;
+    registrationDate: string;
+    gender: string;
     mobileNumber: string;
+    email: string;
+    aadharNumber: string;
+    address: string;
+    maritalStatus: string;
+    introducedAs: string;
+    photoUrl: string;
+    signatureUrl: string;
+    passbookUrl: string;
+    bankAccountNumber: string;
+    bankAccountHolderName: string;
+    bankName: string;
+    bankBranch: string;
+    bankIfsc: string;
+    occupation: string;
+    employeeType: string;
+    organization: string;
+    designation: string;
+    dateOfJoining: string;
+    doorNo: string;
+    streetName: string;
     city: string;
+    pincode: string;
+    nomineeName: string;
+    nomineeAge: number;
+    nomineeRelation: string;
+    nomineeDoorNo: string;
+    nomineeStreetName: string;
+    nomineeCity: string;
+    nomineeAddress: string;
+    nomineePincode: string;
+    nomineeMobileNumber: string;
+    fillSubscriberAddress: string;
+    route: string;
+    gstNumber: string;
+    panCardNumber: string;
+    notes: string;
+    createdAt: string;
     status: string;
 }
 
+// Updated to success boolean as per your implementation plan
 export interface ApiResponse<T> {
-    status: string;
+    success: boolean;
     message: string;
     data: T;
 }
@@ -37,7 +81,6 @@ export interface ApiResponse<T> {
     providedIn: 'root',
 })
 export class MemberService {
-    // Ensure this URL matches your Spring Boot application properties context-path
     private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/members';
 
     constructor(private http: HttpClient) { }
@@ -68,7 +111,6 @@ export class MemberService {
     }
 
     createMember(payload: any): Observable<MemberResponse> {
-        // Sending the JSON payload correctly
         return this.http.post<ApiResponse<MemberResponse>>(this.apiUrl, payload, this.getAuthHeaders())
             .pipe(map(response => response.data));
     }
