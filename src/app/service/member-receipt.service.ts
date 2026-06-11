@@ -35,7 +35,8 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class MemberReceiptService {
-  private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/member-receipts';
+  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/member-receipts';
+  // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/member-receipts';
 
   constructor(
     private http: HttpClient,

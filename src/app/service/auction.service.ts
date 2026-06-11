@@ -5,8 +5,10 @@ import { Observable, of, shareReplay } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Client } from '@stomp/stompjs';
 
-const BASE = 'http://3.108.194.139:8080/chitfunds/api/v1';
-const WS_BASE = 'ws://3.108.194.139:8080/chitfunds/ws/auctions';
+const BASE = 'http://localhost:8080/chitfunds/api/v1';
+// const BASE = 'http://3.108.194.139:8080/chitfunds/api/v1';
+const WS_BASE = 'ws://localhost:8080/chitfunds/ws/auctions';
+// const WS_BASE = 'ws://3.108.194.139:8080/chitfunds/ws/auctions';
 
 export interface ApiResponse<T> {
     success: boolean;

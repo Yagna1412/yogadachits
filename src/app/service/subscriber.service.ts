@@ -16,7 +16,8 @@ export interface SubscriberResponse {
   providedIn: 'root'
 })
 export class SubscriberService {
-  private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/subscribers';
+  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/subscribers';
+  // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/subscribers';
 
   constructor(private http: HttpClient) {}
 
