@@ -1,0 +1,53 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1 class="page-title">Auction History</h1>
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item">Transactions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt=">" /></span>
+      <span class="breadcrumb-item">Auctions</span>
+      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt=">" /></span>
+      <span class="breadcrumb-item active">History</span>
+    </nav>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="table-section">
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <span>Loading history...</span>
+    </div>
+
+    <div class="table-wrapper" *ngIf="!isLoading">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Auction #</th>
+            <th>Date</th>
+            <th>Chit Amount</th>
+            <th>Winning Bid</th>
+            <th>Net Payable</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let auction of auctions">
+            <td>{{ auction.groupName || 'Group ' + auction.chitGroupId }}</td>
+            <td>{{ auction.auctionNumber }}</td>
+            <td>{{ auction.auctionDate }}</td>
+            <td>₹ {{ auction.chitAmount | number }}</td>
+            <td>₹ {{ auction.winningBidAmount | number }}</td>
+            <td>₹ {{ auction.netPayable | number }}</td>
+            <td>
+              <span class="status-badge status-completed">Completed</span>
+            </td>
+          </tr>
+          <tr *ngIf="auctions.length === 0">
+            <td colspan="7" class="text-center">No completed auctions found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

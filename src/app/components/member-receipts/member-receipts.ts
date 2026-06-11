@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { MemberReceiptService, MemberReceiptTableResponse, MemberReceiptCreateRequest } from '../../service/member-receipt.service';
 import { EnrollmentsService, EnrollmentResponse } from '../../service/enrollments.service';
 import { ChitGroupsService } from '../../service/chit-groups.service';
@@ -9,7 +10,7 @@ import { MemberService, MemberResponse } from '../../service/member.service';
 @Component({
   selector: 'app-member-receipts',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './member-receipts.html',
   styleUrl: './member-receipts.scss',
 })

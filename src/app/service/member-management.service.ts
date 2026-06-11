@@ -93,7 +93,7 @@ export class MemberManagementService {
     private getAuthHeaders(): HttpHeaders {
         let token: string | null = null;
         if (isPlatformBrowser(this.platformId)) {
-            token = localStorage.getItem('token');
+            token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
         }
 
         if (token) {

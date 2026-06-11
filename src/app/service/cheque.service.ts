@@ -47,7 +47,7 @@ export class ChequeService {
     private getAuthHeaders(): { headers: HttpHeaders } {
         let token = '';
         if (isPlatformBrowser(this.platformId)) {
-            token = localStorage.getItem('token') || '';
+            token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
         }
         return {
             headers: new HttpHeaders({

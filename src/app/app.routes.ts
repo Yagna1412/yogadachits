@@ -21,6 +21,7 @@ import { ChitGroupsComponent } from './components/chit-groups/chit-groups';
 import { SuitFileInfoComponent } from './components/suit-file/suit-file';
 import { MemberReceiptsComponent } from './components/member-receipts/member-receipts';
 import { AuctionsComponent } from './components/auctions/auctions';
+import { AuctionListComponent } from './components/auction-list/auction-list';
 import { CheckManagementComponent } from './components/check-management/check-management';
 import { ReAuctionComponent } from './components/re-auction/re-auction';
 import { CompanySetupComponent } from './components/company-setup/company-setup';
@@ -115,6 +116,7 @@ export const routes: Routes = [
       { path: 'suit-file', component: SuitFileInfoComponent },
       { path: 'member-receipts', component: MemberReceiptsComponent },
       { path: 'auctions', component: AuctionsComponent },
+      { path: 'auction-list', component: AuctionListComponent },
       { path: 're-auction', component: ReAuctionComponent },
       { path: 'check-management', component: CheckManagementComponent },
       { path: 'company-setup', component: CompanySetupComponent },

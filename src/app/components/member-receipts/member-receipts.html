@@ -1,12 +1,12 @@
 <div class="page-header">
   <div class="header-left">
-    <h1 class="page-title">Member Receipts</h1>
+    <h1 class="page-title">Receipts</h1>
     <nav class="breadcrumb">
       <span class="breadcrumb-item">Transactions</span>
       <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
       <span class="breadcrumb-item">Members</span>
       <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
-      <span class="breadcrumb-item active">Member Receipts</span>
+      <span class="breadcrumb-item active">Receipts</span>
     </nav>
   </div>
 </div>
@@ -138,7 +138,7 @@
 <div class="bid-entry-table-section">
   <div class="bid-inner">
     <div class="table-header">
-      <h2 class="section-title">Member Receipt List</h2>
+      <h2 class="section-title">Receipts List</h2>
       <div class="table-controls">
         <div class="search-box">
           <span class="search-icon">
@@ -181,7 +181,12 @@
             <td>{{ receipt.memberName }}</td>
             <td>{{ receipt.groupName }}</td>
             <td>₹ {{ receipt.amount | number:'1.2-2' }}</td>
-            <td>{{ receipt.paymentMode | uppercase }}</td>
+            <td>
+              <ng-container *ngIf="receipt.paymentMode?.toLowerCase() === 'cheque'; else noLink">
+                <a [routerLink]="['/admin/check-management']" style="color: #003366; text-decoration: underline; cursor: pointer;">{{ receipt.paymentMode | uppercase }}</a>
+              </ng-container>
+              <ng-template #noLink>{{ receipt.paymentMode | uppercase }}</ng-template>
+            </td>
             <td>{{ receipt.entryDate | date:'medium' }}</td>
             <td>
               <div class="action-buttons">

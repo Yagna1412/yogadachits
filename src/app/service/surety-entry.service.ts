@@ -16,7 +16,7 @@ export class SuretyService {
     private getHeaders(): { headers: HttpHeaders } {
         let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
         if (isPlatformBrowser(this.platformId)) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
             if (token) {
                 headers = headers.set('Authorization', `Bearer ${token}`);
             }

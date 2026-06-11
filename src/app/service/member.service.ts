@@ -48,7 +48,7 @@ export class MemberService {
         });
 
         if (typeof window !== 'undefined' && window.localStorage) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token') || localStorage.getItem('authToken');
             if (token) {
                 headers = headers.set('Authorization', `Bearer ${token}`);
             }

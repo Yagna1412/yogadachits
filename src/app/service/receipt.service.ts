@@ -58,7 +58,7 @@ export class ReceiptService {
   private getAuthHeaders(): HttpHeaders {
     let token: string | null = null;
     if (isPlatformBrowser(this.platformId)) {
-      token = localStorage.getItem('token'); 
+      token = localStorage.getItem('token') || localStorage.getItem('authToken'); 
     }
     if (token) {
       return new HttpHeaders({ 'Authorization': `Bearer ${token}` });

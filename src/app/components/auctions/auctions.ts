@@ -172,6 +172,10 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
               this.isTimerRunning = false;
               this.auctionLocked = true;
               this.cdr.detectChanges();
+              
+              if (this.highestBid && !this.selected?.winningBidId) {
+                  this.confirmWinner();
+              }
           }
       }, 1000);
   }
@@ -280,6 +284,7 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         this.isLoading = false;
         this.cdr.detectChanges();
+        this.checkAndAutoStartAuction();
       },
       error: () => {
         this.errorMessage = 'Failed to load data. Please check the backend.';
@@ -348,6 +353,7 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.isLoading = false;
         this.cdr.detectChanges();
+        this.checkAndAutoStartAuction();
       },
       error: () => {
         this.isLoading = false;
@@ -702,5 +708,23 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!d) { return ''; }
     try { return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); }
     catch { return d; }
+  }
+
+  private checkAndAutoStartAuction(): void {
+    if (!this.selected || this.isTimerRunning || this.auctionLocked) return;
+    
+    // In a real application with time, we would compare current time >= assigned auctionTime.
+    // Currently, we can check if the status is still 'Upcoming' or 'Created' and attempt to start.
+    // Or we rely on the session response above. If the backend didn't start it, we can trigger it.
+    
+    // We'll set a basic interval to check if it's time to start (if auction time was available).
+    // For MVP, we can simulate auto-start by triggering it if it's the auction date.
+    const auctionDate = new Date(this.selected.auctionDate);
+    const today = new Date();
+    
+    if (auctionDate.toDateString() === today.toDateString() && !this.selected.winningBidId) {
+       // Attempt to auto start if not already live
+       this.startAuction();
+    }
   }
 }

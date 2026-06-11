@@ -45,6 +45,7 @@ export class LoginComponent {
           // Save token if present
           if (response.token) {
             localStorage.setItem('authToken', response.token);
+            localStorage.setItem('token', response.token);
           }
           const route = this.selectedRole === 'Admin' ? '/admin/dashboard' : '/user/dashboard';
           this.router.navigate([route]);

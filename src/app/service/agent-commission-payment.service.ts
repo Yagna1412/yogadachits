@@ -12,7 +12,7 @@ export class AgentCommissionPaymentService {
   constructor(private http: HttpClient) {}
 
   private getAuthHeaders() {
-    const token = localStorage.getItem('auth_token'); 
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token'); 
     return {
       headers: new HttpHeaders({
         'Authorization': token ? `Bearer ${token}` : '',

@@ -46,7 +46,7 @@ export class MemberReceiptService {
     let token = '';
     
     if (isPlatformBrowser(this.platformId)) {
-      token = localStorage.getItem('token') || '';
+      token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
     }
 
     return {

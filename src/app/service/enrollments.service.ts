@@ -43,7 +43,7 @@ export class EnrollmentsService {
       'X-Tenant-Id': '1'
     });
     if (isPlatformBrowser(this.platformId)) {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
       if (token) {
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
