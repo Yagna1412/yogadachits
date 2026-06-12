@@ -21,7 +21,8 @@
                 <span class="search-icon">
                     <img src="assets/images/icons/Search.png" alt="Search" />
                 </span>
-                <input type="text" placeholder="Search" class="search-input" />
+                <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm"
+                    (input)="filterEntries()" />
                 <span class="search-shortcut">Ctrl Shift K</span>
             </div>
         </div>
@@ -38,10 +39,10 @@
                 </thead>
                 <tbody>
                     <tr *ngFor="let e of entries">
-                        <td>{{ subscriberName(e.subscriberId) }}</td>
-                        <td>{{ groupName(e.chitGroupId) }}</td>
+                        <td>{{ e.subscriberName }}</td>
+                        <td>{{ e.groupName }}</td>
                         <td>{{ e.ticketNo }}</td>
-                        <td>{{ e.person }}</td>
+                        <td>{{ e.personName }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -67,16 +68,16 @@
                         <div class="form-group">
                             <label for="subscriber">Subscriber <span class="text-danger">*</span></label>
                             <select id="subscriber" [(ngModel)]="selectedSubscriberId" class="form-control">
-                                <option value="">-- select subscriber --</option>
-                                <option *ngFor="let s of subscribers" [value]="s.id">{{ s.name }} ({{ s.id }})</option>
+                                <option [ngValue]="null">-- select subscriber --</option>
+                                <option *ngFor="let s of subscribers" [ngValue]="s.id">{{ s.name }}</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="group">Chit Group <span class="text-danger">*</span></label>
                             <select id="group" [(ngModel)]="selectedGroupId" class="form-control">
-                                <option value="">-- select group --</option>
-                                <option *ngFor="let g of chitGroups" [value]="g.id">{{ g.name }}</option>
+                                <option [ngValue]="null">-- select group --</option>
+                                <option *ngFor="let g of chitGroups" [ngValue]="g.id">{{ g.name }}</option>
                             </select>
                         </div>
                     </div>
@@ -88,9 +89,9 @@
                         </div>
                         <div class="form-group">
                             <label for="person">Person <span class="text-danger">*</span></label>
-                            <select id="person" [(ngModel)]="selectedPerson" class="form-control">
-                                <option value="">-- select person --</option>
-                                <option *ngFor="let p of persons" [value]="p">{{ p }}</option>
+                            <select id="person" [(ngModel)]="selectedPersonId" class="form-control">
+                                <option [ngValue]="null">-- select person --</option>
+                                <option *ngFor="let p of persons" [ngValue]="p.id">{{ p.name }}</option>
                             </select>
                         </div>
                     </div>
