@@ -15,24 +15,21 @@ import {
   styleUrl: './business-agent-transfer.scss'
 })
 export class BusinessAgentTransferComponent implements OnInit {
-  // Dropdown / checkbox data (loaded from backend)
   agents: AgentTransferDropdownOption[] = [];
   members: AgentTransferDropdownOption[] = [];
   routes: string[] = [];
   groups: AgentTransferDropdownOption[] = [];
 
-  // Table data (loaded from backend)
   transfers: AgentTransfer[] = [];
 
   showForm: boolean = false;
   searchTerm: string = '';
 
-  // Form fields
   fromAgentId: number | null = null;
   toAgentId: number | null = null;
-  selectedMemberIds: number[] = [];
-  selectedRoutes: string[] = [];
-  selectedGroupIds: number[] = [];
+  selectedMemberId: number | null = null;
+  selectedRoute: string | null = null;
+  selectedGroupId: number | null = null;
 
   errorMessage: string = '';
   successMessage: string = '';
@@ -57,7 +54,6 @@ export class BusinessAgentTransferComponent implements OnInit {
     });
   }
 
-  /** Load Agents, Members, Routes, and Groups in one parallel call */
   loadFormData(): void {
     forkJoin({
       agents: this.agentTransferService.getAgents(),
@@ -95,36 +91,9 @@ export class BusinessAgentTransferComponent implements OnInit {
   resetForm(): void {
     this.fromAgentId = null;
     this.toAgentId = null;
-    this.selectedMemberIds = [];
-    this.selectedRoutes = [];
-    this.selectedGroupIds = [];
-  }
-
-  toggleMember(id: number, event: any): void {
-    if (event.target.checked) {
-      this.selectedMemberIds.push(id);
-    } else {
-      const idx = this.selectedMemberIds.indexOf(id);
-      if (idx > -1) this.selectedMemberIds.splice(idx, 1);
-    }
-  }
-
-  toggleRoute(route: string, event: any): void {
-    if (event.target.checked) {
-      this.selectedRoutes.push(route);
-    } else {
-      const idx = this.selectedRoutes.indexOf(route);
-      if (idx > -1) this.selectedRoutes.splice(idx, 1);
-    }
-  }
-
-  toggleGroup(id: number, event: any): void {
-    if (event.target.checked) {
-      this.selectedGroupIds.push(id);
-    } else {
-      const idx = this.selectedGroupIds.indexOf(id);
-      if (idx > -1) this.selectedGroupIds.splice(idx, 1);
-    }
+    this.selectedMemberId = null;
+    this.selectedRoute = null;
+    this.selectedGroupId = null;
   }
 
   saveTransfer(): void {
@@ -139,7 +108,7 @@ export class BusinessAgentTransferComponent implements OnInit {
       this.errorMessage = 'Cannot transfer to the same agent';
       return;
     }
-    if (this.selectedMemberIds.length === 0 && this.selectedRoutes.length === 0 && this.selectedGroupIds.length === 0) {
+    if (!this.selectedMemberId && !this.selectedRoute && !this.selectedGroupId) {
       this.errorMessage = 'Select at least one member, route, or group to transfer';
       return;
     }
@@ -148,9 +117,9 @@ export class BusinessAgentTransferComponent implements OnInit {
       .createTransfer({
         fromAgentId: this.fromAgentId,
         toAgentId: this.toAgentId,
-        memberIds: [...this.selectedMemberIds],
-        routes: [...this.selectedRoutes],
-        groupIds: [...this.selectedGroupIds],
+        memberIds: this.selectedMemberId ? [this.selectedMemberId] : [],
+        routes: this.selectedRoute ? [this.selectedRoute] : [],
+        groupIds: this.selectedGroupId ? [this.selectedGroupId] : [],
       })
       .subscribe({
         next: () => {
@@ -165,7 +134,6 @@ export class BusinessAgentTransferComponent implements OnInit {
           }, 2000);
         },
         error: (err) => {
-          // Surface backend message (e.g. same agent or nothing selected)
           this.errorMessage =
             err?.error?.message || 'Failed to save transfer. Please check the backend is running.';
           this.cdr.detectChanges();

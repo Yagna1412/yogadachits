@@ -83,28 +83,28 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>Members</label>
-              <div *ngFor="let m of members">
-                <input type="checkbox" [checked]="selectedMemberIds.includes(m.id)"
-                  (change)="toggleMember(m.id, $event)" /> {{ m.name }}
-              </div>
+              <label for="member">Members</label>
+              <select id="member" [(ngModel)]="selectedMemberId" class="form-control">
+                <option [ngValue]="null">-- select member --</option>
+                <option *ngFor="let m of members" [ngValue]="m.id">{{ m.name }}</option>
+              </select>
             </div>
             <div class="form-group">
-              <label>Routes</label>
-              <div *ngFor="let r of routes">
-                <input type="checkbox" [checked]="selectedRoutes.includes(r)"
-                  (change)="toggleRoute(r, $event)" /> {{ r }}
-              </div>
+              <label for="route">Routes</label>
+              <select id="route" [(ngModel)]="selectedRoute" class="form-control">
+                <option [ngValue]="null">-- select route --</option>
+                <option *ngFor="let r of routes" [ngValue]="r">{{ r }}</option>
+              </select>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>Groups</label>
-              <div *ngFor="let g of groups">
-                <input type="checkbox" [checked]="selectedGroupIds.includes(g.id)"
-                  (change)="toggleGroup(g.id, $event)" /> {{ g.name }}
-              </div>
+              <label for="group">Groups</label>
+              <select id="group" [(ngModel)]="selectedGroupId" class="form-control">
+                <option [ngValue]="null">-- select group --</option>
+                <option *ngFor="let g of groups" [ngValue]="g.id">{{ g.name }}</option>
+              </select>
             </div>
           </div>
         </div>
