@@ -59,11 +59,11 @@
               <a routerLink="/admin/agents-target-entry" routerLinkActive="active" class="nested-submenu-link">
                 <span>Agents Target Entry</span>
               </a>
-              <!-- PHASE 2
+
               <a routerLink="/admin/business-agent-transfer" routerLinkActive="active" class="nested-submenu-link">
                 <span>Business/Collection Agent Transfer</span>
               </a>
-              -->
+
 
             </div>
           </div>
@@ -561,7 +561,8 @@
         <div class="search-container">
           <div class="search-box">
             <img src="assets/images/icons/Search.png" alt="Search" class="search-icon" />
-            <input type="text" placeholder="Search anything..." [(ngModel)]="searchQuery" (input)="onSearch()" (focus)="onSearch()" (blur)="hideSearch()" />
+            <input type="text" placeholder="Search anything..." [(ngModel)]="searchQuery" (input)="onSearch()"
+              (focus)="onSearch()" (blur)="hideSearch()" />
             <div class="shortcut">Ctrl K</div>
           </div>
           <!-- Search Results Dropdown -->
@@ -569,7 +570,8 @@
             <div class="no-results" *ngIf="searchResults.length === 0">
               No matches for "{{ searchQuery }}"
             </div>
-            <a *ngFor="let result of searchResults" [routerLink]="result.link" class="search-item" (click)="searchQuery = ''; searchResults = []">
+            <a *ngFor="let result of searchResults" [routerLink]="result.link" class="search-item"
+              (click)="searchQuery = ''; searchResults = []">
               <div class="result-title">{{ result.title }}</div>
               <div class="result-type">{{ result.type }}</div>
             </a>

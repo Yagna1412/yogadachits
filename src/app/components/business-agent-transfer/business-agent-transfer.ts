@@ -1,8 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface Agent { id: string; name: string; }
+import { forkJoin } from 'rxjs';
+import {
+  AgentTransferService,
+  AgentTransferDropdownOption,
+  AgentTransfer,
+} from '../../service/agent-transfer.service';
 
 @Component({
   selector: 'app-business-agent-transfer',
@@ -10,65 +14,116 @@ interface Agent { id: string; name: string; }
   templateUrl: './business-agent-transfer.html',
   styleUrl: './business-agent-transfer.scss'
 })
-export class BusinessAgentTransferComponent {
-  agents: Agent[] = [
-    { id: 'AG001', name: 'Ravi Kumar' },
-    { id: 'AG002', name: 'Meera N' },
-    { id: 'AG003', name: 'Suresh R' }
-  ];
+export class BusinessAgentTransferComponent implements OnInit {
+  // Dropdown / checkbox data (loaded from backend)
+  agents: AgentTransferDropdownOption[] = [];
+  members: AgentTransferDropdownOption[] = [];
+  routes: string[] = [];
+  groups: AgentTransferDropdownOption[] = [];
 
-  members: string[] = ['Member A', 'Member B', 'Member C'];
-  routes: string[] = ['Route 1', 'Route 2', 'Route 3'];
-  groups: string[] = ['Group X', 'Group Y', 'Group Z'];
-
-  fromAgent: string = '';
-  toAgent: string = '';
-  selectedMembers: string[] = [];
-  selectedRoutes: string[] = [];
-  selectedGroups: string[] = [];
-
-  transfers: Array<{
-    fromAgent: string;
-    toAgent: string;
-    members: string[];
-    routes: string[];
-    groups: string[];
-  }> = [
-    { fromAgent: 'AG001', toAgent: 'AG002', members: ['Member A'], routes: ['Route 1'], groups: ['Group X'] }
-  ];
+  // Table data (loaded from backend)
+  transfers: AgentTransfer[] = [];
 
   showForm: boolean = false;
+  searchTerm: string = '';
+
+  // Form fields
+  fromAgentId: number | null = null;
+  toAgentId: number | null = null;
+  selectedMemberIds: number[] = [];
+  selectedRoutes: string[] = [];
+  selectedGroupIds: number[] = [];
+
   errorMessage: string = '';
   successMessage: string = '';
+
+  constructor(
+    private agentTransferService: AgentTransferService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.loadTransfers();
+    this.loadFormData();
+  }
+
+  loadTransfers(): void {
+    this.agentTransferService.getAllTransfers(this.searchTerm).subscribe({
+      next: (data) => {
+        this.transfers = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error fetching agent transfers:', err),
+    });
+  }
+
+  /** Load Agents, Members, Routes, and Groups in one parallel call */
+  loadFormData(): void {
+    forkJoin({
+      agents: this.agentTransferService.getAgents(),
+      members: this.agentTransferService.getMembers(),
+      routes: this.agentTransferService.getRoutes(),
+      groups: this.agentTransferService.getGroups(),
+    }).subscribe({
+      next: ({ agents, members, routes, groups }) => {
+        this.agents = agents;
+        this.members = members;
+        this.routes = routes;
+        this.groups = groups;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading form data:', err);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  filterTransfers(): void {
+    this.loadTransfers();
+  }
 
   toggleForm(): void {
     this.showForm = !this.showForm;
     this.errorMessage = '';
     this.successMessage = '';
     if (!this.showForm) {
-      this.fromAgent = '';
-      this.toAgent = '';
-      this.selectedMembers = [];
-      this.selectedRoutes = [];
-      this.selectedGroups = [];
+      this.resetForm();
     }
   }
 
-  toggleSelection(field: 'members'|'routes'|'groups', value: string, event: any): void {
-    let arr: string[];
-    if (field === 'members') {
-      arr = this.selectedMembers;
-    } else if (field === 'routes') {
-      arr = this.selectedRoutes;
-    } else {
-      arr = this.selectedGroups;
-    }
+  resetForm(): void {
+    this.fromAgentId = null;
+    this.toAgentId = null;
+    this.selectedMemberIds = [];
+    this.selectedRoutes = [];
+    this.selectedGroupIds = [];
+  }
 
+  toggleMember(id: number, event: any): void {
     if (event.target.checked) {
-      arr.push(value);
+      this.selectedMemberIds.push(id);
     } else {
-      const idx = arr.indexOf(value);
-      if (idx > -1) arr.splice(idx, 1);
+      const idx = this.selectedMemberIds.indexOf(id);
+      if (idx > -1) this.selectedMemberIds.splice(idx, 1);
+    }
+  }
+
+  toggleRoute(route: string, event: any): void {
+    if (event.target.checked) {
+      this.selectedRoutes.push(route);
+    } else {
+      const idx = this.selectedRoutes.indexOf(route);
+      if (idx > -1) this.selectedRoutes.splice(idx, 1);
+    }
+  }
+
+  toggleGroup(id: number, event: any): void {
+    if (event.target.checked) {
+      this.selectedGroupIds.push(id);
+    } else {
+      const idx = this.selectedGroupIds.indexOf(id);
+      if (idx > -1) this.selectedGroupIds.splice(idx, 1);
     }
   }
 
@@ -76,34 +131,45 @@ export class BusinessAgentTransferComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
-    if (!this.fromAgent || !this.toAgent) {
+    if (!this.fromAgentId || !this.toAgentId) {
       this.errorMessage = 'Please select both agents';
       return;
     }
-    if (this.fromAgent === this.toAgent) {
+    if (this.fromAgentId === this.toAgentId) {
       this.errorMessage = 'Cannot transfer to the same agent';
       return;
     }
+    if (this.selectedMemberIds.length === 0 && this.selectedRoutes.length === 0 && this.selectedGroupIds.length === 0) {
+      this.errorMessage = 'Select at least one member, route, or group to transfer';
+      return;
+    }
 
-    this.transfers.unshift({
-      fromAgent: this.fromAgent,
-      toAgent: this.toAgent,
-      members: [...this.selectedMembers],
-      routes: [...this.selectedRoutes],
-      groups: [...this.selectedGroups]
-    });
-
-    this.successMessage = 'Transfer completed';
-    // keep form open or reset fields
-    this.fromAgent = '';
-    this.toAgent = '';
-    this.selectedMembers = [];
-    this.selectedRoutes = [];
-    this.selectedGroups = [];
-  }
-
-  agentName(id: string): string {
-    const a = this.agents.find(x => x.id === id);
-    return a ? a.name : id;
+    this.agentTransferService
+      .createTransfer({
+        fromAgentId: this.fromAgentId,
+        toAgentId: this.toAgentId,
+        memberIds: [...this.selectedMemberIds],
+        routes: [...this.selectedRoutes],
+        groupIds: [...this.selectedGroupIds],
+      })
+      .subscribe({
+        next: () => {
+          this.successMessage = 'Transfer completed';
+          this.resetForm();
+          this.loadTransfers();
+          this.cdr.detectChanges();
+          setTimeout(() => {
+            this.successMessage = '';
+            this.showForm = false;
+            this.cdr.detectChanges();
+          }, 2000);
+        },
+        error: (err) => {
+          // Surface backend message (e.g. same agent or nothing selected)
+          this.errorMessage =
+            err?.error?.message || 'Failed to save transfer. Please check the backend is running.';
+          this.cdr.detectChanges();
+        },
+      });
   }
 }
