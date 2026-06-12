@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface Agent {
-  id: string;
-  name: string;
-}
+import {
+  AgentTargetService,
+  AgentTargetDropdownOption,
+  AgentTargetEntry,
+} from '../../service/agent-target.service';
 
 @Component({
   selector: 'app-agents-target-entry',
@@ -13,24 +13,57 @@ interface Agent {
   templateUrl: './agents-target-entry.html',
   styleUrl: './agents-target-entry.scss'
 })
-export class AgentsTargetEntryComponent {
-  agents: Agent[] = [
-    { id: 'AG001', name: 'Ravi Kumar' },
-    { id: 'AG002', name: 'Meera N' },
-    { id: 'AG003', name: 'Suresh R' }
-  ];
+export class AgentsTargetEntryComponent implements OnInit {
+  // Dropdown data (loaded from backend)
+  agents: AgentTargetDropdownOption[] = [];
 
-  selectedAgent: string = '';
+  // Table data (loaded from backend)
+  savedTargets: AgentTargetEntry[] = [];
+
+  showForm: boolean = false;
+  searchTerm: string = '';
+
+  // Form fields
+  selectedAgentId: number | null = null;
   targetAmount: number | null = null;
   targetMonth: string = '';
 
-  savedTargets: Array<{ agentId: string; amount: number; month: string }> = [
-    { agentId: 'AG001', amount: 50000, month: '2026-03' },
-    { agentId: 'AG002', amount: 75000, month: '2026-04' }
-  ];
-  showForm: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
+
+  constructor(
+    private agentTargetService: AgentTargetService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.loadTargets();
+    this.loadAgents();
+  }
+
+  loadTargets(): void {
+    this.agentTargetService.getAllTargets(this.searchTerm).subscribe({
+      next: (data) => {
+        this.savedTargets = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error fetching agent targets:', err),
+    });
+  }
+
+  loadAgents(): void {
+    this.agentTargetService.getAgents().subscribe({
+      next: (data) => {
+        this.agents = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error fetching agents:', err),
+    });
+  }
+
+  filterTargets(): void {
+    this.loadTargets();
+  }
 
   toggleForm(): void {
     this.showForm = !this.showForm;
@@ -38,7 +71,7 @@ export class AgentsTargetEntryComponent {
     this.successMessage = '';
     if (!this.showForm) {
       // reset fields when closing
-      this.selectedAgent = '';
+      this.selectedAgentId = null;
       this.targetAmount = null;
       this.targetMonth = '';
     }
@@ -48,12 +81,12 @@ export class AgentsTargetEntryComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
-    if (!this.selectedAgent) {
+    if (!this.selectedAgentId) {
       this.errorMessage = 'Please select an agent';
       return;
     }
-    if (this.targetAmount === null || isNaN(Number(this.targetAmount))) {
-      this.errorMessage = 'Target must be numeric';
+    if (this.targetAmount === null || isNaN(Number(this.targetAmount)) || Number(this.targetAmount) <= 0) {
+      this.errorMessage = 'Target must be a positive number';
       return;
     }
     if (!this.targetMonth) {
@@ -61,22 +94,33 @@ export class AgentsTargetEntryComponent {
       return;
     }
 
-    this.savedTargets.unshift({
-      agentId: this.selectedAgent,
-      amount: Number(this.targetAmount),
-      month: this.targetMonth
-    });
-
-    this.successMessage = 'Agent target added';
-
-    // reset inputs
-    this.selectedAgent = '';
-    this.targetAmount = null;
-    this.targetMonth = '';
-  }
-
-  agentName(agentId: string): string {
-    const a = this.agents.find(x => x.id === agentId);
-    return a ? a.name : agentId;
+    this.agentTargetService
+      .createTarget({
+        agentId: this.selectedAgentId,
+        targetAmount: Number(this.targetAmount),
+        targetMonth: this.targetMonth,
+      })
+      .subscribe({
+        next: () => {
+          this.successMessage = 'Agent target added';
+          // reset inputs
+          this.selectedAgentId = null;
+          this.targetAmount = null;
+          this.targetMonth = '';
+          this.loadTargets();
+          this.cdr.detectChanges();
+          setTimeout(() => {
+            this.successMessage = '';
+            this.showForm = false;
+            this.cdr.detectChanges();
+          }, 2000);
+        },
+        error: (err) => {
+          // Surface backend message (e.g. duplicate target for the same agent and month)
+          this.errorMessage =
+            err?.error?.message || 'Failed to save target. Please check the backend is running.';
+          this.cdr.detectChanges();
+        },
+      });
   }
 }
