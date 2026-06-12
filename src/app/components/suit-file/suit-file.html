@@ -109,6 +109,7 @@
 
   <!-- RIGHT SECTION: Suit File Entry -->
   <div class="suit-file-entry-section">
+    <div *ngIf="pageMessage" class="page-message">{{ pageMessage }}</div>
     <div class="entry-header">
       <h2 class="entry-title">Suit File Info Entry</h2>
       <button class="btn-add-timeline" (click)="openTimelineDialog()">
@@ -119,7 +120,15 @@
 
     <!-- Timeline -->
     <div class="timeline-container">
-      <div class="timeline">
+      <div *ngIf="timelineLoadError" class="error-message">{{ timelineLoadError }}</div>
+
+      <div *ngIf="selectedMember && !timelineLoadError && timelineEntries.length === 0" class="timeline-empty">
+        <p>No timeline entries yet for {{ selectedMember.name }}.</p>
+        <p *ngIf="hasSuitFile">Click "+ Add Timeline Entry" to add the first entry.</p>
+        <p *ngIf="!hasSuitFile">Add suit file information first, then add timeline entries.</p>
+      </div>
+
+      <div class="timeline" *ngIf="timelineEntries.length > 0">
         <div *ngFor="let entry of timelineEntries; let i = index" class="timeline-item"
           [class.last]="i === timelineEntries.length - 1">
 
@@ -129,7 +138,8 @@
 
           <div class="timeline-content">
             <div class="timeline-event-title">{{ entry.title }}</div>
-            <div class="timeline-event-subtitle">{{ entry.subtitle }}<span>•</span>{{ entry.date }} {{ entry.time }}
+            <div class="timeline-event-subtitle" *ngIf="entry.subtitle || entry.date || entry.time">
+              {{ entry.subtitle }}<span *ngIf="entry.date || entry.time">•</span>{{ entry.date }} {{ entry.time }}
             </div>
             <!-- Document if exists -->
             <div class="timeline-document" *ngIf="entry.document">
@@ -153,7 +163,7 @@
             </div>
 
             <!-- Notification Section -->
-            <div class="timeline-notify" *ngIf="entry.notify">
+            <div class="timeline-notify" *ngIf="entry.notify && entry.notify.length > 0">
               <span class="notify-label">Notify</span>
               <div class="notify-users">
                 <span class="notify-user" *ngFor="let user of entry.notify">
@@ -179,6 +189,7 @@
 
     <form (ngSubmit)="submitSuitForm()" #suitForm="ngForm">
       <div class="modal-body">
+        <div *ngIf="suitErrorMessage" class="error-message">{{ suitErrorMessage }}</div>
         <div class="row">
           <div class="col">
             <label>Select Member</label>
@@ -221,15 +232,6 @@
 
         <h3>Suit Valuation</h3>
 
-
-        <!-- <div class="row">
-          <div class="col-full">
-            <label>Description</label>
-            <textarea [(ngModel)]="newSuit.description" name="description" class="form-control" rows="5"
-              placeholder="Enter event details..."></textarea>
-          </div>
-        </div> -->
-
         <div class="row small-inputs">
           <div class="col-small">
             <label>Principal (₹)</label>
@@ -266,7 +268,9 @@
       </div>
 
       <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSavingSuit">
+          {{ isSavingSuit ? 'Saving...' : 'Save' }}
+        </button>
       </div>
     </form>
   </div>
@@ -279,7 +283,7 @@
       <div class="success-icon">
         <img src="assets/images/icons/icons8-spinner.gif" alt="Success">
       </div>
-      <h3>Member Added Successfully</h3>
+      <h3>Suit Information Saved</h3>
       <button class="btn btn-primary btn-continue" (click)="closeSuccessModal()">Continue</button>
     </div>
   </div>
@@ -289,13 +293,14 @@
 <div *ngIf="showTimelineModal" class="modal-overlay">
   <div class="modal-content timeline-modal">
     <div class="modal-header">
-      <h3>Add Timeline Entry <span class="case-badge">123456</span></h3>
+      <h3>Add Timeline Entry <span class="case-badge">{{ currentCaseNumber || '—' }}</span></h3>
       <button class="close-btn" (click)="closeTimelineDialog()">×</button>
     </div>
 
     <form (ngSubmit)="submitTimelineForm()" #timelineForm="ngForm">
       <div class="modal-body timeline-body">
         <div class="left-col">
+          <div *ngIf="timelineErrorMessage" class="error-message">{{ timelineErrorMessage }}</div>
           <label>Title</label>
           <input type="text" class="form-control" [(ngModel)]="newTimeline.title" name="title" placeholder="e.g ABC" />
 
@@ -336,7 +341,9 @@
           </div>
 
           <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSavingTimeline">
+              {{ isSavingTimeline ? 'Saving...' : 'Save' }}
+            </button>
           </div>
         </div>
 

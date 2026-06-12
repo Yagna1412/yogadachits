@@ -2,7 +2,6 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 
 export interface SelfChitDropdownOption {
     id: number;
@@ -33,14 +32,20 @@ export interface SelfChitEntryRequest {
 export class SelfChitsService {
     private platformId = inject(PLATFORM_ID);
     private apiUrl = 'http://localhost:8080/chitfunds/api/v1/self-chits';
-    // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/self-chits';
 
     constructor(private http: HttpClient) { }
 
+    private isBrowser(): boolean {
+        return isPlatformBrowser(this.platformId);
+    }
+
     private getHeaders(): { headers: HttpHeaders } {
-        let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-        if (isPlatformBrowser(this.platformId)) {
-            const token = localStorage.getItem('token');
+        let headers = new HttpHeaders({
+            'Content-Type': 'application/json',
+            'X-Tenant-Id': '1'
+        });
+        if (this.isBrowser()) {
+            const token = localStorage.getItem('authToken') || localStorage.getItem('token');
             if (token) {
                 headers = headers.set('Authorization', `Bearer ${token}`);
             }
@@ -49,51 +54,41 @@ export class SelfChitsService {
     }
 
     getAllEntries(searchTerm?: string): Observable<SelfChitEntry[]> {
+        if (!this.isBrowser()) {
+            return of([]);
+        }
         let params = new HttpParams();
         if (searchTerm && searchTerm.trim() !== '') {
             params = params.set('searchTerm', searchTerm.trim());
         }
-        return this.http.get<SelfChitEntry[]>(this.apiUrl, { ...this.getHeaders(), params }).pipe(
-            catchError(err => {
-                console.error('Error fetching self chits:', err);
-                return of([]);
-            })
-        );
+        return this.http.get<SelfChitEntry[]>(this.apiUrl, { ...this.getHeaders(), params });
     }
 
     createEntry(entryData: SelfChitEntryRequest): Observable<SelfChitEntry> {
-        return this.http.post<SelfChitEntry>(this.apiUrl, entryData, this.getHeaders()).pipe(
-            catchError(err => {
-                console.error('Error creating self chit:', err);
-                throw err; // Re-throw so component error handler fires
-            })
-        );
+        if (!this.isBrowser()) {
+            return of({} as SelfChitEntry);
+        }
+        return this.http.post<SelfChitEntry>(this.apiUrl, entryData, this.getHeaders());
     }
 
     getSubscribers(): Observable<SelfChitDropdownOption[]> {
-        return this.http.get<SelfChitDropdownOption[]>(`${this.apiUrl}/subscribers`, this.getHeaders()).pipe(
-            catchError(err => {
-                console.error('Error fetching subscribers:', err);
-                return of([]);
-            })
-        );
+        if (!this.isBrowser()) {
+            return of([]);
+        }
+        return this.http.get<SelfChitDropdownOption[]>(`${this.apiUrl}/subscribers`, this.getHeaders());
     }
 
     getChitGroups(): Observable<SelfChitDropdownOption[]> {
-        return this.http.get<SelfChitDropdownOption[]>(`${this.apiUrl}/chit-groups`, this.getHeaders()).pipe(
-            catchError(err => {
-                console.error('Error fetching chit groups:', err);
-                return of([]);
-            })
-        );
+        if (!this.isBrowser()) {
+            return of([]);
+        }
+        return this.http.get<SelfChitDropdownOption[]>(`${this.apiUrl}/chit-groups`, this.getHeaders());
     }
 
     getPersons(): Observable<SelfChitDropdownOption[]> {
-        return this.http.get<SelfChitDropdownOption[]>(`${this.apiUrl}/persons`, this.getHeaders()).pipe(
-            catchError(err => {
-                console.error('Error fetching persons:', err);
-                return of([]);
-            })
-        );
+        if (!this.isBrowser()) {
+            return of([]);
+        }
+        return this.http.get<SelfChitDropdownOption[]>(`${this.apiUrl}/persons`, this.getHeaders());
     }
 }

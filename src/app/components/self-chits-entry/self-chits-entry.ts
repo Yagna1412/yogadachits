@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -16,18 +17,19 @@ import {
   styleUrls: ['./self-chits-entry.scss'],
 })
 export class SelfChitsEntryComponent implements OnInit {
-  // Dropdown data (loaded from backend)
+  private platformId = inject(PLATFORM_ID);
+
   subscribers: SelfChitDropdownOption[] = [];
   chitGroups: SelfChitDropdownOption[] = [];
   persons: SelfChitDropdownOption[] = [];
 
-  // Table data (loaded from backend)
   entries: SelfChitEntry[] = [];
+  isLoading = false;
+  loadError = '';
 
   showForm = false;
   searchTerm = '';
 
-  // Form fields
   selectedSubscriberId: number | null = null;
   selectedGroupId: number | null = null;
   ticketNo = '';
@@ -42,21 +44,31 @@ export class SelfChitsEntryComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
     this.loadEntries();
     this.loadFormData();
   }
 
   loadEntries() {
+    this.isLoading = true;
+    this.loadError = '';
     this.selfChitsService.getAllEntries(this.searchTerm).subscribe({
       next: (data) => {
-        this.entries = data;
+        this.isLoading = false;
+        this.entries = Array.isArray(data) ? data : [];
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error fetching self chits:', err),
+      error: (err) => {
+        this.isLoading = false;
+        this.entries = [];
+        this.loadError = err?.error?.message || 'Unable to load self chit entries. Please ensure the backend is running on port 8080.';
+        this.cdr.detectChanges();
+      },
     });
   }
 
-  /** Load Subscribers, Chit Groups, and Persons in one parallel call */
   loadFormData() {
     forkJoin({
       subscribers: this.selfChitsService.getSubscribers(),
@@ -141,7 +153,6 @@ export class SelfChitsEntryComponent implements OnInit {
           }, 2000);
         },
         error: (err) => {
-          // Surface backend message (e.g. duplicate ticket for the same group)
           this.errorMessage =
             err?.error?.message || 'Failed to save entry. Please check the backend is running.';
           this.cdr.detectChanges();

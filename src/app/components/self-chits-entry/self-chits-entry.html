@@ -27,7 +27,12 @@
             </div>
         </div>
 
-        <div *ngIf="entries.length > 0" class="table-wrapper">
+        <div *ngIf="loadError" class="error-message">{{ loadError }}</div>
+        <div *ngIf="isLoading" class="empty-state">
+            <p>Loading entries...</p>
+        </div>
+
+        <div *ngIf="!isLoading && entries.length > 0" class="table-wrapper">
             <table class="table">
                 <thead>
                     <tr>
@@ -47,7 +52,7 @@
                 </tbody>
             </table>
         </div>
-        <div *ngIf="entries.length === 0" class="empty-state">
+        <div *ngIf="!isLoading && !loadError && entries.length === 0" class="empty-state">
             <p>No entries yet. Click "Add Entry" to start recording self chits.</p>
         </div>
     </div>
