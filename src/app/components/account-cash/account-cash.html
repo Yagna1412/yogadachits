@@ -12,6 +12,8 @@
 </div>
 
 <div class="main-container">
+  <div *ngIf="successMessage" class="success-banner">{{ successMessage }}</div>
+  <div *ngIf="loadError" class="error-banner">{{ loadError }}</div>
   <!-- Tab Navigation -->
   <div class="tabs-container">
     <button class="tab-button" [class.active]="activeTab === 'receipts'" (click)="switchTab('receipts')">
@@ -37,7 +39,8 @@
         </div>
       </div>
       <div class="table-wrapper">
-        <table class="table" *ngIf="filteredReceipts.length">
+        <div *ngIf="isLoadingReceipts" class="loading-message">Loading cash receipts from database...</div>
+        <table class="table" *ngIf="!isLoadingReceipts && filteredReceipts.length">
           <thead>
             <tr>
               <th>Transaction Type</th><th>Account</th><th>Transaction Date</th><th>Voucher Series</th><th>Voucher No</th><th>Particular Account</th><th>Amount</th><th>Grand Total</th>
@@ -49,8 +52,9 @@
             </tr>
           </tbody>
         </table>
-        <div class="empty-state" *ngIf="!filteredReceipts.length">
-          <p>No cash receipts found. Click "Add Receipt" to record one.</p>
+        <div class="empty-state" *ngIf="!isLoadingReceipts && !filteredReceipts.length">
+          <p>No cash receipts found in database. Click "Add Receipt" to record one.</p>
+          <p class="field-hint">Saved in <strong>voucher_header</strong> (<code>voucher_type = cash_receipt</code>) and <strong>voucher_line</strong>.</p>
         </div>
       </div>
     </div>
@@ -61,6 +65,8 @@
           <button class="close-btn" (click)="toggleReceiptForm()">×</button>
         </div>
         <div class="form-body">
+          <div *ngIf="apiError" class="error-banner">{{ apiError }}</div>
+          <p *ngIf="isLoadingForm" class="field-hint">Loading form defaults...</p>
           <div class="form-row">
             <div class="form-group"><label>Transaction Type</label><input class="form-control" [(ngModel)]="newReceipt.transactionType" placeholder="Income, Asset Sale, etc."/></div>
             <div class="form-group"><label>Account</label><input class="form-control" [(ngModel)]="newReceipt.account" placeholder="Cash Account"/></div>
@@ -83,7 +89,7 @@
           </div>
           <div class="form-footer">
             <button class="btn btn-secondary" (click)="toggleReceiptForm()">Cancel</button>
-            <button class="btn btn-primary" (click)="saveReceipt()">Save</button>
+            <button class="btn btn-primary" (click)="saveReceipt()" [disabled]="isSavingReceipt || isLoadingForm">{{ isSavingReceipt ? 'Saving...' : 'Save' }}</button>
           </div>
         </div>
       </div>
@@ -105,7 +111,8 @@
         </div>
       </div>
       <div class="table-wrapper">
-        <table class="table" *ngIf="filteredPayments.length">
+        <div *ngIf="isLoadingPayments" class="loading-message">Loading cash payments from database...</div>
+        <table class="table" *ngIf="!isLoadingPayments && filteredPayments.length">
           <thead>
             <tr>
               <th>Transaction Type</th><th>Account</th><th>Transaction Date</th><th>Voucher Series</th><th>Voucher No</th><th>Particular Account</th><th>Amount</th><th>Grand Total</th>
@@ -117,8 +124,9 @@
             </tr>
           </tbody>
         </table>
-        <div class="empty-state" *ngIf="!filteredPayments.length">
-          <p>No cash payments found. Click "Add Payment" to record one.</p>
+        <div class="empty-state" *ngIf="!isLoadingPayments && !filteredPayments.length">
+          <p>No cash payments found in database. Click "Add Payment" to record one.</p>
+          <p class="field-hint">Saved in <strong>voucher_header</strong> (<code>voucher_type = cash_payment</code>) and <strong>voucher_line</strong>.</p>
         </div>
       </div>
     </div>
@@ -129,6 +137,8 @@
           <button class="close-btn" (click)="togglePaymentForm()">×</button>
         </div>
         <div class="form-body">
+          <div *ngIf="apiError" class="error-banner">{{ apiError }}</div>
+          <p *ngIf="isLoadingForm" class="field-hint">Loading form defaults...</p>
           <div class="form-row">
             <div class="form-group"><label>Transaction Type</label><input class="form-control" [(ngModel)]="newPayment.transactionType" placeholder="Expense, Purchase, etc."/></div>
             <div class="form-group"><label>Account</label><input class="form-control" [(ngModel)]="newPayment.account" placeholder="Cash Account"/></div>
@@ -151,7 +161,7 @@
           </div>
           <div class="form-footer">
             <button class="btn btn-secondary" (click)="togglePaymentForm()">Cancel</button>
-            <button class="btn btn-primary" (click)="savePayment()">Save</button>
+            <button class="btn btn-primary" (click)="savePayment()" [disabled]="isSavingPayment || isLoadingForm">{{ isSavingPayment ? 'Saving...' : 'Save' }}</button>
           </div>
         </div>
       </div>
