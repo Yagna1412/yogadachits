@@ -2,6 +2,10 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
   {
+    path: 'admin/auctions',
+    renderMode: RenderMode.Client
+  },
+  {
     path: 'admin/auctions/view/:auctionId',
     renderMode: RenderMode.Client
   },
@@ -11,6 +15,10 @@ export const serverRoutes: ServerRoute[] = [
   },
   {
     path: 'admin/member-management',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'admin/bid-payments',
     renderMode: RenderMode.Client
   },
   {

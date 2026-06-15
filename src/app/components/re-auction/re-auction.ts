@@ -77,7 +77,7 @@ export class ReAuctionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.loadFromRoute();
+    setTimeout(() => this.loadFromRoute(), 0);
 
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),

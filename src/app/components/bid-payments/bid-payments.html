@@ -24,6 +24,11 @@
     </div>
 
     <div class="table-wrapper">
+      <div *ngIf="loadError" class="error-banner list-banner">
+        <span>{{ loadError }}</span>
+        <button type="button" class="error-close" (click)="loadError = ''">×</button>
+      </div>
+
       <div *ngIf="isLoadingTable" style="padding: 20px; text-align: center; color: gray;">
         Loading records...
       </div>
@@ -57,7 +62,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of filteredPayments">
+          <tr *ngFor="let p of paginatedPayments">
             <td>{{p.groupName}}</td>
             <td><span class="badge" style="background: #eef2ff; color: #2b5cff; padding: 4px 8px; border-radius: 4px; font-weight: bold;">{{p.ticketNo}}</span></td>
             <td style="font-weight: 500;">{{p.paidTo}}</td>
@@ -84,8 +89,28 @@
           </tr>
         </tbody>
       </table>
-      <div class="empty-state" *ngIf="!isLoadingTable && filteredPayments.length === 0">
+      <div class="empty-state" *ngIf="!isLoadingTable && !loadError && filteredPayments.length === 0">
         <p>No bid payments found. Click "Add Bid Payment" to create one.</p>
+      </div>
+    </div>
+
+    <div class="pagination-container" *ngIf="filteredPayments.length > 0 && !isLoadingTable">
+      <div class="pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ paginationEnd }} of {{ filteredPayments.length }} results
+      </div>
+      <div class="pagination-controls">
+        <button type="button" class="page-btn prev" [disabled]="currentPage === 1" (click)="prevPage()">
+          <span>&lt;</span> Previous
+        </button>
+        <div class="page-numbers">
+          <button type="button" class="page-number" *ngFor="let p of getVisiblePages()"
+            [class.active]="currentPage === p" (click)="goToPage(p)">
+            {{ p }}
+          </button>
+        </div>
+        <button type="button" class="page-btn next" [disabled]="currentPage === totalPages" (click)="nextPage()">
+          Next <span>&gt;</span>
+        </button>
       </div>
     </div>
   </div>
@@ -94,19 +119,42 @@
     <div class="form-card">
       <div class="form-header">
         <h2>Add Bid Payment (Disbursement)</h2>
-        <button class="close-btn" (click)="toggleForm()">×</button>
+        <button type="button" class="close-btn" (click)="closeForm()">×</button>
       </div>
+
+      <div *ngIf="apiError" class="error-banner">
+        <span>{{ apiError }}</span>
+        <button type="button" class="error-close" (click)="dismissApiError()">×</button>
+      </div>
+      <div *ngIf="successMessage" class="success-banner">{{ successMessage }}</div>
+
       <div class="form-body">
         
         <div class="form-row">
           <div class="form-group" style="width: 100%;">
             <label style="color: #2b5cff; font-weight: bold;">Step 1: Select Completed Auction to Disburse</label>
-            <select class="form-control" [(ngModel)]="selectedAuctionId" (change)="onAuctionSelect()">
+            <select class="form-control" [(ngModel)]="selectedAuctionId" (change)="onAuctionSelect()" [disabled]="isLoadingAuctions">
               <option [ngValue]="null">-- Select a Winner --</option>
-              <option *ngFor="let a of completedAuctions" [ngValue]="a.id">
-                {{ a.groupName }} | {{ a.memberName }} ({{ a.ticketString }}) | Auction #{{ a.auctionNumber }}
-              </option>
+              <optgroup *ngIf="pendingAuctions.length > 0" label="Available for Disbursement">
+                <option *ngFor="let a of pendingAuctions" [ngValue]="a.id">
+                  {{ a.label }}
+                </option>
+              </optgroup>
+              <optgroup *ngIf="disbursedAuctions.length > 0" label="Already Disbursed">
+                <option *ngFor="let a of disbursedAuctions" [ngValue]="a.id" disabled>
+                  {{ a.label }}
+                </option>
+              </optgroup>
             </select>
+            <p *ngIf="isLoadingAuctions" class="field-hint">Loading completed auctions...</p>
+            <p *ngIf="!isLoadingAuctions && completedAuctions.length === 0" class="field-hint warn">
+              No completed auctions with winners found in the database.
+            </p>
+            <p *ngIf="!isLoadingAuctions && completedAuctions.length > 0" class="field-hint">
+              {{ completedAuctions.length }} winner record(s) loaded
+              <span *ngIf="pendingAuctions.length > 0"> — {{ pendingAuctions.length }} available for disbursement</span>
+              <span *ngIf="disbursedAuctions.length > 0"> — {{ disbursedAuctions.length }} already disbursed</span>
+            </p>
           </div>
         </div>
         
@@ -171,27 +219,30 @@
           <div class="form-row">
             <div class="form-group">
               <label>Cash/Bank A/C</label>
-              <select class="form-control" [(ngModel)]="newPayment.account">
-                <option value="Cash">Cash</option>
-                <option value="Bank">Bank Transfer / Cheque</option>
+              <select class="form-control" [class.is-invalid]="hasError('account')" [(ngModel)]="newPayment.account">
+                <option [ngValue]="'cash'">Cash</option>
+                <option [ngValue]="'cheque'">Bank Transfer / Cheque</option>
               </select>
+              <span class="field-error" *ngIf="hasError('account')">{{ getError('account') }}</span>
             </div>
             <div class="form-group">
-              <label>Final Paid Amount</label>
-              <input class="form-control" type="number" [(ngModel)]="newPayment.amount" />
+              <label>Final Paid Amount <span class="required">*</span></label>
+              <input class="form-control" type="number" [class.is-invalid]="hasError('amount')" [(ngModel)]="newPayment.amount" />
+              <span class="field-error" *ngIf="hasError('amount')">{{ getError('amount') }}</span>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Transaction Date</label>
-              <input class="form-control" type="date" [(ngModel)]="newPayment.transactionDate" />
+              <label>Transaction Date <span class="required">*</span></label>
+              <input class="form-control" type="date" [class.is-invalid]="hasError('transactionDate')" [(ngModel)]="newPayment.transactionDate" />
+              <span class="field-error" *ngIf="hasError('transactionDate')">{{ getError('transactionDate') }}</span>
             </div>
              <div class="form-group">
               <label>Narration / Notes</label>
               <input class="form-control" [(ngModel)]="newPayment.narration" placeholder="e.g. Cleared pending dues" />
             </div>
           </div>
-          <div class="form-row" *ngIf="newPayment.account === 'Bank'">
+          <div class="form-row" *ngIf="newPayment.account === 'cheque'">
             <div class="form-group">
               <label>Cheque / Reference No</label>
               <input class="form-control" [(ngModel)]="newPayment.chequeNumber" />
@@ -215,8 +266,10 @@
         </div>
 
         <div class="form-footer">
-          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
-          <button class="btn btn-primary" [disabled]="!selectedAuctionId" (click)="savePayment()">Save & Disburse</button>
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+          <button type="button" class="btn btn-primary" [disabled]="!selectedAuctionId || isSaving" (click)="savePayment()">
+            {{ isSaving ? 'Saving...' : 'Save & Disburse' }}
+          </button>
         </div>
       </div>
     </div>
