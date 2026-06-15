@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, timeout } from 'rxjs/operators';
 
 export interface PreviousWinnerInfo {
     ticket: string;
@@ -17,6 +18,7 @@ export interface EligibleMember {
 }
 
 export interface PastAuction {
+    auctionId: number;
     auctionNumber: number;
     winner: string;
     amount: number;
@@ -24,9 +26,34 @@ export interface PastAuction {
 }
 
 export interface ReAuctionDetailsResponse {
+    auctionId: number;
+    chitGroupId: number;
+    chitGroupName: string;
+    auctionNumber: number;
+    chitAmount: number;
+    status: string;
+    failureReason: string;
     previousWinner: PreviousWinnerInfo;
     eligibleMembers: EligibleMember[];
     pastAuctions: PastAuction[];
+}
+
+export interface ReAuctionPreviewRequest {
+    auctionId: number;
+    newWinnerEnrollmentId: number;
+    newBidAmount: number;
+}
+
+export interface ReAuctionPreviewResponse {
+    newWinnerName: string;
+    newWinnerTicket: string;
+    newBidAmount: number;
+    netPayable: number;
+    bidDifference: number;
+    payableDifference: number;
+    previousWinnerName: string;
+    previousBidAmount: number;
+    previousNetPayable: number;
 }
 
 export interface ReAuctionConfirmRequest {
@@ -39,8 +66,8 @@ export interface ReAuctionConfirmRequest {
 export interface ApiResponse<T> {
     success: boolean;
     message: string;
-    data: T;
-    timestamp: string;
+    data: T | null;
+    timestamp?: string;
 }
 
 @Injectable({
@@ -52,11 +79,56 @@ export class ReAuctionService {
 
     constructor(private http: HttpClient) { }
 
+    private request<T>(obs: Observable<ApiResponse<T>>, fallbackMessage: string): Observable<ApiResponse<T>> {
+        return obs.pipe(
+            timeout(30000),
+            catchError((err) => of({
+                success: false,
+                message: err?.error?.message || err?.message || fallbackMessage,
+                data: null,
+            }))
+        );
+    }
+
     getReAuctionDetails(auctionId: number): Observable<ApiResponse<ReAuctionDetailsResponse>> {
-        return this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/details/${auctionId}`);
+        return this.request(
+            this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/details/${auctionId}`),
+            'Unable to load re-auction details.'
+        );
+    }
+
+    getReAuctionDetailsByChitGroup(chitGroupId: number): Observable<ApiResponse<ReAuctionDetailsResponse>> {
+        return this.request(
+            this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/chit-group/${chitGroupId}`),
+            'Unable to load re-auction details.'
+        );
+    }
+
+    previewReAuction(request: ReAuctionPreviewRequest): Observable<ApiResponse<ReAuctionPreviewResponse>> {
+        return this.request(
+            this.http.post<ApiResponse<ReAuctionPreviewResponse>>(`${this.baseUrl}/preview`, request),
+            'Unable to preview re-auction.'
+        );
     }
 
     confirmReAuction(request: ReAuctionConfirmRequest): Observable<ApiResponse<string>> {
-        return this.http.post<ApiResponse<string>>(`${this.baseUrl}/confirm`, request);
+        return this.request(
+            this.http.post<ApiResponse<string>>(`${this.baseUrl}/confirm`, request),
+            'Failed to confirm re-auction.'
+        );
+    }
+
+    getReasonOptions(): Observable<ApiResponse<string[]>> {
+        return this.request(
+            this.http.get<ApiResponse<string[]>>(`${this.baseUrl}/reasons`),
+            'Unable to load reason options.'
+        );
+    }
+
+    getLatestEligibleReAuction(): Observable<ApiResponse<ReAuctionDetailsResponse>> {
+        return this.request(
+            this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/latest`),
+            'Unable to load re-auction details.'
+        );
     }
 }
