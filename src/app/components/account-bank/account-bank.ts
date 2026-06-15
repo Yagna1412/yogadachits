@@ -1,6 +1,21 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef,
+  NgZone,
+  inject,
+  PLATFORM_ID
+} from '@angular/core';
+import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
+import {
+  BankAccountService,
+  BankTransactionItem,
+  BankTransactionForm
+} from '../../service/bank-account.service';
 
 @Component({
   selector: 'app-account-bank',
@@ -8,87 +23,416 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './account-bank.html',
   styleUrls: ['./account-bank.scss']
 })
-export class AccountBankComponent {
+export class AccountBankComponent implements OnInit, OnDestroy {
+  private platformId = inject(PLATFORM_ID);
+  private destroy$ = new Subject<void>();
+
   showDepositForm = false;
   showPaymentForm = false;
   searchTerm = '';
-  activeTab = 'deposits'; // 'deposits' or 'payments'
+  activeTab = 'deposits';
 
-  // Bank Deposits data
-  deposits: any[] = [
-    { id:1, transactionType:'Cash Deposit', bankAccount:'HDFC-12345', transactionDate:'2026-02-01', voucherSeries:'BD', voucherNo:'001', currentBalance:100000, particularAccount:'Cash Deposit', chequeNo:'', chequeDate:'', bankName:'HDFC Bank', place:'Main Branch', narration:'Cash deposit from daily collection', amount:50000, grandTotal:150000 },
-    { id:2, transactionType:'Transfer', bankAccount:'HDFC-12345', transactionDate:'2026-02-05', voucherSeries:'BD', voucherNo:'002', currentBalance:150000, particularAccount:'Inter-bank Transfer', chequeNo:'', chequeDate:'', bankName:'HDFC Bank', place:'Main Branch', narration:'Transfer from another account', amount:100000, grandTotal:250000 },
-    { id:3, transactionType:'Cheque Deposit', bankAccount:'HDFC-12345', transactionDate:'2026-02-10', voucherSeries:'BD', voucherNo:'003', currentBalance:250000, particularAccount:'Cheque Deposit', chequeNo:'CHQ123456', chequeDate:'2026-02-08', bankName:'HDFC Bank', place:'Main Branch', narration:'Customer cheque deposit', amount:75000, grandTotal:325000 }
-  ];
+  isLoadingDeposits = false;
+  isLoadingPayments = false;
+  isLoadingForm = false;
+  isSavingDeposit = false;
+  isSavingPayment = false;
 
-  // Bank Payments data
-  payments: any[] = [
-    { id:1, transactionType:'Vendor Payment', bankAccount:'HDFC-12345', transactionDate:'2026-02-02', voucherSeries:'BP', voucherNo:'001', currentBalance:150000, particularAccount:'Vendor Payments', chequeNo:'CHQ001', chequeDate:'2026-02-02', bankName:'HDFC Bank', place:'Main Branch', narration:'Payment to vendor for supplies', amount:25000, grandTotal:125000 },
-    { id:2, transactionType:'Salary Payment', bankAccount:'HDFC-12345', transactionDate:'2026-02-08', voucherSeries:'BP', voucherNo:'002', currentBalance:125000, particularAccount:'Salaries', chequeNo:'CHQ002', chequeDate:'2026-02-08', bankName:'HDFC Bank', place:'Main Branch', narration:'Monthly salary payments', amount:80000, grandTotal:45000 },
-    { id:3, transactionType:'Loan Payment', bankAccount:'HDFC-12345', transactionDate:'2026-02-12', voucherSeries:'BP', voucherNo:'003', currentBalance:45000, particularAccount:'Loan EMI', chequeNo:'CHQ003', chequeDate:'2026-02-12', bankName:'HDFC Bank', place:'Main Branch', narration:'Bank loan EMI payment', amount:15000, grandTotal:30000 }
-  ];
+  deposits: BankTransactionItem[] = [];
+  payments: BankTransactionItem[] = [];
+  filteredDeposits: BankTransactionItem[] = [];
+  filteredPayments: BankTransactionItem[] = [];
+  paginatedDeposits: BankTransactionItem[] = [];
+  paginatedPayments: BankTransactionItem[] = [];
+  newDeposit: BankTransactionForm = {};
+  newPayment: BankTransactionForm = {};
 
-  filteredDeposits: any[] = [...this.deposits];
-  filteredPayments: any[] = [...this.payments];
-  newDeposit: any = {};
-  newPayment: any = {};
+  depositCurrentPage = 1;
+  paymentCurrentPage = 1;
+  pageSize = 10;
+  depositTotalPages = 1;
+  paymentTotalPages = 1;
 
-  toggleDepositForm() { this.showDepositForm = !this.showDepositForm; }
-  togglePaymentForm() { this.showPaymentForm = !this.showPaymentForm; }
+  loadError = '';
+  depositApiError = '';
+  paymentApiError = '';
+  successMessage = '';
 
-  switchTab(tab: string) {
+  constructor(
+    private bankAccountService: BankAccountService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {}
+
+  ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    setTimeout(() => {
+      this.loadDeposits();
+      this.loadPayments();
+    }, 0);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  switchTab(tab: string): void {
     this.activeTab = tab;
-    this.showDepositForm = false;
+    this.closeDepositForm();
+    this.closePaymentForm();
+    this.successMessage = '';
+  }
+
+  openDepositForm(): void {
+    this.activeTab = 'deposits';
+    this.showDepositForm = true;
     this.showPaymentForm = false;
+    this.depositApiError = '';
+    this.successMessage = '';
+    this.loadDepositFormDefaults();
   }
 
-  filterDeposits() {
-    const q = (this.searchTerm || '').toLowerCase();
-    this.filteredDeposits = this.deposits.filter(d => {
-      return (!q ||
-        (d.transactionType && d.transactionType.toLowerCase().includes(q)) ||
-        (d.voucherNo && d.voucherNo.toLowerCase().includes(q)) ||
-        (d.bankName && d.bankName.toLowerCase().includes(q))
-      );
-    });
-  }
-
-  filterPayments() {
-    const q = (this.searchTerm || '').toLowerCase();
-    this.filteredPayments = this.payments.filter(p => {
-      return (!q ||
-        (p.transactionType && p.transactionType.toLowerCase().includes(q)) ||
-        (p.voucherNo && p.voucherNo.toLowerCase().includes(q)) ||
-        (p.bankName && p.bankName.toLowerCase().includes(q))
-      );
-    });
-  }
-
-  saveDeposit() {
-    const amt = parseFloat(this.newDeposit.amount) || 0;
-    if (!amt || isNaN(amt)) { alert('Amount numeric'); return; }
-    ['currentBalance', 'amount', 'grandTotal'].forEach(f => {
-      if (this.newDeposit[f] !== undefined) this.newDeposit[f] = parseFloat(this.newDeposit[f]) || 0;
-    });
-    const entry = { ...this.newDeposit, id: Date.now() };
-    this.deposits.push(entry);
+  closeDepositForm(): void {
+    this.showDepositForm = false;
     this.newDeposit = {};
-    this.showDepositForm = false;
-    this.filterDeposits();
-    alert('Deposit recorded');
+    this.depositApiError = '';
+    this.isLoadingForm = false;
   }
 
-  savePayment() {
-    const amt = parseFloat(this.newPayment.amount) || 0;
-    if (!amt || isNaN(amt)) { alert('Amount numeric'); return; }
-    ['currentBalance', 'amount', 'grandTotal'].forEach(f => {
-      if (this.newPayment[f] !== undefined) this.newPayment[f] = parseFloat(this.newPayment[f]) || 0;
-    });
-    const entry = { ...this.newPayment, id: Date.now() };
-    this.payments.push(entry);
-    this.newPayment = {};
+  openPaymentForm(): void {
+    this.activeTab = 'payments';
+    this.showPaymentForm = true;
+    this.showDepositForm = false;
+    this.paymentApiError = '';
+    this.successMessage = '';
+    this.loadPaymentFormDefaults();
+  }
+
+  closePaymentForm(): void {
     this.showPaymentForm = false;
-    this.filterPayments();
-    alert('Payment recorded');
+    this.newPayment = {};
+    this.paymentApiError = '';
+    this.isLoadingForm = false;
+  }
+
+  loadDeposits(): void {
+    this.isLoadingDeposits = true;
+    this.loadError = '';
+    this.cdr.detectChanges();
+
+    this.bankAccountService.getDeposits()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isLoadingDeposits = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res?.success === false) {
+              this.loadError = res.message || '';
+              this.deposits = [];
+              this.filteredDeposits = [];
+              this.paginatedDeposits = [];
+            } else {
+              this.deposits = res?.data || [];
+              this.filterDeposits();
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  loadPayments(): void {
+    this.isLoadingPayments = true;
+    this.cdr.detectChanges();
+
+    this.bankAccountService.getPayments()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isLoadingPayments = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res?.success === false) {
+              this.payments = [];
+              this.filteredPayments = [];
+              this.paginatedPayments = [];
+            } else {
+              this.payments = res?.data || [];
+              this.filterPayments();
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  loadDepositFormDefaults(): void {
+    this.isLoadingForm = true;
+    this.bankAccountService.getDepositFormDefaults()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isLoadingForm = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res?.success && res.data) {
+              this.newDeposit = { ...res.data, voucherSeries: res.data.voucherSeries || 'BD' };
+            } else {
+              this.newDeposit = {
+                voucherSeries: 'BD',
+                bankAccount: 'HDFC-12345',
+                bankName: 'HDFC Bank',
+                transactionDate: this.today()
+              };
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  loadPaymentFormDefaults(): void {
+    this.isLoadingForm = true;
+    this.bankAccountService.getPaymentFormDefaults()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isLoadingForm = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res?.success && res.data) {
+              this.newPayment = { ...res.data, voucherSeries: res.data.voucherSeries || 'BP' };
+            } else {
+              this.newPayment = {
+                voucherSeries: 'BP',
+                bankAccount: 'HDFC-12345',
+                bankName: 'HDFC Bank',
+                transactionDate: this.today()
+              };
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  private today(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  filterDeposits(): void {
+    const q = (this.searchTerm || '').toLowerCase();
+    this.filteredDeposits = this.deposits.filter(d =>
+      !q ||
+      (d.transactionType && d.transactionType.toLowerCase().includes(q)) ||
+      (d.voucherNo && d.voucherNo.toLowerCase().includes(q)) ||
+      (d.bankName && d.bankName.toLowerCase().includes(q)) ||
+      (d.bankAccount && d.bankAccount.toLowerCase().includes(q))
+    );
+    this.depositCurrentPage = 1;
+    this.updateDepositPagination();
+  }
+
+  filterPayments(): void {
+    const q = (this.searchTerm || '').toLowerCase();
+    this.filteredPayments = this.payments.filter(p =>
+      !q ||
+      (p.transactionType && p.transactionType.toLowerCase().includes(q)) ||
+      (p.voucherNo && p.voucherNo.toLowerCase().includes(q)) ||
+      (p.bankName && p.bankName.toLowerCase().includes(q)) ||
+      (p.bankAccount && p.bankAccount.toLowerCase().includes(q))
+    );
+    this.paymentCurrentPage = 1;
+    this.updatePaymentPagination();
+  }
+
+  updateDepositPagination(): void {
+    this.depositTotalPages = Math.ceil(this.filteredDeposits.length / this.pageSize) || 1;
+    if (this.depositCurrentPage > this.depositTotalPages) {
+      this.depositCurrentPage = this.depositTotalPages;
+    }
+    const startIndex = (this.depositCurrentPage - 1) * this.pageSize;
+    this.paginatedDeposits = this.filteredDeposits.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  updatePaymentPagination(): void {
+    this.paymentTotalPages = Math.ceil(this.filteredPayments.length / this.pageSize) || 1;
+    if (this.paymentCurrentPage > this.paymentTotalPages) {
+      this.paymentCurrentPage = this.paymentTotalPages;
+    }
+    const startIndex = (this.paymentCurrentPage - 1) * this.pageSize;
+    this.paginatedPayments = this.filteredPayments.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  goToDepositPage(page: number): void {
+    if (page >= 1 && page <= this.depositTotalPages) {
+      this.depositCurrentPage = page;
+      this.updateDepositPagination();
+    }
+  }
+
+  goToPaymentPage(page: number): void {
+    if (page >= 1 && page <= this.paymentTotalPages) {
+      this.paymentCurrentPage = page;
+      this.updatePaymentPagination();
+    }
+  }
+
+  nextDepositPage(): void {
+    this.goToDepositPage(this.depositCurrentPage + 1);
+  }
+
+  prevDepositPage(): void {
+    this.goToDepositPage(this.depositCurrentPage - 1);
+  }
+
+  nextPaymentPage(): void {
+    this.goToPaymentPage(this.paymentCurrentPage + 1);
+  }
+
+  prevPaymentPage(): void {
+    this.goToPaymentPage(this.paymentCurrentPage - 1);
+  }
+
+  getDepositVisiblePages(): number[] {
+    return this.getVisiblePages(this.depositCurrentPage, this.depositTotalPages);
+  }
+
+  getPaymentVisiblePages(): number[] {
+    return this.getVisiblePages(this.paymentCurrentPage, this.paymentTotalPages);
+  }
+
+  private getVisiblePages(currentPage: number, totalPages: number): number[] {
+    const pages: number[] = [];
+    const maxVisible = 3;
+    let start = Math.max(1, currentPage - 1);
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  get depositPaginationEnd(): number {
+    return Math.min(this.depositCurrentPage * this.pageSize, this.filteredDeposits.length);
+  }
+
+  get paymentPaginationEnd(): number {
+    return Math.min(this.paymentCurrentPage * this.pageSize, this.filteredPayments.length);
+  }
+
+  saveDeposit(): void {
+    const amt = Number(this.newDeposit.amount);
+    if (!amt || isNaN(amt) || amt <= 0) {
+      this.depositApiError = 'Please enter a valid amount.';
+      this.cdr.detectChanges();
+      return;
+    }
+    if (!this.newDeposit.transactionDate) {
+      this.depositApiError = 'Please enter the transaction date.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isSavingDeposit = true;
+    this.depositApiError = '';
+    this.bankAccountService.saveDeposit(this.newDeposit)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isSavingDeposit = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res?.success !== true) {
+              this.depositApiError = res?.message || 'Failed to save bank deposit.';
+            } else {
+              this.closeDepositForm();
+              this.activeTab = 'deposits';
+              this.successMessage = res?.message || 'Bank deposit saved successfully.';
+              this.depositCurrentPage = 1;
+              this.loadDeposits();
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  savePayment(): void {
+    const amt = Number(this.newPayment.amount);
+    if (!amt || isNaN(amt) || amt <= 0) {
+      this.paymentApiError = 'Please enter a valid amount.';
+      this.cdr.detectChanges();
+      return;
+    }
+    if (!this.newPayment.transactionDate) {
+      this.paymentApiError = 'Please enter the transaction date.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isSavingPayment = true;
+    this.paymentApiError = '';
+    this.bankAccountService.savePayment(this.newPayment)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isSavingPayment = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res?.success !== true) {
+              this.paymentApiError = res?.message || 'Failed to save bank payment.';
+            } else {
+              this.closePaymentForm();
+              this.activeTab = 'payments';
+              this.successMessage = res?.message || 'Bank payment saved successfully.';
+              this.paymentCurrentPage = 1;
+              this.loadPayments();
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
   }
 }
