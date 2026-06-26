@@ -22,8 +22,16 @@
         <span class="search-shortcut">Ctrl Shift K</span>
       </div>
     </div>
+
+    <div *ngIf="loadError" class="error-banner">
+      <span>{{ loadError }}</span>
+      <button type="button" class="error-close" (click)="loadError = ''">×</button>
+    </div>
+
+    <div *ngIf="isLoadingTable" class="loading-message">Loading advances from database...</div>
+
     <div class="table-wrapper">
-      <table class="table" *ngIf="filteredAdvances.length">
+      <table class="table" *ngIf="!isLoadingTable && filteredAdvances.length">
         <thead>
           <tr>
             <th>Group</th><th>Ticket</th><th>Paid To</th><th>Transaction Date</th><th>Amount</th><th>Total Paid</th>
@@ -31,12 +39,18 @@
         </thead>
         <tbody>
           <tr *ngFor="let a of filteredAdvances">
-            <td>{{a.groupName}}</td><td>{{a.ticketNo}}</td><td>{{a.paidTo}}</td><td>{{a.transactionDate}}</td><td>{{a.amount}}</td><td>{{a.totalPaid}}</td>
+            <td>{{ a.groupName }}</td>
+            <td>{{ a.ticketNo }}</td>
+            <td>{{ a.paidTo }}</td>
+            <td>{{ a.transactionDate }}</td>
+            <td>{{ a.amount }}</td>
+            <td>{{ a.totalPaid }}</td>
           </tr>
         </tbody>
       </table>
-      <div class="empty-state" *ngIf="!filteredAdvances.length">
-        <p>No advances found. Click "Add Advance" to create one.</p>
+      <div class="empty-state" *ngIf="!isLoadingTable && !loadError && !filteredAdvances.length">
+        <p>No advances found in database. Click "Add Advance" to create one.</p>
+        <p class="field-hint">Saved records are stored in the <strong>payout</strong> table (<code>payout_type = bid_advance_refund</code>).</p>
       </div>
     </div>
   </div>
@@ -45,24 +59,53 @@
     <div class="form-card">
       <div class="form-header">
         <h2>Add Bid Advance</h2>
-        <button class="close-btn" (click)="toggleForm()">×</button>
+        <button class="close-btn" (click)="closeForm()">×</button>
       </div>
       <div class="form-body">
-        <div class="form-row">
-          <div class="form-group"><label>Group Name</label><input class="form-control" [(ngModel)]="newAdvance.groupName"/></div>
-          <div class="form-group"><label>Ticket No</label><input class="form-control" [(ngModel)]="newAdvance.ticketNo"/></div>
+        <div *ngIf="apiError" class="error-banner">
+          <span>{{ apiError }}</span>
+          <button type="button" class="error-close" (click)="apiError = ''">×</button>
         </div>
+
         <div class="form-row">
-          <div class="form-group"><label>Paid To</label><input class="form-control" [(ngModel)]="newAdvance.paidTo"/></div>
-          <div class="form-group"><label>Series</label><input class="form-control" [(ngModel)]="newAdvance.series"/></div>
+          <div class="form-group">
+            <label>Group Name *</label>
+            <select class="form-control" [(ngModel)]="selectedGroupId" (change)="onGroupSelect()" [disabled]="isLoadingGroups">
+              <option [ngValue]="null">-- Select Chit Group --</option>
+              <option *ngFor="let g of chitGroups" [ngValue]="g.id">{{ g.groupName }}</option>
+            </select>
+            <p *ngIf="isLoadingGroups" class="field-hint">Loading chit groups...</p>
+            <p *ngIf="!isLoadingGroups && chitGroups.length" class="field-hint">{{ chitGroups.length }} group(s) available</p>
+          </div>
+          <div class="form-group">
+            <label>Ticket / Member *</label>
+            <select class="form-control" [(ngModel)]="selectedEnrollmentId" (change)="onEnrollmentSelect()"
+              [disabled]="!selectedGroupId || isLoadingMembers || groupMembers.length === 0">
+              <option [ngValue]="null">-- Select Ticket / Member --</option>
+              <option *ngFor="let m of groupMembers" [ngValue]="m.enrollmentId">
+                {{ m.ticketNo }} — {{ m.memberName }}
+              </option>
+            </select>
+            <p *ngIf="isLoadingMembers" class="field-hint">Loading members for selected group...</p>
+            <p *ngIf="selectedGroupId && !isLoadingMembers && groupMembers.length" class="field-hint">
+              {{ groupMembers.length }} member(s) in this group
+            </p>
+          </div>
+        </div>
+
+        <p *ngIf="isLoadingForm" class="field-hint">Loading member details from server...</p>
+
+        <div class="form-row">
+          <div class="form-group"><label>Paid To</label><input class="form-control" [(ngModel)]="newAdvance.paidTo" readonly/></div>
+          <div class="form-group"><label>Series</label><input class="form-control" [(ngModel)]="newAdvance.series" readonly/></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>No</label><input class="form-control" [(ngModel)]="newAdvance.no"/></div>
-          <div class="form-group"><label>Transaction Date</label><input class="form-control" type="date" [(ngModel)]="newAdvance.transactionDate"/></div>
+          <div class="form-group"><label>Transaction Date *</label><input class="form-control" type="date" [(ngModel)]="newAdvance.transactionDate"/></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Cash/Bank A/C</label><input class="form-control" [(ngModel)]="newAdvance.account"/></div>
-          <div class="form-group"><label>Amount</label><input class="form-control" type="number" [(ngModel)]="newAdvance.amount"/></div>
+          <div class="form-group"><label>Cash/Bank A/C</label><input class="form-control" [(ngModel)]="newAdvance.account" placeholder="cash or bank"/></div>
+          <div class="form-group"><label>Amount *</label><input class="form-control" type="number" [(ngModel)]="newAdvance.amount"/></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Narration</label><input class="form-control" [(ngModel)]="newAdvance.narration"/></div>
@@ -70,23 +113,25 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>Cheque Date</label><input class="form-control" type="date" [(ngModel)]="newAdvance.chequeDate"/></div>
-          <div class="form-group"><label>Current Installment No</label><input class="form-control" [(ngModel)]="newAdvance.currentInstallment"/></div>
+          <div class="form-group"><label>Current Installment No</label><input class="form-control" type="number" [(ngModel)]="newAdvance.currentInstallmentNo" readonly/></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Paid Up To</label><input class="form-control" [(ngModel)]="newAdvance.paidUpTo"/></div>
-          <div class="form-group"><label>Chit Amount</label><input class="form-control" type="number" [(ngModel)]="newAdvance.chitAmount"/></div>
+          <div class="form-group"><label>Paid Up To</label><input class="form-control" [(ngModel)]="newAdvance.paidUpTo" readonly/></div>
+          <div class="form-group"><label>Chit Amount</label><input class="form-control" type="number" [(ngModel)]="newAdvance.chitAmount" readonly/></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Company Commission</label><input class="form-control" type="number" [(ngModel)]="newAdvance.companyCommission"/></div>
+          <div class="form-group"><label>Company Commission</label><input class="form-control" type="number" [(ngModel)]="newAdvance.companyCommission" readonly/></div>
           <div class="form-group"><label>Advance Amount</label><input class="form-control" type="number" [(ngModel)]="newAdvance.advanceAmount"/></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Adjustment Amount</label><input class="form-control" type="number" [(ngModel)]="newAdvance.adjustmentAmount"/></div>
-          <div class="form-group"><label>Total Paid</label><input class="form-control" type="number" [(ngModel)]="newAdvance.totalPaid"/></div>
+          <div class="form-group"><label>Total Paid (existing)</label><input class="form-control" type="number" [(ngModel)]="newAdvance.totalPaid" readonly/></div>
         </div>
         <div class="form-footer">
-          <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
-          <button class="btn btn-primary" (click)="saveAdvance()">Save</button>
+          <button class="btn btn-secondary" (click)="closeForm()" [disabled]="isSaving">Cancel</button>
+          <button class="btn btn-primary" (click)="saveAdvance()" [disabled]="isSaving || isLoadingForm || isLoadingGroups">
+            {{ isSaving ? 'Saving...' : 'Save' }}
+          </button>
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef, NgZone, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { finalize, switchMap } from 'rxjs/operators';
 
 import {
   AuctionsService,
@@ -70,6 +70,7 @@ interface Calc {
   styleUrl    : './auctions.scss',
 })
 export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
+  private platformId = inject(PLATFORM_ID);
 
   isLoading          = false;
   isSubmittingBid    = false;
@@ -107,10 +108,17 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get highestBid(): BidRow | undefined { return this.bids.find(b => b.status === 'Highest Bid'); }
 
-  constructor(private svc: AuctionsService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private svc: AuctionsService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit(): void {
-    this.loadPage();
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    setTimeout(() => this.loadPage(), 0);
   }
 
   ngOnDestroy(): void {
@@ -252,39 +260,46 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
             first,
           }))
         );
+      }),
+      finalize(() => {
+        this.ngZone.run(() => {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        });
       })
     ).subscribe({
       next: ({ items, bids, enrollments, first }: any) => {
-        if (!first) {
-          // If no auctions exist for this group, empty state will show via HTML
-          this.selected = null;
-        } else {
-          this.selected = first;
-          this.setHeader(first, this.groupAuctions.length);
-          this.setCalcBase(first);
+        this.ngZone.run(() => {
+          if (!first) {
+            this.selected = null;
+          } else {
+            this.selected = first;
+            this.setHeader(first, this.groupAuctions.length);
+            this.setCalcBase(first);
 
-          this.bids = this.buildRows(enrollments, bids);
-          this.header.totalMembers = this.bids.length;
-          
-          if (bids.length) { this.recalculate(); }
-          
-          this.svc.connectToAuction(
-              first.id,
-              (session) => this.handleSessionUpdate(session),
-              (bid) => this.handleBidUpdate(bid)
-          );
-          
-          this.svc.getAuctionSession(first.id).subscribe(res => {
-              if (res.data) this.handleSessionUpdate(res.data);
-          });
-        }
-        this.isLoading = false;
-        this.cdr.detectChanges();
+            this.bids = this.buildRows(enrollments, bids);
+            this.header.totalMembers = this.bids.length;
+
+            if (bids.length) { this.recalculate(); }
+
+            this.svc.connectToAuction(
+                first.id,
+                (session) => this.handleSessionUpdate(session),
+                (bid) => this.handleBidUpdate(bid)
+            );
+
+            this.svc.getAuctionSession(first.id).subscribe(res => {
+                if (res.data) this.handleSessionUpdate(res.data);
+            });
+          }
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.errorMessage = 'Failed to load data. Please check the backend.';
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.errorMessage = 'Failed to load data. Please check the backend.';
+          this.cdr.detectChanges();
+        });
       },
     });
   }

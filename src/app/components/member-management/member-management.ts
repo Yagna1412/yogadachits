@@ -1,76 +1,24 @@
-import { Component, OnInit } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef,
+  NgZone,
+  inject,
+  PLATFORM_ID,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-// Data models
-export interface Member {
-  id: string;
-  name: string;
-  groupName: string;
-  ticketNo: string;
-  mobile: string;
-  status: 'Active' | 'Inactive' | 'Transferred' | 'Removed';
-  enrollDate?: string;
-  address?: string;
-  paidUpTo?: string;
-  payable?: number;
-  paid?: number;
-}
-
-export interface MemberRemoval {
-  groupName: string;
-  ticketNo: string;
-  subscriber: string;
-  removalDate: string;
-  authorizedBy: string;
-  reason: string;
-  id?: string;
-}
-
-export interface MemberTransfer {
-  transferDate: string;
-  groupName: string;
-  ticketNo: string;
-  subscriber: string;
-  transferTo: string;
-  busAgent: string;
-  collAgent: string;
-  authorizedBy: string;
-  reason: string;
-  addressType: string;
-  enrollDate: string;
-  memberAddr: string;
-  paidUpTo: string;
-  payable: number;
-  paid: number;
-  transferee: string;
-  transfereeAddr: string;
-  nominee: string;
-  age: string;
-  relation: string;
-  mobile: string;
-  doorNo: string;
-  street: string;
-  city: string;
-  pincode: string;
-  id?: string;
-}
-
-export interface MemberReallotment {
-  groupName: string;
-  ticketNumber: string;
-  bidder: string;
-  reallotmentDate: string;
-  authorizedBy: string;
-  reason: string;
-  enrollmentDate: string;
-  address: string;
-  runningInstallmentNo: number;
-  subscriptionPayable: number;
-  paidAmount: number;
-  balanceAmount: number;
-  id?: string;
-}
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
+import {
+  MemberManagementService,
+  Member,
+  MemberRemoval,
+  MemberTransfer,
+  MemberReallotment,
+} from '../../service/member-management.service';
 
 @Component({
   selector: 'app-member-management',
@@ -78,100 +26,121 @@ export interface MemberReallotment {
   templateUrl: './member-management.html',
   styleUrls: ['./member-management.scss']
 })
-export class MemberManagementComponent implements OnInit {
-  // UI State
+export class MemberManagementComponent implements OnInit, OnDestroy {
+  private platformId = inject(PLATFORM_ID);
+  private destroy$ = new Subject<void>();
+
   showForm = false;
   operationType: 'removal' | 'transfer' | 'reallotment' = 'removal';
-  searchTerm: string = '';
-  searchGroup: string = '';
-  searchStatus: string = '';
+  searchTerm = '';
+  searchGroup = '';
+  searchStatus = '';
 
-  // Form data
   newRemoval: MemberRemoval = this.initRemoval();
   newTransfer: MemberTransfer = this.initTransfer();
   newReallotment: MemberReallotment = this.initReallotment();
 
-  errorMessage: string = '';
-  successMessage: string = '';
+  submitted = false;
+  fieldErrors: Record<string, string> = {};
+  apiError = '';
+  successMessage = '';
+  isLoading = false;
+  isSaving = false;
+  loadError = '';
 
-  // Data arrays - Master members list
-  allMembers: Member[] = [
-    {
-      id: 'MEM001',
-      name: 'Rajesh Kumar',
-      groupName: 'Group A',
-      ticketNo: '101',
-      mobile: '9876543210',
-      status: 'Active',
-      enrollDate: '2024-01-15',
-      address: '123 Main St, Chennai',
-      paidUpTo: '2026-02-28',
-      payable: 50000,
-      paid: 35000
-    },
-    {
-      id: 'MEM002',
-      name: 'Priya Sharma',
-      groupName: 'Group B',
-      ticketNo: '202',
-      mobile: '9876543211',
-      status: 'Active',
-      enrollDate: '2024-02-10',
-      address: '456 Park Ave, Bangalore',
-      paidUpTo: '2026-02-28',
-      payable: 60000,
-      paid: 45000
-    },
-    {
-      id: 'MEM003',
-      name: 'Amit Patel',
-      groupName: 'Group A',
-      ticketNo: '102',
-      mobile: '9876543212',
-      status: 'Active',
-      enrollDate: '2024-01-20',
-      address: '789 Oak Ln, Mumbai',
-      paidUpTo: '2026-02-28',
-      payable: 55000,
-      paid: 40000
-    },
-    {
-      id: 'MEM004',
-      name: 'Sunita Devi',
-      groupName: 'Group C',
-      ticketNo: '303',
-      mobile: '9876543213',
-      status: 'Active',
-      enrollDate: '2024-03-05',
-      address: '321 Elm St, Hyderabad',
-      paidUpTo: '2026-02-28',
-      payable: 45000,
-      paid: 30000
-    }
-  ];
-
-  removals: MemberRemoval[] = [];
-  transfers: MemberTransfer[] = [];
-  reallotments: MemberReallotment[] = [];
+  allMembers: Member[] = [];
 
   filteredMembers: Member[] = [];
-  filteredRemovals: MemberRemoval[] = [];
-  filteredTransfers: MemberTransfer[] = [];
-  filteredReallotments: MemberReallotment[] = [];
+  paginatedMembers: Member[] = [];
 
-  // Dropdown options
-  groups = ['Group A', 'Group B', 'Group C', 'Group D'];
-  agents = ['Agent X', 'Agent Y', 'Agent Z'];
-  authorizedBy = ['Manager 1', 'Manager 2', 'Director'];
+  currentPage = 1;
+  pageSize = 10;
+  totalPages = 1;
+
+  groups: string[] = [];
+  agents: string[] = [];
+  authorizedBy: string[] = [];
   addressTypes = ['Residential', 'Commercial', 'Business'];
 
-  constructor() {}
+  constructor(
+    private memberManagementService: MemberManagementService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit(): void {
-    this.filterMembers();
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    // Minimal fix: defer load + force UI refresh after withFetch callback
+    setTimeout(() => this.loadData(), 0);
   }
 
-  // Initialization methods
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  get addButtonLabel(): string {
+    if (this.operationType === 'transfer') return '+ Add Transfer';
+    if (this.operationType === 'reallotment') return '+ Add Reallotment';
+    return '+ Add Removal';
+  }
+
+  private today(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  private loadData(): void {
+    this.isLoading = true;
+    this.loadError = '';
+    this.cdr.detectChanges();
+
+    this.memberManagementService.getLookupOptions()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res.success && res.data) {
+              this.groups = res.data.groups ?? [];
+              this.authorizedBy = res.data.authorizedBy ?? [];
+              this.agents = res.data.agents ?? [];
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
+
+    this.memberManagementService.getMembers()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            this.allMembers = res.success && res.data ? res.data : [];
+            this.filterMembers();
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => {
+          this.ngZone.run(() => {
+            this.loadError = this.extractErrorMessage(err, 'Unable to load members. Please ensure the backend is running.');
+            this.allMembers = [];
+            this.filterMembers();
+            this.cdr.detectChanges();
+          });
+        }
+      });
+
+  }
+
   private initRemoval(): MemberRemoval {
     return {
       groupName: '',
@@ -205,11 +174,7 @@ export class MemberManagementComponent implements OnInit {
       nominee: '',
       age: '',
       relation: '',
-      mobile: '',
-      doorNo: '',
-      street: '',
-      city: '',
-      pincode: ''
+      mobile: ''
     };
   }
 
@@ -230,14 +195,48 @@ export class MemberManagementComponent implements OnInit {
     };
   }
 
-  // UI Methods
-  toggleForm(): void {
-    this.showForm = !this.showForm;
-    if (!this.showForm) {
-      this.resetForms();
-      this.errorMessage = '';
-      this.successMessage = '';
+  clearValidation(): void {
+    this.submitted = false;
+    this.fieldErrors = {};
+    this.apiError = '';
+  }
+
+  hasError(field: string): boolean {
+    return this.submitted && !!this.fieldErrors[field];
+  }
+
+  getError(field: string): string {
+    return this.fieldErrors[field] || '';
+  }
+
+  dismissApiError(): void {
+    this.apiError = '';
+  }
+
+  dismissLoadError(): void {
+    this.loadError = '';
+  }
+
+  openBlankForm(): void {
+    this.clearValidation();
+    this.successMessage = '';
+
+    if (this.operationType === 'removal') {
+      this.newRemoval = { ...this.initRemoval(), removalDate: this.today() };
+    } else if (this.operationType === 'transfer') {
+      this.newTransfer = { ...this.initTransfer(), transferDate: this.today() };
+    } else {
+      this.newReallotment = { ...this.initReallotment(), reallotmentDate: this.today() };
     }
+
+    this.showForm = true;
+  }
+
+  closeForm(): void {
+    this.showForm = false;
+    this.resetForms();
+    this.clearValidation();
+    this.successMessage = '';
   }
 
   setOperationType(type: 'removal' | 'transfer' | 'reallotment'): void {
@@ -250,7 +249,6 @@ export class MemberManagementComponent implements OnInit {
     this.newReallotment = this.initReallotment();
   }
 
-  // Filter methods
   filterMembers(): void {
     this.filteredMembers = this.allMembers.filter(member => {
       const matchesSearch = !this.searchTerm ||
@@ -263,133 +261,311 @@ export class MemberManagementComponent implements OnInit {
 
       return matchesSearch && matchesGroup && matchesStatus;
     });
+    this.currentPage = 1;
+    this.updatePagination();
   }
 
-  // Removal methods
+  updatePagination(): void {
+    this.totalPages = Math.ceil(this.filteredMembers.length / this.pageSize) || 1;
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    this.paginatedMembers = this.filteredMembers.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  prevPage(): void {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  getVisiblePages(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 3;
+    let start = Math.max(1, this.currentPage - 1);
+    let end = Math.min(this.totalPages, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  get paginationEnd(): number {
+    return Math.min(this.currentPage * this.pageSize, this.filteredMembers.length);
+  }
+
+  openRemovalForm(member: Member): void {
+    this.operationType = 'removal';
+    this.clearValidation();
+    this.successMessage = '';
+    this.newRemoval = {
+      groupName: member.groupName,
+      ticketNo: member.ticketNo,
+      subscriber: member.name,
+      removalDate: this.today(),
+      authorizedBy: '',
+      reason: ''
+    };
+    this.showForm = true;
+  }
+
+  openTransferForm(member: Member): void {
+    this.operationType = 'transfer';
+    this.clearValidation();
+    this.successMessage = '';
+    this.newTransfer = {
+      ...this.initTransfer(),
+      groupName: member.groupName,
+      ticketNo: member.ticketNo,
+      subscriber: member.name,
+      transferDate: this.today(),
+      enrollDate: member.enrollDate || '',
+      memberAddr: member.address || '',
+      paidUpTo: member.paidUpTo || '',
+      payable: member.payable || 0,
+      paid: member.paid || 0,
+      mobile: member.mobile
+    };
+    this.showForm = true;
+  }
+
+  openReallotmentForm(member: Member): void {
+    this.operationType = 'reallotment';
+    this.clearValidation();
+    this.successMessage = '';
+    this.newReallotment = {
+      ...this.initReallotment(),
+      groupName: member.groupName,
+      ticketNumber: member.ticketNo,
+      reallotmentDate: this.today(),
+      enrollmentDate: member.enrollDate || '',
+      address: member.address || '',
+      subscriptionPayable: member.payable || 0,
+      paidAmount: member.paid || 0,
+      balanceAmount: (member.payable || 0) - (member.paid || 0)
+    };
+    this.showForm = true;
+  }
+
+  private setFieldError(field: string, message: string): void {
+    this.fieldErrors[field] = message;
+  }
+
+  private validateRemovalForm(): boolean {
+    this.fieldErrors = {};
+    if (!this.newRemoval.groupName) {
+      this.setFieldError('groupName', 'Please select a group.');
+    }
+    if (!this.newRemoval.ticketNo?.trim()) {
+      this.setFieldError('ticketNo', 'Please enter the ticket number.');
+    }
+    if (!this.newRemoval.subscriber?.trim()) {
+      this.setFieldError('subscriber', 'Please enter the subscriber name.');
+    }
+    if (!this.newRemoval.removalDate) {
+      this.setFieldError('removalDate', 'Please select the removal date.');
+    }
+    if (!this.newRemoval.authorizedBy) {
+      this.setFieldError('authorizedBy', 'Please select who authorized this removal.');
+    }
+    if (!this.newRemoval.reason?.trim()) {
+      this.setFieldError('reason', 'Please enter a reason for removal.');
+    }
+    return Object.keys(this.fieldErrors).length === 0;
+  }
+
+  private validateTransferForm(): boolean {
+    this.fieldErrors = {};
+    if (!this.newTransfer.transferDate) {
+      this.setFieldError('transferDate', 'Please select the transfer date.');
+    }
+    if (!this.newTransfer.groupName) {
+      this.setFieldError('groupName', 'Please select the current group.');
+    }
+    if (!this.newTransfer.ticketNo?.trim()) {
+      this.setFieldError('ticketNo', 'Please enter the ticket number.');
+    }
+    if (!this.newTransfer.subscriber?.trim()) {
+      this.setFieldError('subscriber', 'Please enter the subscriber name.');
+    }
+    if (!this.newTransfer.transferTo) {
+      this.setFieldError('transferTo', 'Please select the destination group.');
+    }
+    if (!this.newTransfer.transferee?.trim()) {
+      this.setFieldError('transferee', 'Please enter the transferee name.');
+    }
+    if (!this.newTransfer.authorizedBy) {
+      this.setFieldError('authorizedBy', 'Please select who authorized this transfer.');
+    }
+    if (!this.newTransfer.reason?.trim()) {
+      this.setFieldError('reason', 'Please enter a reason for transfer.');
+    }
+    return Object.keys(this.fieldErrors).length === 0;
+  }
+
+  private validateReallotmentForm(): boolean {
+    this.fieldErrors = {};
+    if (!this.newReallotment.groupName) {
+      this.setFieldError('groupName', 'Please select a group.');
+    }
+    if (!this.newReallotment.ticketNumber?.trim()) {
+      this.setFieldError('ticketNumber', 'Please enter the ticket number.');
+    }
+    if (!this.newReallotment.bidder?.trim()) {
+      this.setFieldError('bidder', 'Please enter the bidder name.');
+    }
+    if (!this.newReallotment.reallotmentDate) {
+      this.setFieldError('reallotmentDate', 'Please select the reallotment date.');
+    }
+    if (!this.newReallotment.authorizedBy) {
+      this.setFieldError('authorizedBy', 'Please select who authorized this reallotment.');
+    }
+    if (!this.newReallotment.reason?.trim()) {
+      this.setFieldError('reason', 'Please enter a reason for reallotment.');
+    }
+    return Object.keys(this.fieldErrors).length === 0;
+  }
+
   saveRemoval(): void {
-    this.errorMessage = '';
+    this.submitted = true;
+    this.apiError = '';
     this.successMessage = '';
 
-    if (!this.newRemoval.groupName || !this.newRemoval.subscriber || !this.newRemoval.removalDate || !this.newRemoval.reason) {
-      this.errorMessage = 'Please fill in all required fields';
+    if (!this.validateRemovalForm()) {
+      this.cdr.detectChanges();
       return;
     }
 
-    const removal = {
-      ...this.newRemoval,
-      id: 'REM' + Date.now()
-    };
-
-    this.removals.push(removal);
-
-    // Update member status to removed
-    const member = this.allMembers.find(m => m.name === this.newRemoval.subscriber);
-    if (member) {
-      member.status = 'Removed';
-    }
-
-    this.successMessage = 'Member removed successfully!';
-    setTimeout(() => {
-      this.toggleForm();
-      this.filterMembers();
-    }, 1500);
+    this.isSaving = true;
+    this.memberManagementService.createRemoval(this.newRemoval)
+      .pipe(finalize(() => {
+        this.ngZone.run(() => {
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        });
+      }))
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res.success) {
+              this.successMessage = res.message || 'Member removed successfully.';
+              this.loadData();
+              setTimeout(() => this.closeForm(), 1500);
+            } else {
+              this.apiError = res.message || 'Unable to save removal.';
+            }
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => {
+          this.ngZone.run(() => {
+            this.apiError = this.extractErrorMessage(err, 'Unable to save removal. Please verify the details.');
+            this.cdr.detectChanges();
+          });
+        }
+      });
   }
 
-  // Transfer methods
   saveTransfer(): void {
-    this.errorMessage = '';
+    this.submitted = true;
+    this.apiError = '';
     this.successMessage = '';
 
-    if (!this.newTransfer.groupName || !this.newTransfer.subscriber || !this.newTransfer.transferDate || !this.newTransfer.reason) {
-      this.errorMessage = 'Please fill in all required fields';
+    if (!this.validateTransferForm()) {
+      this.cdr.detectChanges();
       return;
     }
 
-    const transfer = {
-      ...this.newTransfer,
-      id: 'TRF' + Date.now()
-    };
-
-    this.transfers.push(transfer);
-
-    // Update member status to transferred
-    const member = this.allMembers.find(m => m.name === this.newTransfer.subscriber);
-    if (member) {
-      member.status = 'Transferred';
-    }
-
-    this.successMessage = 'Member transferred successfully!';
-    setTimeout(() => {
-      this.toggleForm();
-      this.filterMembers();
-    }, 1500);
+    this.isSaving = true;
+    this.memberManagementService.createTransfer(this.newTransfer)
+      .pipe(finalize(() => {
+        this.ngZone.run(() => {
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        });
+      }))
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res.success) {
+              this.successMessage = res.message || 'Member transferred successfully.';
+              this.loadData();
+              setTimeout(() => this.closeForm(), 1500);
+            } else {
+              this.apiError = res.message || 'Unable to save transfer.';
+            }
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => {
+          this.ngZone.run(() => {
+            this.apiError = this.extractErrorMessage(err, 'Unable to save transfer. Please verify the details.');
+            this.cdr.detectChanges();
+          });
+        }
+      });
   }
 
-  // Reallotment methods
   saveReallotment(): void {
-    this.errorMessage = '';
+    this.submitted = true;
+    this.apiError = '';
     this.successMessage = '';
 
-    if (!this.newReallotment.groupName || !this.newReallotment.bidder || !this.newReallotment.reallotmentDate || !this.newReallotment.reason) {
-      this.errorMessage = 'Please fill in all required fields';
+    if (!this.validateReallotmentForm()) {
+      this.cdr.detectChanges();
       return;
     }
 
-    const reallotment = {
-      ...this.newReallotment,
-      id: 'REALL' + Date.now()
-    };
-
-    this.reallotments.push(reallotment);
-    this.successMessage = 'Member reallocated successfully!';
-    setTimeout(() => {
-      this.toggleForm();
-      this.filterMembers();
-    }, 1500);
+    this.isSaving = true;
+    this.memberManagementService.createReallotment(this.newReallotment)
+      .pipe(finalize(() => {
+        this.ngZone.run(() => {
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        });
+      }))
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res.success) {
+              this.successMessage = res.message || 'Member reallocated successfully.';
+              this.loadData();
+              setTimeout(() => this.closeForm(), 1500);
+            } else {
+              this.apiError = res.message || 'Unable to save reallotment.';
+            }
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => {
+          this.ngZone.run(() => {
+            this.apiError = this.extractErrorMessage(err, 'Unable to save reallotment. Please verify the details.');
+            this.cdr.detectChanges();
+          });
+        }
+      });
   }
 
-  // Load member data into transfer form
-  loadMemberForTransfer(member: Member): void {
-    if (member) {
-      this.newTransfer.groupName = member.groupName;
-      this.newTransfer.ticketNo = member.ticketNo;
-      this.newTransfer.subscriber = member.name;
-      this.newTransfer.enrollDate = member.enrollDate || '';
-      this.newTransfer.memberAddr = member.address || '';
-      this.newTransfer.paidUpTo = member.paidUpTo || '';
-      this.newTransfer.payable = member.payable || 0;
-      this.newTransfer.paid = member.paid || 0;
-      this.newTransfer.mobile = member.mobile;
+  private extractErrorMessage(err: any, fallback: string): string {
+    if (err?.error?.message) {
+      return err.error.message;
     }
-  }
-
-  // Load member data for reallotment
-  loadMemberForReallotment(member: Member): void {
-    if (member) {
-      this.newReallotment.groupName = member.groupName;
-      this.newReallotment.ticketNumber = member.ticketNo;
-      this.newReallotment.enrollmentDate = member.enrollDate || '';
-      this.newReallotment.address = member.address || '';
-      this.newReallotment.subscriptionPayable = member.payable || 0;
-      this.newReallotment.paidAmount = member.paid || 0;
-      this.newReallotment.balanceAmount = (member.payable || 0) - (member.paid || 0);
+    if (typeof err?.error === 'string') {
+      return err.error;
     }
-  }
-
-  // Get member name from removal for display
-  getMemberName(removal: MemberRemoval): string {
-    return removal.subscriber;
-  }
-
-  getTotalRemovals(): number {
-    return this.removals.length;
-  }
-
-  getTotalTransfers(): number {
-    return this.transfers.length;
-  }
-
-  getTotalReallotments(): number {
-    return this.reallotments.length;
+    return fallback;
   }
 }

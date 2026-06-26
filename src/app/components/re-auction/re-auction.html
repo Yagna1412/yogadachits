@@ -12,31 +12,33 @@
     </div>
 </div>
 
-<div class="main-rea-auction">
+<div class="loading-message" *ngIf="isLoading && !chitGroupName">Loading re-auction details...</div>
+<div class="error-message" *ngIf="loadError">{{ loadError }}</div>
+
+<div class="main-rea-auction" *ngIf="chitGroupName">
     <!-- previous auction status -->
     <div class="page-inner-header">
-        <img src="assets/images/icons/arrow-left.png" alt="Info Icon" class="info-icon" />
-        <h2 class="page-inner-title">Golden Circle 2024</h2>
-        <div class="status-badge failed">Re-Auction Required</div>
+        <button type="button" class="back-btn" (click)="goBack()" aria-label="Go back">
+            <img src="assets/images/icons/arrow-left.png" alt="Back" class="info-icon" />
+        </button>
+        <h2 class="page-inner-title">{{ chitGroupName }}</h2>
+        <div class="status-badge failed">{{ status }}</div>
     </div>
 
-
     <div class="previous-auction-card" [ngClass]="{'failed': true}">
-        <h3>Previous Auction Failed <span class="status-tag">Admin Cancellation</span></h3>
+        <h3>Previous Auction Failed <span class="status-tag">{{ failureReason }}</span></h3>
         <div class="prev-info">
             <div class="avatar">
                 <img src="https://i.pravatar.cc/150?img=2" alt="" />
                 <div class="info-text">
                     <div class="name">{{ previous.name }}</div>
-                    <div class="ticket-no">
-                        ({{ previous.ticket }})
-                    </div>
+                    <div class="ticket-no">({{ previous.ticket }})</div>
                 </div>
             </div>
 
             <div class="info-right">
                 <div class="label">
-                    <div class="name">Bid Amount </div>
+                    <div class="name">Bid Amount</div>
                     <div class="text">{{ formatCurrency(previous.bidAmount) }}</div>
                 </div>
                 <div class="label">
@@ -55,29 +57,36 @@
     <div class="new-auction-section">
         <h3>New Auction Winner</h3>
         <div class="replace-row">
-            <button class="replace-btn" (click)="newWinner = previous.name; newBid = previous.bidAmount">
+            <button class="replace-btn" type="button"
+                (click)="newWinnerEnrollmentId = null; newBid = previous.bidAmount; onMemberOrBidChange()">
                 Replace with ↓
             </button>
         </div>
         <div class="form-group">
             <div class="form-row">
-            <label for="member">Select Member</label>
-            <select id="member" [(ngModel)]="newWinner">
-                <option value="" disabled>Select member</option>
-                <option *ngFor="let m of members" [value]="m">{{ m }}</option>
-            </select>
+                <label for="member">Select Member</label>
+                <select id="member" [(ngModel)]="newWinnerEnrollmentId" (ngModelChange)="onMemberOrBidChange()">
+                    <option [ngValue]="null" disabled>Select member</option>
+                    <option *ngFor="let m of eligibleMembers" [ngValue]="m.enrollmentId">
+                        {{ m.memberName }}
+                    </option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="amount">Amount (₹)</label>
+                <input id="amount" type="number" min="0" [(ngModel)]="newBid" (ngModelChange)="onMemberOrBidChange()" />
+            </div>
+            <div class="form-row">
+                <label>Net Payable</label>
+                <input type="text" [value]="formatCurrency(computedNetPayable)" readonly />
+            </div>
         </div>
-        <div class="form-row">
-            <label for="amount">Amount (₹)</label>
-            <input id="amount" type="number" [(ngModel)]="newBid" />
-        </div>
-        <div class="form-row">
-            <label>Net Payable</label>
-            <input type="text" [value]="formatCurrency(computedNetPayable)" readonly />
-        </div>
-        </div>
+        <p class="error-message" *ngIf="saveError">{{ saveError }}</p>
         <div class="action-row">
-            <button class="btn btn-primary" (click)="openConfirmModal()">Confirm Re-Auction</button>
+            <button class="btn btn-primary" type="button" (click)="openConfirmModal()"
+                [disabled]="isSaving || isPreviewLoading || !newWinnerEnrollmentId || !newBid">
+                Confirm Re-Auction
+            </button>
         </div>
     </div>
 
@@ -102,9 +111,12 @@
                         <td>{{ formatCurrency(p.amount) }}</td>
                         <td>{{ p.date }}</td>
                         <td>
-                            <button class="view-btn">👁️</button>
-                            <button class="print-btn">🖨️</button>
+                            <button class="view-btn" type="button" (click)="viewAuction(p.auctionId)" title="View">👁️</button>
+                            <button class="print-btn" type="button" (click)="printAuction(p.auctionId)" title="Print">🖨️</button>
                         </td>
+                    </tr>
+                    <tr *ngIf="pastAuctions.length === 0">
+                        <td colspan="5" class="empty-cell">No past auctions found.</td>
                     </tr>
                 </tbody>
             </table>
@@ -117,14 +129,14 @@
     <div class="modal-content confirm-modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
             <h2>Confirm Re-Auction</h2>
-            <button class="modal-close" (click)="closeConfirmModal()">×</button>
+            <button type="button" class="modal-close" (click)="closeConfirmModal()">×</button>
         </div>
         <div class="modal-body">
             <div class="winner-card">
                 <h3>Winning Bid</h3>
                 <div class="winner-details">
                     <span class="winner-icon"><img src="assets/images/icons/user1.png" alt="Bidder Icon" /></span>
-                    <span class="winner-name">{{ newWinner }}</span>
+                    <span class="winner-name">{{ selectedMemberName }}</span>
                 </div>
                 <div class="winner-divider"></div>
                 <div class="winner-amount-section">
@@ -139,13 +151,11 @@
             <div class="difference-row">
                 <div>
                     <label>Bid Difference (₹)</label>
-                    <div class="difference-input">{{ bidDifference > 0 ? '+' : '' }}{{ formatCurrency(bidDifference) }}
-                    </div>
+                    <div class="difference-input">{{ formatSignedCurrency(bidDifference) }}</div>
                 </div>
                 <div>
                     <label>Payable Difference (₹)</label>
-                    <div class="difference-input">{{ payableDifference > 0 ? '+' : '' }}{{
-                        formatCurrency(payableDifference) }}</div>
+                    <div class="difference-input">{{ formatSignedCurrency(payableDifference) }}</div>
                 </div>
             </div>
             <div class="what-changes">
@@ -155,10 +165,13 @@
                     <li>New receipts are now active</li>
                 </ul>
             </div>
+            <p class="error-message" *ngIf="saveError">{{ saveError }}</p>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="closeConfirmModal()">Cancel</button>
-            <button class="btn btn-primary" (click)="confirmReAuction()">Confirm Winner</button>
+            <button type="button" class="btn btn-secondary" (click)="closeConfirmModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="confirmReAuction()" [disabled]="isSaving">
+                {{ isSaving ? 'Saving...' : 'Confirm Winner' }}
+            </button>
         </div>
     </div>
 </div>
@@ -168,6 +181,6 @@
     <div class="modal-content success-modal" (click)="$event.stopPropagation()">
         <div class="success-icon">🏆</div>
         <h2 class="success-title">Winner Updated</h2>
-        <button class="btn btn-primary btn-large" (click)="closeSuccessModal()">Continue</button>
+        <button type="button" class="btn btn-primary btn-large" (click)="closeSuccessModal()">Continue</button>
     </div>
 </div>

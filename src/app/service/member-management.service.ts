@@ -1,5 +1,5 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable } from 'rxjs';
 
@@ -10,7 +10,7 @@ export interface ApiResponse<T> {
 }
 
 export interface Member {
-    id: string;
+    id: number;
     name: string;
     groupName: string;
     ticketNo: string;
@@ -24,7 +24,7 @@ export interface Member {
 }
 
 export interface MemberRemoval {
-    id?: string;
+    id?: number;
     groupName: string;
     ticketNo: string;
     subscriber: string;
@@ -34,7 +34,7 @@ export interface MemberRemoval {
 }
 
 export interface MemberTransfer {
-    id?: string;
+    id?: number;
     transferDate: string;
     groupName: string;
     ticketNo: string;
@@ -63,7 +63,7 @@ export interface MemberTransfer {
 }
 
 export interface MemberReallotment {
-    id?: string;
+    id?: number;
     groupName: string;
     ticketNumber: string;
     bidder: string;
@@ -78,13 +78,18 @@ export interface MemberReallotment {
     balanceAmount: number;
 }
 
+export interface MemberLookupOptions {
+    groups: string[];
+    authorizedBy: string[];
+    agents: string[];
+}
+
 @Injectable({
     providedIn: 'root'
 })
 export class MemberManagementService {
 
     private apiUrl = 'http://localhost:8080/chitfunds/api/v1/member-management';
-    // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/member-management';
 
     constructor(
         private http: HttpClient,
@@ -100,42 +105,65 @@ export class MemberManagementService {
         if (token) {
             return new HttpHeaders({ 'Authorization': `Bearer ${token}` });
         }
-        console.warn("No token found. Request may fail with 403 Forbidden.");
         return new HttpHeaders();
     }
 
-    // --- GET METHODS ---
-
-    getMembers(): Observable<ApiResponse<Member[]>> {
-        // ✅ FIXED: Now points to the correct controller endpoint
+    getMembers(searchTerm?: string, groupName?: string, status?: string): Observable<ApiResponse<Member[]>> {
+        let params = new HttpParams();
+        if (searchTerm) {
+            params = params.set('searchTerm', searchTerm);
+        }
+        if (groupName) {
+            params = params.set('groupName', groupName);
+        }
+        if (status) {
+            params = params.set('status', status);
+        }
         return this.http.get<ApiResponse<Member[]>>(`${this.apiUrl}/members`, {
+            headers: this.getAuthHeaders(),
+            params
+        });
+    }
+
+    getLookupOptions(): Observable<ApiResponse<MemberLookupOptions>> {
+        return this.http.get<ApiResponse<MemberLookupOptions>>(`${this.apiUrl}/lookup-options`, {
             headers: this.getAuthHeaders()
         });
     }
 
     getRemovals(): Observable<ApiResponse<MemberRemoval[]>> {
-        return this.http.get<ApiResponse<MemberRemoval[]>>(`${this.apiUrl}/removals`, { headers: this.getAuthHeaders() });
+        return this.http.get<ApiResponse<MemberRemoval[]>>(`${this.apiUrl}/removals`, {
+            headers: this.getAuthHeaders()
+        });
     }
 
     getTransfers(): Observable<ApiResponse<MemberTransfer[]>> {
-        return this.http.get<ApiResponse<MemberTransfer[]>>(`${this.apiUrl}/transfers`, { headers: this.getAuthHeaders() });
+        return this.http.get<ApiResponse<MemberTransfer[]>>(`${this.apiUrl}/transfers`, {
+            headers: this.getAuthHeaders()
+        });
     }
 
     getReallotments(): Observable<ApiResponse<MemberReallotment[]>> {
-        return this.http.get<ApiResponse<MemberReallotment[]>>(`${this.apiUrl}/reallotments`, { headers: this.getAuthHeaders() });
+        return this.http.get<ApiResponse<MemberReallotment[]>>(`${this.apiUrl}/reallotments`, {
+            headers: this.getAuthHeaders()
+        });
     }
 
-    // --- POST METHODS ---
-
     createRemoval(request: MemberRemoval): Observable<ApiResponse<MemberRemoval>> {
-        return this.http.post<ApiResponse<MemberRemoval>>(`${this.apiUrl}/removals`, request, { headers: this.getAuthHeaders() });
+        return this.http.post<ApiResponse<MemberRemoval>>(`${this.apiUrl}/removals`, request, {
+            headers: this.getAuthHeaders()
+        });
     }
 
     createTransfer(request: MemberTransfer): Observable<ApiResponse<MemberTransfer>> {
-        return this.http.post<ApiResponse<MemberTransfer>>(`${this.apiUrl}/transfers`, request, { headers: this.getAuthHeaders() });
+        return this.http.post<ApiResponse<MemberTransfer>>(`${this.apiUrl}/transfers`, request, {
+            headers: this.getAuthHeaders()
+        });
     }
 
     createReallotment(request: MemberReallotment): Observable<ApiResponse<MemberReallotment>> {
-        return this.http.post<ApiResponse<MemberReallotment>>(`${this.apiUrl}/reallotments`, request, { headers: this.getAuthHeaders() });
+        return this.http.post<ApiResponse<MemberReallotment>>(`${this.apiUrl}/reallotments`, request, {
+            headers: this.getAuthHeaders()
+        });
     }
 }

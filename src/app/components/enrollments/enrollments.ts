@@ -1,4 +1,5 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -23,6 +24,7 @@ interface EnrollmentChitGroupOption {
   styleUrls: ['./enrollments.scss']
 })
 export class EnrollmentsComponent implements OnInit, AfterViewInit {
+  private platformId = inject(PLATFORM_ID);
 
   isLoading = false;
   errorMessage = '';
@@ -171,6 +173,9 @@ export class EnrollmentsComponent implements OnInit, AfterViewInit {
   ) { }
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
     this.loadEnrollments();
     this.loadChitGroups();
     this.loadMembers();
@@ -187,21 +192,24 @@ export class EnrollmentsComponent implements OnInit, AfterViewInit {
     this.errorMessage = '';
 
     this.enrollmentsService.getEnrollments().subscribe({
-      next: (res: any) => {
-        const data = res?.data || res || [];
-        if (Array.isArray(data)) {
-          this.enrollments = data;
-          this.filteredEnrollments = [...this.enrollments];
-        } else {
+      next: (res) => {
+        if (res?.success === false) {
           this.enrollments = [];
           this.filteredEnrollments = [];
-          this.errorMessage = res?.message || 'Failed to load enrollments.';
+          this.errorMessage = res.message || 'Failed to load enrollments.';
+        } else {
+          const data = res?.data ?? [];
+          this.enrollments = Array.isArray(data) ? data : [];
+          this.filteredEnrollments = [...this.enrollments];
+          this.errorMessage = '';
         }
         this.isLoading = false;
-        this.cdr.detectChanges(); // Manually flush explicitly so native `fetch` API doesn't maroon UI
+        this.cdr.detectChanges();
       },
-      error: () => {
-        this.errorMessage = 'Failed to load enrollments. Please check the backend is running.';
+      error: (err) => {
+        this.enrollments = [];
+        this.filteredEnrollments = [];
+        this.errorMessage = err?.error?.message || 'Failed to load enrollments. Please ensure the backend is running on port 8080.';
         this.isLoading = false;
         this.cdr.detectChanges();
       }
