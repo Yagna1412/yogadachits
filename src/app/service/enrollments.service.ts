@@ -41,7 +41,7 @@ export interface EnrollmentPayload {
 export class EnrollmentsService {
 
   private platformId = inject(PLATFORM_ID);
-  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/enrollments';
+  private apiUrl = '/chitfunds/api/v1/enrollments';
   // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/enrollments';
 
   constructor(private http: HttpClient) {}
@@ -96,7 +96,7 @@ export class EnrollmentsService {
 
   getInstallmentsByEnrollmentId(enrollmentId: number): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(
-      `http://localhost:8080/chitfunds/api/v1/installments?enrollmentId=${enrollmentId}`,
+      `/chitfunds/api/v1/installments?enrollmentId=${enrollmentId}`,
       // `http://3.108.194.139:8080/chitfunds/api/v1/installments?enrollmentId=${enrollmentId}`,
       this.getHeaders()
     ).pipe(
@@ -123,7 +123,7 @@ export class EnrollmentsService {
   createSubscriberForMember(memberId: number, displayName: string): Observable<ApiResponse<any>> {
     const payload = { subscriberType: "member", memberId: memberId, displayName: displayName };
     return this.http.post<ApiResponse<any>>(
-      'http://localhost:8080/chitfunds/api/v1/subscribers', payload, this.getHeaders()
+      '/chitfunds/api/v1/subscribers', payload, this.getHeaders()
       // 'http://3.108.194.139:8080/chitfunds/api/v1/subscribers', payload, this.getHeaders()
     ).pipe(
       catchError(() => of({
