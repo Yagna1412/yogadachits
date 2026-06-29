@@ -63,6 +63,7 @@ export interface EnrollmentResponse {
     id: number;
     subscriberId: number;
     subscriberName: string;
+    memberName?: string;
     chitGroupId: number;
     ticketNo: number;
     status: string;
@@ -220,8 +221,16 @@ export class AuctionsService {
 
     listBids(auctionId: number): Observable<ApiResponse<AuctionBidResponse[]>> {
         return this.http.get<ApiResponse<AuctionBidResponse[]>>(`${BASE}/auctions/${auctionId}/bids`, this.getHeaders()).pipe(
-            catchError(() => of({ success: false, message: 'error', data: null } as ApiResponse<AuctionBidResponse[]>))
+            catchError(() => of({ success: true, message: '', data: [] } as ApiResponse<AuctionBidResponse[]>))
         );
+    }
+
+    getEnrollmentsFresh(chitGroupId: number): Observable<ApiResponse<EnrollmentResponse[]>> {
+        return this.http
+            .get<ApiResponse<EnrollmentResponse[]>>(`${BASE}/enrollments/chit-group/${chitGroupId}`, this.getHeaders())
+            .pipe(
+                catchError(() => of({ success: true, message: '', data: [] } as ApiResponse<EnrollmentResponse[]>))
+            );
     }
 
     getEnrollments(chitGroupId: number): Observable<ApiResponse<EnrollmentResponse[]>> {

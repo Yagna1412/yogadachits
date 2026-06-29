@@ -1,9 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -46,13 +44,17 @@ export class EnrollmentsService {
 
   constructor(private http: HttpClient) {}
 
+  private isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
+  }
+
   private getHeaders(): { headers: HttpHeaders } {
     let headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'X-Tenant-Id': '1'
     });
-    if (isPlatformBrowser(this.platformId)) {
-      const token = localStorage.getItem('authToken');
+    if (this.isBrowser()) {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       if (token) {
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
@@ -61,9 +63,11 @@ export class EnrollmentsService {
             headers = headers.set('Authorization', `Bearer ${token}`);
           } else {
             localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
           }
         } catch {
           localStorage.removeItem('authToken');
+          localStorage.removeItem('token');
         }
       }
     }
@@ -71,57 +75,46 @@ export class EnrollmentsService {
   }
 
   getEnrollments(): Observable<ApiResponse<EnrollmentResponse[]>> {
-    return this.http.get<ApiResponse<EnrollmentResponse[]>>(
-      this.apiUrl, this.getHeaders()
-    ).pipe(
-      catchError(() => of({
-        success: false,
-        message: 'Failed to load enrollments',
-        data: null
-      } as ApiResponse<EnrollmentResponse[]>))
-    );
+    if (!this.isBrowser()) {
+      return of({ success: true, message: '', data: [] });
+    }
+    return this.http.get<ApiResponse<EnrollmentResponse[]>>(this.apiUrl, this.getHeaders());
   }
 
   getEnrollmentById(enrollmentId: number): Observable<ApiResponse<EnrollmentResponse>> {
+    if (!this.isBrowser()) {
+      return of({ success: false, message: '', data: null });
+    }
     return this.http.get<ApiResponse<EnrollmentResponse>>(
       `${this.apiUrl}/${enrollmentId}`, this.getHeaders()
-    ).pipe(
-      catchError(() => of({
-        success: false,
-        message: 'Failed to load enrollment details',
-        data: null
-      } as ApiResponse<EnrollmentResponse>))
     );
   }
 
   getInstallmentsByEnrollmentId(enrollmentId: number): Observable<ApiResponse<any[]>> {
+    if (!this.isBrowser()) {
+      return of({ success: true, message: '', data: [] });
+    }
     return this.http.get<ApiResponse<any[]>>(
       `/chitfunds/api/v1/installments?enrollmentId=${enrollmentId}`,
       // `http://3.108.194.139:8080/chitfunds/api/v1/installments?enrollmentId=${enrollmentId}`,
       this.getHeaders()
-    ).pipe(
-      catchError(() => of({
-        success: false,
-        message: 'Failed to load installments',
-        data: []
-      } as ApiResponse<any[]>))
     );
   }
 
   createEnrollment(payload: EnrollmentPayload): Observable<ApiResponse<EnrollmentResponse>> {
+    if (!this.isBrowser()) {
+      return of({ success: false, message: 'Not available on server', data: null });
+    }
     return this.http.post<ApiResponse<EnrollmentResponse>>(
       this.apiUrl, payload, this.getHeaders()
-    ).pipe(
-      catchError(() => of({
-        success: false,
-        message: 'Failed to create enrollment',
-        data: null
-      } as ApiResponse<EnrollmentResponse>))
     );
   }
 
   createSubscriberForMember(memberId: number, displayName: string): Observable<ApiResponse<any>> {
-    const payload = { subscriberType: "member", memberId: memberId, displayName: displayName };
+    if (!this.isBrowser()) {
+      return of({ success: false, message: 'Not available on server', data: null });
+    }
+    const payload = { subscriberType: 'member', memberId, displayName };
     return this.http.post<ApiResponse<any>>(
       '/chitfunds/api/v1/subscribers', payload, this.getHeaders()
       // 'http://3.108.194.139:8080/chitfunds/api/v1/subscribers', payload, this.getHeaders()

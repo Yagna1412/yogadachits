@@ -1,6 +1,21 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef,
+  NgZone,
+  inject,
+  PLATFORM_ID
+} from '@angular/core';
+import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
+import {
+  CashAccountService,
+  CashTransactionItem,
+  CashTransactionForm
+} from '../../service/cash-account.service';
 
 @Component({
   selector: 'app-account-cash',
@@ -8,87 +23,284 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './account-cash.html',
   styleUrls: ['./account-cash.scss']
 })
-export class AccountCashComponent {
+export class AccountCashComponent implements OnInit, OnDestroy {
+  private platformId = inject(PLATFORM_ID);
+  private destroy$ = new Subject<void>();
+
   showReceiptForm = false;
   showPaymentForm = false;
   searchTerm = '';
-  activeTab = 'receipts'; // 'receipts' or 'payments'
+  activeTab = 'receipts';
 
-  // Cash Receipts data
-  receipts: any[] = [
-    { id:1, transactionType:'Income', account:'Cash Account', transactionDate:'2026-02-01', voucherSeries:'CR', voucherNo:'001', currentBalance:50000, particularAccount:'Misc. Income', narration:'Miscellaneous income from services', amount:5000, grandTotal:55000 },
-    { id:2, transactionType:'Asset Sale', account:'Cash Account', transactionDate:'2026-02-05', voucherSeries:'CR', voucherNo:'002', currentBalance:55000, particularAccount:'Asset Sale', narration:'Sale of old equipment', amount:8000, grandTotal:63000 },
-    { id:3, transactionType:'Loan Received', account:'Cash Account', transactionDate:'2026-02-10', voucherSeries:'CR', voucherNo:'003', currentBalance:63000, particularAccount:'Bank Loan', narration:'Short-term bank loan received', amount:100000, grandTotal:163000 }
-  ];
+  isLoadingReceipts = false;
+  isLoadingPayments = false;
+  isLoadingForm = false;
+  isSavingReceipt = false;
+  isSavingPayment = false;
 
-  // Cash Payments data
-  payments: any[] = [
-    { id:1, transactionType:'Expense', account:'Cash Account', transactionDate:'2026-02-02', voucherSeries:'CP', voucherNo:'001', currentBalance:55000, particularAccount:'Office Rent', narration:'Monthly office rent payment', amount:10000, grandTotal:45000 },
-    { id:2, transactionType:'Purchase', account:'Cash Account', transactionDate:'2026-02-08', voucherSeries:'CP', voucherNo:'002', currentBalance:45000, particularAccount:'Supplies', narration:'Office supplies purchase', amount:2500, grandTotal:42500 },
-    { id:3, transactionType:'Utility', account:'Cash Account', transactionDate:'2026-02-12', voucherSeries:'CP', voucherNo:'003', currentBalance:42500, particularAccount:'Electricity', narration:'Electricity bill payment', amount:3000, grandTotal:39500 }
-  ];
+  receipts: CashTransactionItem[] = [];
+  payments: CashTransactionItem[] = [];
+  filteredReceipts: CashTransactionItem[] = [];
+  filteredPayments: CashTransactionItem[] = [];
+  newReceipt: CashTransactionForm = {};
+  newPayment: CashTransactionForm = {};
 
-  filteredReceipts: any[] = [...this.receipts];
-  filteredPayments: any[] = [...this.payments];
-  newReceipt: any = {};
-  newPayment: any = {};
+  loadError = '';
+  apiError = '';
+  successMessage = '';
 
-  toggleReceiptForm() { this.showReceiptForm = !this.showReceiptForm; }
-  togglePaymentForm() { this.showPaymentForm = !this.showPaymentForm; }
+  constructor(
+    private cashAccountService: CashAccountService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {}
 
-  switchTab(tab: string) {
+  ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    setTimeout(() => {
+      this.loadReceipts();
+      this.loadPayments();
+    }, 0);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  switchTab(tab: string): void {
     this.activeTab = tab;
     this.showReceiptForm = false;
     this.showPaymentForm = false;
+    this.apiError = '';
+    this.successMessage = '';
   }
 
-  filterReceipts() {
+  toggleReceiptForm(): void {
+    this.showReceiptForm = !this.showReceiptForm;
+    if (this.showReceiptForm) {
+      this.apiError = '';
+      this.loadReceiptFormDefaults();
+    }
+  }
+
+  togglePaymentForm(): void {
+    this.showPaymentForm = !this.showPaymentForm;
+    if (this.showPaymentForm) {
+      this.apiError = '';
+      this.loadPaymentFormDefaults();
+    }
+  }
+
+  loadReceipts(): void {
+    this.isLoadingReceipts = true;
+    this.loadError = '';
+    this.cdr.detectChanges();
+
+    this.cashAccountService.getReceipts()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isLoadingReceipts = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            this.receipts = res?.success !== false ? (res?.data || []) : [];
+            this.filterReceipts();
+            if (res?.success === false) this.loadError = res.message || '';
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  loadPayments(): void {
+    this.isLoadingPayments = true;
+    this.cdr.detectChanges();
+
+    this.cashAccountService.getPayments()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isLoadingPayments = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            this.payments = res?.success !== false ? (res?.data || []) : [];
+            this.filterPayments();
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  loadReceiptFormDefaults(): void {
+    this.isLoadingForm = true;
+    this.cashAccountService.getReceiptFormDefaults()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isLoadingForm = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res?.success && res.data) {
+              this.newReceipt = { ...res.data, voucherSeries: res.data.voucherSeries || 'CR' };
+            } else {
+              this.newReceipt = { voucherSeries: 'CR', account: 'Cash Account', transactionDate: this.today() };
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  loadPaymentFormDefaults(): void {
+    this.isLoadingForm = true;
+    this.cashAccountService.getPaymentFormDefaults()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isLoadingForm = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (res?.success && res.data) {
+              this.newPayment = { ...res.data, voucherSeries: res.data.voucherSeries || 'CP' };
+            } else {
+              this.newPayment = { voucherSeries: 'CP', account: 'Cash Account', transactionDate: this.today() };
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  private today(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  filterReceipts(): void {
     const q = (this.searchTerm || '').toLowerCase();
-    this.filteredReceipts = this.receipts.filter(r => {
-      return (!q ||
-        (r.transactionType && r.transactionType.toLowerCase().includes(q)) ||
-        (r.voucherNo && r.voucherNo.toLowerCase().includes(q)) ||
-        (r.particularAccount && r.particularAccount.toLowerCase().includes(q))
-      );
-    });
+    this.filteredReceipts = this.receipts.filter(r =>
+      !q ||
+      (r.transactionType && r.transactionType.toLowerCase().includes(q)) ||
+      (r.voucherNo && r.voucherNo.toLowerCase().includes(q)) ||
+      (r.particularAccount && r.particularAccount.toLowerCase().includes(q))
+    );
   }
 
-  filterPayments() {
+  filterPayments(): void {
     const q = (this.searchTerm || '').toLowerCase();
-    this.filteredPayments = this.payments.filter(p => {
-      return (!q ||
-        (p.transactionType && p.transactionType.toLowerCase().includes(q)) ||
-        (p.voucherNo && p.voucherNo.toLowerCase().includes(q)) ||
-        (p.particularAccount && p.particularAccount.toLowerCase().includes(q))
-      );
-    });
+    this.filteredPayments = this.payments.filter(p =>
+      !q ||
+      (p.transactionType && p.transactionType.toLowerCase().includes(q)) ||
+      (p.voucherNo && p.voucherNo.toLowerCase().includes(q)) ||
+      (p.particularAccount && p.particularAccount.toLowerCase().includes(q))
+    );
   }
 
-  saveReceipt() {
-    const amt = parseFloat(this.newReceipt.amount) || 0;
-    if (!amt || isNaN(amt)) { alert('Amount numeric'); return; }
-    ['currentBalance', 'amount', 'grandTotal'].forEach(f => {
-      if (this.newReceipt[f] !== undefined) this.newReceipt[f] = parseFloat(this.newReceipt[f]) || 0;
-    });
-    const entry = { ...this.newReceipt, id: Date.now() };
-    this.receipts.push(entry);
-    this.newReceipt = {};
-    this.showReceiptForm = false;
-    this.filterReceipts();
-    alert('Cash receipt recorded');
+  saveReceipt(): void {
+    const amt = Number(this.newReceipt.amount);
+    if (!amt || isNaN(amt) || amt <= 0) {
+      this.apiError = 'Please enter a valid amount.';
+      return;
+    }
+    if (!this.newReceipt.transactionDate) {
+      this.apiError = 'Please enter the transaction date.';
+      return;
+    }
+
+    this.isSavingReceipt = true;
+    this.apiError = '';
+    this.cashAccountService.saveReceipt(this.newReceipt)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isSavingReceipt = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (!res?.success) {
+              this.apiError = res?.message || 'Failed to save cash receipt.';
+            } else {
+              this.showReceiptForm = false;
+              this.newReceipt = {};
+              this.activeTab = 'receipts';
+              this.successMessage = res?.message || 'Cash receipt saved successfully.';
+              this.loadReceipts();
+              this.loadPayments();
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
   }
 
-  savePayment() {
-    const amt = parseFloat(this.newPayment.amount) || 0;
-    if (!amt || isNaN(amt)) { alert('Amount numeric'); return; }
-    ['currentBalance', 'amount', 'grandTotal'].forEach(f => {
-      if (this.newPayment[f] !== undefined) this.newPayment[f] = parseFloat(this.newPayment[f]) || 0;
-    });
-    const entry = { ...this.newPayment, id: Date.now() };
-    this.payments.push(entry);
-    this.newPayment = {};
-    this.showPaymentForm = false;
-    this.filterPayments();
-    alert('Cash payment recorded');
+  savePayment(): void {
+    const amt = Number(this.newPayment.amount);
+    if (!amt || isNaN(amt) || amt <= 0) {
+      this.apiError = 'Please enter a valid amount.';
+      return;
+    }
+    if (!this.newPayment.transactionDate) {
+      this.apiError = 'Please enter the transaction date.';
+      return;
+    }
+
+    this.isSavingPayment = true;
+    this.apiError = '';
+    this.cashAccountService.savePayment(this.newPayment)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.ngZone.run(() => {
+            this.isSavingPayment = false;
+            this.cdr.detectChanges();
+          });
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            if (!res?.success) {
+              this.apiError = res?.message || 'Failed to save cash payment.';
+            } else {
+              this.showPaymentForm = false;
+              this.newPayment = {};
+              this.activeTab = 'payments';
+              this.successMessage = res?.message || 'Cash payment saved successfully.';
+              this.loadReceipts();
+              this.loadPayments();
+            }
+            this.cdr.detectChanges();
+          });
+        }
+      });
   }
 }

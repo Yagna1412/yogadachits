@@ -12,12 +12,14 @@
 </div>
 
 <div class="main-container">
-  <!-- Tab Navigation -->
+  <div *ngIf="successMessage" class="success-banner">{{ successMessage }}</div>
+  <div *ngIf="loadError" class="error-banner">{{ loadError }}</div>
+
   <div class="tabs-container">
-    <button class="tab-button" [class.active]="activeTab === 'deposits'" (click)="switchTab('deposits')">
+    <button type="button" class="tab-button" [class.active]="activeTab === 'deposits'" (click)="switchTab('deposits')">
       <span>Bank Deposits</span>
     </button>
-    <button class="tab-button" [class.active]="activeTab === 'payments'" (click)="switchTab('payments')">
+    <button type="button" class="tab-button" [class.active]="activeTab === 'payments'" (click)="switchTab('payments')">
       <span>Bank Payments</span>
     </button>
   </div>
@@ -33,34 +35,59 @@
             <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterDeposits()"/>
             <span class="search-shortcut">Ctrl Shift K</span>
           </div>
-          <button class="btn btn-primary btn-add" (click)="toggleDepositForm()">+ Add Deposit</button>
+          <button type="button" class="btn btn-primary btn-add" (click)="openDepositForm()">+ Add Deposit</button>
         </div>
       </div>
       <div class="table-wrapper">
-        <table class="table" *ngIf="filteredDeposits.length">
+        <div *ngIf="isLoadingDeposits" class="loading-message">Loading bank deposits from database...</div>
+        <table class="table" *ngIf="!isLoadingDeposits && paginatedDeposits.length">
           <thead>
             <tr>
               <th>Transaction Type</th><th>Bank Account</th><th>Transaction Date</th><th>Voucher Series</th><th>Voucher No</th><th>Bank Name</th><th>Amount</th><th>Grand Total</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let d of filteredDeposits">
+            <tr *ngFor="let d of paginatedDeposits">
               <td>{{d.transactionType}}</td><td>{{d.bankAccount}}</td><td>{{d.transactionDate}}</td><td>{{d.voucherSeries}}</td><td>{{d.voucherNo}}</td><td>{{d.bankName}}</td><td>{{d.amount}}</td><td>{{d.grandTotal}}</td>
             </tr>
           </tbody>
         </table>
-        <div class="empty-state" *ngIf="!filteredDeposits.length">
-          <p>No deposits found. Click "Add Deposit" to record one.</p>
+        <div class="empty-state" *ngIf="!isLoadingDeposits && !filteredDeposits.length">
+          <p>No bank deposits found in database. Click "Add Deposit" to record one.</p>
+          <p class="field-hint">Saved in <strong>voucher_header</strong> (<code>voucher_type = bank_receipt</code>) and <strong>voucher_line</strong>.</p>
+        </div>
+      </div>
+
+      <div class="pagination-container" *ngIf="filteredDeposits.length > 0 && !isLoadingDeposits">
+        <div class="pagination-info">
+          Showing {{ (depositCurrentPage - 1) * pageSize + 1 }} to {{ depositPaginationEnd }} of {{ filteredDeposits.length }} results
+        </div>
+        <div class="pagination-controls">
+          <button type="button" class="page-btn prev" [disabled]="depositCurrentPage === 1" (click)="prevDepositPage()">
+            <span>&lt;</span> Previous
+          </button>
+          <div class="page-numbers">
+            <button type="button" class="page-number" *ngFor="let p of getDepositVisiblePages()"
+              [class.active]="depositCurrentPage === p" (click)="goToDepositPage(p)">
+              {{ p }}
+            </button>
+          </div>
+          <button type="button" class="page-btn next" [disabled]="depositCurrentPage === depositTotalPages" (click)="nextDepositPage()">
+            Next <span>&gt;</span>
+          </button>
         </div>
       </div>
     </div>
+
     <div class="add-entry-form" *ngIf="showDepositForm">
       <div class="form-card">
         <div class="form-header">
           <h2>Record Bank Deposit</h2>
-          <button class="close-btn" (click)="toggleDepositForm()">×</button>
+          <button type="button" class="close-btn" (click)="closeDepositForm()">×</button>
         </div>
         <div class="form-body">
+          <div *ngIf="depositApiError" class="error-banner">{{ depositApiError }}</div>
+          <p *ngIf="isLoadingForm" class="field-hint">Loading form defaults...</p>
           <div class="form-row">
             <div class="form-group"><label>Transaction Type</label><input class="form-control" [(ngModel)]="newDeposit.transactionType" placeholder="Cash Deposit, Transfer, etc."/></div>
             <div class="form-group"><label>Bank Account</label><input class="form-control" [(ngModel)]="newDeposit.bankAccount" placeholder="Account number"/></div>
@@ -90,8 +117,8 @@
             <div class="form-group"><label>Grand Total</label><input class="form-control" type="number" [(ngModel)]="newDeposit.grandTotal"/></div>
           </div>
           <div class="form-footer">
-            <button class="btn btn-secondary" (click)="toggleDepositForm()">Cancel</button>
-            <button class="btn btn-primary" (click)="saveDeposit()">Save</button>
+            <button type="button" class="btn btn-secondary" (click)="closeDepositForm()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="saveDeposit()" [disabled]="isSavingDeposit || isLoadingForm">{{ isSavingDeposit ? 'Saving...' : 'Save' }}</button>
           </div>
         </div>
       </div>
@@ -109,34 +136,59 @@
             <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm" (input)="filterPayments()"/>
             <span class="search-shortcut">Ctrl Shift K</span>
           </div>
-          <button class="btn btn-primary btn-add" (click)="togglePaymentForm()">+ Add Payment</button>
+          <button type="button" class="btn btn-primary btn-add" (click)="openPaymentForm()">+ Add Payment</button>
         </div>
       </div>
       <div class="table-wrapper">
-        <table class="table" *ngIf="filteredPayments.length">
+        <div *ngIf="isLoadingPayments" class="loading-message">Loading bank payments from database...</div>
+        <table class="table" *ngIf="!isLoadingPayments && paginatedPayments.length">
           <thead>
             <tr>
               <th>Transaction Type</th><th>Bank Account</th><th>Transaction Date</th><th>Voucher Series</th><th>Voucher No</th><th>Bank Name</th><th>Amount</th><th>Grand Total</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let p of filteredPayments">
+            <tr *ngFor="let p of paginatedPayments">
               <td>{{p.transactionType}}</td><td>{{p.bankAccount}}</td><td>{{p.transactionDate}}</td><td>{{p.voucherSeries}}</td><td>{{p.voucherNo}}</td><td>{{p.bankName}}</td><td>{{p.amount}}</td><td>{{p.grandTotal}}</td>
             </tr>
           </tbody>
         </table>
-        <div class="empty-state" *ngIf="!filteredPayments.length">
-          <p>No payments found. Click "Add Payment" to record one.</p>
+        <div class="empty-state" *ngIf="!isLoadingPayments && !filteredPayments.length">
+          <p>No bank payments found in database. Click "Add Payment" to record one.</p>
+          <p class="field-hint">Saved in <strong>voucher_header</strong> (<code>voucher_type = bank_payment</code>) and <strong>voucher_line</strong>.</p>
+        </div>
+      </div>
+
+      <div class="pagination-container" *ngIf="filteredPayments.length > 0 && !isLoadingPayments">
+        <div class="pagination-info">
+          Showing {{ (paymentCurrentPage - 1) * pageSize + 1 }} to {{ paymentPaginationEnd }} of {{ filteredPayments.length }} results
+        </div>
+        <div class="pagination-controls">
+          <button type="button" class="page-btn prev" [disabled]="paymentCurrentPage === 1" (click)="prevPaymentPage()">
+            <span>&lt;</span> Previous
+          </button>
+          <div class="page-numbers">
+            <button type="button" class="page-number" *ngFor="let p of getPaymentVisiblePages()"
+              [class.active]="paymentCurrentPage === p" (click)="goToPaymentPage(p)">
+              {{ p }}
+            </button>
+          </div>
+          <button type="button" class="page-btn next" [disabled]="paymentCurrentPage === paymentTotalPages" (click)="nextPaymentPage()">
+            Next <span>&gt;</span>
+          </button>
         </div>
       </div>
     </div>
+
     <div class="add-entry-form" *ngIf="showPaymentForm">
       <div class="form-card">
         <div class="form-header">
           <h2>Record Bank Payment</h2>
-          <button class="close-btn" (click)="togglePaymentForm()">×</button>
+          <button type="button" class="close-btn" (click)="closePaymentForm()">×</button>
         </div>
         <div class="form-body">
+          <div *ngIf="paymentApiError" class="error-banner">{{ paymentApiError }}</div>
+          <p *ngIf="isLoadingForm" class="field-hint">Loading form defaults...</p>
           <div class="form-row">
             <div class="form-group"><label>Transaction Type</label><input class="form-control" [(ngModel)]="newPayment.transactionType" placeholder="Vendor Payment, Salary, etc."/></div>
             <div class="form-group"><label>Bank Account</label><input class="form-control" [(ngModel)]="newPayment.bankAccount" placeholder="Account number"/></div>
@@ -166,8 +218,8 @@
             <div class="form-group"><label>Grand Total</label><input class="form-control" type="number" [(ngModel)]="newPayment.grandTotal"/></div>
           </div>
           <div class="form-footer">
-            <button class="btn btn-secondary" (click)="togglePaymentForm()">Cancel</button>
-            <button class="btn btn-primary" (click)="savePayment()">Save</button>
+            <button type="button" class="btn btn-secondary" (click)="closePaymentForm()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="savePayment()" [disabled]="isSavingPayment || isLoadingForm">{{ isSavingPayment ? 'Saving...' : 'Save' }}</button>
           </div>
         </div>
       </div>

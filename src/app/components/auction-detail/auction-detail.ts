@@ -1,7 +1,8 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 
 import {
   AuctionBidResponse,
@@ -93,6 +94,8 @@ interface AuctionDetailState {
   styleUrl: './auction-detail.scss',
 })
 export class AuctionDetailComponent implements OnInit, OnDestroy {
+  private platformId = inject(PLATFORM_ID);
+
   isLoading = false;
   errorMessage = '';
   auctionId: number | null = null;
@@ -124,10 +127,15 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private svc: AuctionsService
+    private svc: AuctionsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     const rawId = this.route.snapshot.paramMap.get('auctionId');
     const auctionId = rawId ? Number(rawId) : NaN;
 
@@ -159,40 +167,72 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
     this.bids = [];
     this.svc.disconnectFromAuction();
 
-    forkJoin({
-      auctions: this.svc.listAuctions(),
-      detail: this.svc.getAuctionById(auctionId),
-    }).subscribe({
-      next: ({ auctions, detail }) => {
-        const allAuctions = this.normalizeAuctionList(this.extractData<AuctionResponse[]>(auctions));
-        const base = allAuctions.find((item) => item.id === auctionId) ?? null;
-        const merged = this.mergeAuction(base, this.extractData<Partial<AuctionResponse>>(detail));
+    this.svc.getAuctionById(auctionId).pipe(
+      catchError(() => of({ success: false, message: 'Failed to load auction details.', data: null }))
+    ).subscribe({
+      next: (detailRes) => {
+        const detail = this.extractData<Partial<AuctionResponse>>(detailRes);
+        if (!detailRes?.success || !detail?.id) {
+          this.errorMessage = detailRes?.message || 'Auction details are not available for the selected auction.';
+          this.isLoading = false;
+          this.cdr.detectChanges();
+          return;
+        }
 
+        const merged = this.mergeAuction(null, detail);
         if (!merged) {
           this.errorMessage = 'Auction details are not available for the selected auction.';
           this.isLoading = false;
+          this.cdr.detectChanges();
           return;
         }
 
         this.selected = merged;
-        this.setHeader(merged, allAuctions.filter((item) => item.chitGroupId === merged.chitGroupId).length || 1);
+        this.setHeader(merged, merged.auctionNumber || 1);
         this.setCalcBase(merged);
-
+        this.loadGroupAuctionCount(merged);
         this.loadSupplementaryData(merged);
       },
       error: () => {
         this.errorMessage = 'Failed to load auction details.';
         this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private loadGroupAuctionCount(auction: AuctionSummary): void {
+    this.svc.listAuctions().pipe(
+      catchError(() => of({ success: false, message: 'error', data: [] as AuctionResponse[] }))
+    ).subscribe({
+      next: (auctionsRes) => {
+        const allAuctions = this.normalizeAuctionList(this.extractData<AuctionResponse[]>(auctionsRes));
+        const groupCount = allAuctions.filter((item) => item.chitGroupId === auction.chitGroupId).length;
+        if (groupCount > 0) {
+          this.setHeader(auction, groupCount);
+          this.cdr.detectChanges();
+        }
       },
     });
   }
 
   private loadSupplementaryData(auction: AuctionSummary): void {
     forkJoin({
-      bids: this.svc.listBids(auction.id),
-      enrollments: this.svc.getEnrollments(auction.chitGroupId),
-      session: this.svc.getAuctionSession(auction.id),
-    }).subscribe({
+      bids: this.svc.listBids(auction.id).pipe(
+        catchError(() => of({ success: true, message: '', data: [] as AuctionBidResponse[] }))
+      ),
+      enrollments: this.svc.getEnrollmentsFresh(auction.chitGroupId).pipe(
+        catchError(() => of({ success: true, message: '', data: [] as EnrollmentResponse[] }))
+      ),
+      session: this.svc.getAuctionSession(auction.id).pipe(
+        catchError(() => of({ success: true, message: '', data: null }))
+      ),
+    }).pipe(
+      finalize(() => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
       next: ({ bids, enrollments, session }) => {
         const bidData = this.extractData<AuctionBidResponse[]>(bids) ?? [];
         const enrollmentData = this.extractData<EnrollmentResponse[]>(enrollments) ?? [];
@@ -202,14 +242,20 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
 
         if (bidData.length > 0) {
           this.recalculate();
+        } else if (auction.winningBidAmount) {
+          this.calc = {
+            ...this.calc,
+            winningBid: auction.winningBidAmount,
+            bidLoss: auction.bidLossAmount ?? this.calc.bidLoss,
+            dividendPerMember: auction.dividendPerMember ?? this.calc.dividendPerMember,
+            netPayable: auction.netPayable ?? this.calc.netPayable,
+          };
         }
 
         this.session = this.extractData<AuctionSessionResponse>(session);
-        this.isLoading = false;
       },
       error: () => {
         this.errorMessage = 'Auction snapshot loaded, but bids or session data could not be fetched.';
-        this.isLoading = false;
       },
     });
   }
@@ -482,7 +528,7 @@ export class AuctionDetailComponent implements OnInit, OnDestroy {
         return {
           ticketNumber: `T${String(enrollment.ticketNo).padStart(3, '0')}`,
           enrollmentId: enrollment.id,
-          subscriber: enrollment.subscriberName || `Member #${enrollment.id}`,
+          subscriber: enrollment.subscriberName || enrollment.memberName || `Member #${enrollment.id}`,
           subscriberId: enrollment.subscriberId,
           memberStatus: enrollment.status || '-',
           bidAmount,

@@ -20,7 +20,8 @@
         <span class="search-icon">
           <img src="assets/images/icons/Search.png" alt="Search" />
         </span>
-        <input type="text" placeholder="Search" class="search-input" />
+        <input type="text" placeholder="Search" class="search-input" [(ngModel)]="searchTerm"
+          (input)="filterTargets()" />
         <span class="search-shortcut">Ctrl Shift K</span>
       </div>
     </div>
@@ -36,9 +37,9 @@
         </thead>
         <tbody>
           <tr *ngFor="let t of savedTargets">
-            <td>{{ agentName(t.agentId) }}</td>
-            <td>{{ t.amount }}</td>
-            <td>{{ t.month }}</td>
+            <td>{{ t.agentName }}</td>
+            <td>{{ t.targetAmount }}</td>
+            <td>{{ t.targetMonth }}</td>
           </tr>
         </tbody>
       </table>
@@ -62,9 +63,9 @@
           <div class="form-row">
             <div class="form-group">
               <label for="agent">Agent <span class="text-danger">*</span></label>
-              <select id="agent" [(ngModel)]="selectedAgent" class="form-control">
-                <option value="">-- select agent --</option>
-                <option *ngFor="let a of agents" [value]="a.id">{{ a.name }}</option>
+              <select id="agent" [(ngModel)]="selectedAgentId" class="form-control">
+                <option [ngValue]="null">-- select agent --</option>
+                <option *ngFor="let a of agents" [ngValue]="a.id">{{ a.name }}</option>
               </select>
             </div>
 

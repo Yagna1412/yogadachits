@@ -1,6 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import {
+  SuitFileService,
+  SuitMemberOption,
+  SuitTimelineEntry,
+  SuitFileRecord
+} from '../../service/suit-file.service';
 
 interface Member {
   id: string;
@@ -26,27 +33,29 @@ interface TimelineEntry {
 
 @Component({
   selector: 'app-suit-file',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './suit-file.html',
   styleUrl: './suit-file.scss',
 })
-export class SuitFileInfoComponent {
+export class SuitFileInfoComponent implements OnInit {
+  private platformId = inject(PLATFORM_ID);
+  private readonly defaultAvatar = 'assets/images/icons/user.png';
+
   searchQuery: string = '';
   selectedMember: Member | null = null;
   showAddSuitModal: boolean = false;
   showSuccessModal: boolean = false;
+  isSavingSuit: boolean = false;
+  isSavingTimeline: boolean = false;
 
   newSuit: any = {
     memberId: '',
-    eventType: '',
     suitCause: '',
     suitDate: '',
     courtName: '',
     lawyerDetails: '',
-    date: '',
-    time: '',
     caseNumber: '',
-    description: '',
     principal: null,
     interest: null,
     legalCost: null,
@@ -55,11 +64,13 @@ export class SuitFileInfoComponent {
     legalNoticeDate: ''
   };
 
-  // Timeline modal state
   showTimelineModal: boolean = false;
   showTimelineSuccess: boolean = false;
+  currentCaseNumber: string = '';
+  hasSuitFile: boolean = false;
+  activeSuitFile: SuitFileRecord | null = null;
 
-  notifyUsers: string[] = ['Suresh Babu', 'Mahesh Naidu', 'Priya Sharma'];
+  notifyUsers: string[] = [];
 
   newTimeline: any = {
     title: '',
@@ -73,139 +84,235 @@ export class SuitFileInfoComponent {
   filteredNotifyUsers: string[] = [];
   showNotifyDropdown: boolean = false;
 
-  uploadedFiles: Array<{name: string; size: string; raw?: File}> = [];
+  uploadedFiles: Array<{ name: string; size: string; raw?: File }> = [];
 
-  members: Member[] = [
-    {
-      id: '1',
-      name: 'Srikanth Yadav',
-      avatar: 'https://i.pravatar.cc/150?img=1',
-      joinedDate: 'Mar 2023',
-      status: 'Case Filed',
-      outstandingAmount: '₹ 25,000',
-      enrolledGroups: ['Golden Circle 2024', 'Silver Star 50']
-    },
-    {
-      id: '2',
-      name: 'Anjali Reddy',
-      avatar: 'https://i.pravatar.cc/150?img=2',
-      joinedDate: 'Mar 2023',
-      status: 'Pending',
-      outstandingAmount: '₹ 30,000',
-      enrolledGroups: ['Golden Circle 2024']
-    },
-    {
-      id: '3',
-      name: 'Ravi Kumar Goud',
-      avatar: 'https://i.pravatar.cc/150?img=3',
-      joinedDate: 'Mar 2023',
-      status: 'Active',
-      outstandingAmount: '₹ 15,000',
-      enrolledGroups: ['Silver Star 50']
-    },
-    {
-      id: '4',
-      name: 'Mahesh Naidu',
-      avatar: 'https://i.pravatar.cc/150?img=4',
-      joinedDate: 'Mar 2023',
-      status: 'Active',
-      outstandingAmount: '₹ 20,000',
-      enrolledGroups: ['Golden Circle 2024', 'Silver Star 50']
-    }
-  ];
-
-  suggestedMembers: Member[] = [
-    this.members[1],
-    this.members[2],
-    this.members[3]
-  ];
-
+  members: Member[] = [];
+  suggestedMembers: Member[] = [];
   searchResults: Member[] = [];
+  timelineEntries: TimelineEntry[] = [];
+  timelineLoadError = '';
+  pageMessage = '';
 
-  timelineEntries: TimelineEntry[] = [
-    {
-      title: 'Legal Notice Sent',
-      subtitle: 'First notice sent via registered post',
-      date: 'Mar 19,2026',
-      time: '03:30 PM'
-    },
-    {
-      title: 'Notice Received',
-      subtitle: 'Acknowledgement received',
-      date: 'Mar 19,2026',
-      time: '03:30 PM'
-    },
-    {
-      title: 'Case Filed',
-      subtitle: 'Case filed at Dist. Court - Case No. 2024/CH/1234',
-      date: 'May 19,2026',
-      time: '03:30 PM'
-    },
-    {
-      title: 'First Hearing',
-      subtitle: 'Defendant requested adjournment',
-      date: 'June 19,2026',
-      time: '03:30 PM',
-      document: {
-        name: 'First Hearing Imp.pdf',
-        size: '5.3 MB'
-      }
-    },
-    {
-      title: 'Second Hearing',
-      subtitle: 'OverviEvidence submission - Next hearing: Mar 19,2027 • 2 Hrs',
-      date: '',
-      time: '',
-      document: {
-        name: 'Second Hearing Imp.pdf',
-        size: '5.3 MB'
-      },
-      notify: ['Suresh Babu', 'Mahesh Naidu']
+  suitErrorMessage: string = '';
+  timelineErrorMessage: string = '';
+
+  constructor(
+    private suitFileService: SuitFileService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
     }
-  ];
+    this.loadMembers();
+    this.suitFileService.getNotifyUsers().subscribe({
+      next: (users) => {
+        this.notifyUsers = users;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadMembers(searchTerm?: string) {
+    this.suitFileService.getMembers(searchTerm).subscribe({
+      next: (data) => {
+        const mapped = data.map(m => this.mapMemberOption(m));
+        this.members = mapped;
+        if (!searchTerm?.trim()) {
+          this.suggestedMembers = mapped.slice(0, 4);
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.pageMessage = 'Unable to load members. Please ensure the backend is running on port 8080.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   onSearch() {
-    if (this.searchQuery.trim() === '') {
+    const term = this.searchQuery.trim();
+    if (!term) {
       this.searchResults = [];
-    } else {
-      const query = this.searchQuery.toLowerCase();
-      this.searchResults = this.members.filter(member => 
-        member.name.toLowerCase().includes(query)
-      );
+      return;
     }
+
+    this.suitFileService.getMembers(term).subscribe({
+      next: (data) => {
+        this.searchResults = data.map(m => this.mapMemberOption(m));
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.searchResults = [];
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   selectMember(member: Member) {
-    this.selectedMember = member;
+    this.selectedMember = { ...member };
     this.searchQuery = '';
     this.searchResults = [];
+    this.timelineLoadError = '';
+    this.pageMessage = '';
+
+    this.refreshMemberSummary(Number(member.id));
+    this.loadSuitFile(Number(member.id));
+    this.loadTimeline(Number(member.id));
+  }
+
+  refreshMemberSummary(memberId: number) {
+    this.suitFileService.getMemberSummary(memberId).subscribe({
+      next: (summary) => {
+        if (summary?.id) {
+          this.selectedMember = {
+            id: String(summary.id),
+            name: summary.name,
+            avatar: this.resolveAvatar(summary.photoUrl),
+            joinedDate: summary.joinedDate || '',
+            status: this.formatStatus(summary.status),
+            outstandingAmount: summary.outstandingAmount || '₹ 0',
+            enrolledGroups: summary.enrolledGroups || []
+          };
+        }
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadSuitFile(memberId: number) {
+    this.suitFileService.getSuitFileForMember(memberId).subscribe({
+      next: (suit) => {
+        if (suit?.legalCaseId) {
+          this.activeSuitFile = suit;
+          this.hasSuitFile = true;
+          this.currentCaseNumber = suit.caseNumber || '';
+          this.cdr.detectChanges();
+          return;
+        }
+        this.suitFileService.getLatestCaseNumber(memberId).subscribe({
+          next: (caseNo) => {
+            this.hasSuitFile = !!caseNo?.trim();
+            this.currentCaseNumber = caseNo || '';
+            this.activeSuitFile = this.hasSuitFile
+              ? {
+                  legalCaseId: 0,
+                  memberId,
+                  memberName: this.selectedMember?.name || '',
+                  caseNumber: caseNo
+                }
+              : null;
+            this.cdr.detectChanges();
+          }
+        });
+      }
+    });
+  }
+
+  loadTimeline(memberId: number) {
+    this.timelineLoadError = '';
+    this.suitFileService.getTimeline(memberId).subscribe({
+      next: (entries) => {
+        this.timelineEntries = (entries || []).map(e => this.mapTimelineEntry(e));
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.timelineEntries = [];
+        this.timelineLoadError = err?.error?.message || 'Unable to load timeline. Please ensure the backend is running on port 8080.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   openAddSuitDialog() {
+    this.loadMembers();
     this.showAddSuitModal = true;
+    this.suitErrorMessage = '';
+    this.newSuit.memberId = this.selectedMember?.id || '';
   }
 
   closeAddSuitDialog() {
     this.showAddSuitModal = false;
+    this.suitErrorMessage = '';
   }
 
   submitSuitForm() {
-    // Normally send `newSuit` to backend. Close form and show success dialog immediately.
-    this.showAddSuitModal = false;
-    this.showSuccessModal = true;
+    this.suitErrorMessage = '';
+    if (!this.newSuit.memberId) {
+      this.suitErrorMessage = 'Please select a member';
+      return;
+    }
+    if (!this.newSuit.suitCause?.trim()) {
+      this.suitErrorMessage = 'Suit cause is required';
+      return;
+    }
 
-    // reset form
+    this.isSavingSuit = true;
+    this.suitFileService.createSuitFile({
+      memberId: Number(this.newSuit.memberId),
+      suitCause: this.newSuit.suitCause.trim(),
+      suitDate: this.newSuit.suitDate || undefined,
+      caseNumber: this.newSuit.caseNumber || undefined,
+      courtName: this.newSuit.courtName || undefined,
+      lawyerDetails: this.newSuit.lawyerDetails || undefined,
+      principal: this.newSuit.principal ?? undefined,
+      interest: this.newSuit.interest ?? undefined,
+      legalCost: this.newSuit.legalCost ?? undefined,
+      incCharges: this.newSuit.incCharges ?? undefined,
+      claimAmount: this.newSuit.claimAmount ?? undefined,
+      legalNoticeDate: this.newSuit.legalNoticeDate || undefined,
+    }).subscribe({
+      next: (response) => {
+        this.isSavingSuit = false;
+        if (!response?.legalCaseId) {
+          this.suitErrorMessage = 'Save failed. Please check the backend is running.';
+          this.cdr.detectChanges();
+          return;
+        }
+        this.applySavedSuit(response);
+        this.showAddSuitModal = false;
+        this.showSuccessModal = true;
+        this.resetSuitForm();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isSavingSuit = false;
+        this.suitErrorMessage = err?.error?.message || 'Failed to save suit information.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private applySavedSuit(response: SuitFileRecord) {
+    this.activeSuitFile = response;
+    this.hasSuitFile = true;
+    this.currentCaseNumber = response.caseNumber || '';
+
+    const memberId = String(response.memberId);
+    const existing = this.members.find(m => m.id === memberId);
+    this.selectedMember = {
+      id: memberId,
+      name: response.memberName || existing?.name || 'Member',
+      avatar: existing?.avatar || this.defaultAvatar,
+      joinedDate: existing?.joinedDate || '',
+      status: this.formatStatus(response.status || 'filed'),
+      outstandingAmount: response.claimAmount != null ? `₹ ${response.claimAmount}` : (existing?.outstandingAmount || '₹ 0'),
+      enrolledGroups: existing?.enrolledGroups || []
+    };
+
+    this.loadTimeline(Number(response.memberId));
+    this.refreshMemberSummary(Number(response.memberId));
+  }
+
+  resetSuitForm() {
     this.newSuit = {
-      memberId: '',
-      eventType: '',
+      memberId: this.selectedMember?.id || '',
       suitCause: '',
       suitDate: '',
       courtName: '',
       lawyerDetails: '',
-      date: '',
-      time: '',
       caseNumber: '',
-      description: '',
       principal: null,
       interest: null,
       legalCost: null,
@@ -219,31 +326,55 @@ export class SuitFileInfoComponent {
     this.showSuccessModal = false;
   }
 
-  // Timeline modal handlers
   openTimelineDialog() {
+    if (!this.selectedMember) {
+      this.pageMessage = 'Please select a member first.';
+      return;
+    }
+
+    this.timelineErrorMessage = '';
+    this.pageMessage = '';
+
+    if (!this.hasSuitFile) {
+      this.pageMessage = 'No suit file for this member. Click "+ Add Suit File" and save suit information first.';
+      return;
+    }
+
+    this.currentCaseNumber = this.activeSuitFile?.caseNumber || this.currentCaseNumber || '—';
+    this.resetTimelineForm();
     this.showTimelineModal = true;
+    this.cdr.detectChanges();
   }
 
   closeTimelineDialog() {
     this.showTimelineModal = false;
+    this.timelineErrorMessage = '';
+    this.showNotifyDropdown = false;
   }
 
-  handleFileInput(event: any) {
-    const files: FileList = event.target.files;
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      this.uploadedFiles.push({ name: f.name, size: this.humanFileSize(f.size), raw: f });
-    }
+  handleFileInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files) return;
+    this.addFiles(input.files);
+    input.value = '';
   }
 
   onDrop(event: DragEvent) {
     event.preventDefault();
-    if (!event.dataTransfer) return;
-    const files = event.dataTransfer.files;
+    if (!event.dataTransfer?.files?.length) return;
+    this.addFiles(event.dataTransfer.files);
+  }
+
+  addFiles(files: FileList) {
     for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      this.uploadedFiles.push({ name: f.name, size: this.humanFileSize(f.size), raw: f });
+      const file = files[i];
+      this.uploadedFiles.push({
+        name: file.name,
+        size: this.humanFileSize(file.size),
+        raw: file
+      });
     }
+    this.cdr.detectChanges();
   }
 
   removeUploadedFile(index: number) {
@@ -256,7 +387,7 @@ export class SuitFileInfoComponent {
       this.filteredNotifyUsers = this.notifyUsers.filter(u => !this.newTimeline.notify.includes(u));
     } else {
       const term = searchTerm.toLowerCase();
-      this.filteredNotifyUsers = this.notifyUsers.filter(u => 
+      this.filteredNotifyUsers = this.notifyUsers.filter(u =>
         u.toLowerCase().includes(term) && !this.newTimeline.notify.includes(u)
       );
     }
@@ -280,29 +411,91 @@ export class SuitFileInfoComponent {
   }
 
   submitTimelineForm() {
-    // create a timeline entry from form fields
-    const entry: TimelineEntry = {
-      title: this.newTimeline.title || 'Untitled',
-      subtitle: this.newTimeline.details || '',
-      date: this.newTimeline.date,
-      time: this.newTimeline.time,
-      document: this.uploadedFiles.length ? { name: this.uploadedFiles[0].name, size: this.uploadedFiles[0].size } : undefined,
-      notify: this.newTimeline.notify && this.newTimeline.notify.length > 0 ? this.newTimeline.notify : undefined
-    };
-    // add to timeline
-    this.timelineEntries.unshift(entry);
+    if (!this.selectedMember) {
+      return;
+    }
 
-    // close modal and show success
-    this.showTimelineModal = false;
-    this.showTimelineSuccess = true;
+    this.timelineErrorMessage = '';
+    if (!this.newTimeline.title?.trim()) {
+      this.timelineErrorMessage = 'Title is required';
+      return;
+    }
 
-    // reset form
-    this.newTimeline = { title: '', date: '', time: '', details: '', notify: [] };
-    this.uploadedFiles = [];
+    const firstFile = this.uploadedFiles.length ? this.uploadedFiles[0] : null;
+
+    this.isSavingTimeline = true;
+    this.suitFileService.createTimelineEntry(Number(this.selectedMember.id), {
+      title: this.newTimeline.title.trim(),
+      details: this.newTimeline.details?.trim() || undefined,
+      hearingDate: this.newTimeline.date || undefined,
+      hearingTime: this.newTimeline.time || undefined,
+      documentName: firstFile?.name,
+      documentSize: firstFile?.size,
+      notifyUsers: [...this.newTimeline.notify]
+    }).subscribe({
+      next: () => {
+        this.isSavingTimeline = false;
+        this.showTimelineModal = false;
+        this.showTimelineSuccess = true;
+        this.resetTimelineForm();
+        this.loadTimeline(Number(this.selectedMember!.id));
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isSavingTimeline = false;
+        this.timelineErrorMessage = err?.error?.message || 'Failed to save timeline entry.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   closeTimelineSuccess() {
     this.showTimelineSuccess = false;
+  }
+
+  private resetTimelineForm() {
+    this.newTimeline = { title: '', date: '', time: '', details: '', notify: [] };
+    this.uploadedFiles = [];
+    this.notifySearchInput = '';
+    this.filteredNotifyUsers = [];
+    this.showNotifyDropdown = false;
+    this.timelineErrorMessage = '';
+  }
+
+  private mapMemberOption(m: SuitMemberOption): Member {
+    return {
+      id: String(m.id),
+      name: m.name,
+      avatar: this.resolveAvatar(m.photoUrl),
+      joinedDate: m.joinedDate || '',
+      status: 'Active',
+      outstandingAmount: '₹ 0',
+      enrolledGroups: []
+    };
+  }
+
+  private resolveAvatar(photoUrl?: string): string {
+    if (photoUrl && photoUrl !== 'string' && (photoUrl.startsWith('http') || photoUrl.startsWith('assets/'))) {
+      return photoUrl;
+    }
+    return this.defaultAvatar;
+  }
+
+  private mapTimelineEntry(e: SuitTimelineEntry): TimelineEntry {
+    const notify = Array.isArray(e.notify) ? e.notify : (e.notify ? [e.notify as unknown as string] : []);
+    return {
+      title: e.title,
+      subtitle: e.subtitle,
+      date: e.date,
+      time: e.time,
+      document: e.document,
+      notify
+    };
+  }
+
+  private formatStatus(status: string): string {
+    if (!status) return 'Active';
+    return status.charAt(0).toUpperCase() + status.slice(1);
   }
 
   private humanFileSize(size: number) {

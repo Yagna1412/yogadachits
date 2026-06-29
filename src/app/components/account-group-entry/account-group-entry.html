@@ -24,7 +24,9 @@
         <span class="search-shortcut">Ctrl Shift K</span>
       </div>
     </div>
-    <div *ngIf="filteredGroups.length > 0" class="table-wrapper">
+    <div *ngIf="loadError" class="error-message">{{ loadError }}</div>
+    <div *ngIf="isLoading" class="empty-state"><p>Loading groups...</p></div>
+    <div *ngIf="!isLoading && filteredGroups.length > 0" class="table-wrapper">
       <table class="table">
         <thead>
           <tr>
@@ -34,13 +36,13 @@
         </thead>
         <tbody>
           <tr *ngFor="let g of filteredGroups">
-            <td>{{g.name}}</td>
-            <td>{{g.type}}</td>
+            <td>{{ g.name }}</td>
+            <td>{{ g.type }}</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div *ngIf="filteredGroups.length === 0" class="empty-state">
+    <div *ngIf="!isLoading && !loadError && filteredGroups.length === 0" class="empty-state">
       <p>No account groups yet. Click "Add Group" to create one.</p>
     </div>
   </div>
@@ -75,7 +77,9 @@
         </div>
         <div class="form-footer">
           <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
-          <button class="btn btn-primary" (click)="saveGroup()">Save</button>
+          <button class="btn btn-primary" (click)="saveGroup()" [disabled]="isSaving">
+            {{ isSaving ? 'Saving...' : 'Save' }}
+          </button>
         </div>
       </div>
     </div>

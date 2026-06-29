@@ -12,7 +12,7 @@
             <span class="breadcrumb-item active">Member Management</span>
         </nav>
     </div>
-    <button class="btn btn-primary btn-add" (click)="toggleForm()">+ Add Member</button>
+    <button class="btn btn-primary btn-add" (click)="openBlankForm()">{{ addButtonLabel }}</button>
 </div>
 
 <div class="main-container">
@@ -24,15 +24,15 @@
                 <div class="tabs-container">
                     <button class="tab-button" (click)="setOperationType('removal')"
                         [class.active]="operationType === 'removal'">
-                        Member Removal ({{ getTotalRemovals() }})
+                        Member Removal
                     </button>
                     <button class="tab-button" (click)="setOperationType('transfer')"
                         [class.active]="operationType === 'transfer'">
-                        Member Transfer ({{ getTotalTransfers() }})
+                        Member Transfer
                     </button>
                     <button class="tab-button" (click)="setOperationType('reallotment')"
                         [class.active]="operationType === 'reallotment'">
-                        Member Reallotment ({{ getTotalReallotments() }})
+                        Member Reallotment
                     </button>
                 </div>
                 <div class="search-box">
@@ -64,8 +64,15 @@
                 </div>
             </div>
 
+            <!-- Error/Success Messages -->
+            <div *ngIf="loadError" class="error-banner list-banner">
+                <span>{{ loadError }}</span>
+                <button type="button" class="error-close" (click)="dismissLoadError()">×</button>
+            </div>
+            <div *ngIf="isLoading" class="loading-message">Loading members...</div>
+
             <!-- Members Table -->
-            <div class="table-wrapper">
+            <div class="table-wrapper" *ngIf="!isLoading">
                 <table class="table">
                     <thead>
                         <tr>
@@ -78,7 +85,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let member of filteredMembers">
+                        <tr *ngFor="let member of paginatedMembers">
                             <td class="member-name">{{ member.name }}</td>
                             <td>{{ member.ticketNo }}</td>
                             <td>{{ member.groupName }}</td>
@@ -90,105 +97,45 @@
                             </td>
                             <td>
                                 <button class="action-link" *ngIf="operationType === 'transfer'"
-                                    (click)="loadMemberForTransfer(member); showForm = true">
+                                    (click)="openTransferForm(member)">
                                     Transfer
                                 </button>
                                 <button class="action-link" *ngIf="operationType === 'reallotment'"
-                                    (click)="loadMemberForReallotment(member); showForm = true">
+                                    (click)="openReallotmentForm(member)">
                                     Reallocate
                                 </button>
                                 <button class="action-link" *ngIf="operationType === 'removal'"
-                                    (click)="showForm = true; newRemoval.subscriber = member.name; newRemoval.groupName = member.groupName; newRemoval.ticketNo = member.ticketNo">
+                                    (click)="openRemovalForm(member)">
                                     Remove
                                 </button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
 
-            <!-- Removal Records -->
-            <div *ngIf="operationType === 'removal' && removals.length > 0" class="records-section">
-                <h4>Removal Records</h4>
-                <div class="table-wrapper">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Subscriber</th>
-                                <th>Group</th>
-                                <th>Removal Date</th>
-                                <th>Reason</th>
-                                <th>Authorized By</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let removal of removals">
-                                <td>{{ removal.subscriber }}</td>
-                                <td>{{ removal.groupName }}</td>
-                                <td>{{ removal.removalDate }}</td>
-                                <td>{{ removal.reason }}</td>
-                                <td>{{ removal.authorizedBy }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div *ngIf="filteredMembers.length === 0 && !isLoading" class="empty-state">
+                    <p>No members found. Try adjusting your search or filter criteria.</p>
                 </div>
             </div>
 
-            <!-- Transfer Records -->
-            <div *ngIf="operationType === 'transfer' && transfers.length > 0" class="records-section">
-                <h4>Transfer Records</h4>
-                <div class="table-wrapper">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Subscriber</th>
-                                <th>From Group</th>
-                                <th>To Group</th>
-                                <th>Transfer Date</th>
-                                <th>Reason</th>
-                                <th>Authorized By</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let transfer of transfers">
-                                <td>{{ transfer.subscriber }}</td>
-                                <td>{{ transfer.groupName }}</td>
-                                <td>{{ transfer.transferTo }}</td>
-                                <td>{{ transfer.transferDate }}</td>
-                                <td>{{ transfer.reason }}</td>
-                                <td>{{ transfer.authorizedBy }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <!-- Pagination -->
+            <div class="pagination-container" *ngIf="filteredMembers.length > 0 && !isLoading">
+                <div class="pagination-info">
+                    Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ paginationEnd }} of {{ filteredMembers.length }} results
                 </div>
-            </div>
-
-            <!-- Reallotment Records -->
-            <div *ngIf="operationType === 'reallotment' && reallotments.length > 0" class="records-section">
-                <h4>Reallotment Records</h4>
-                <div class="table-wrapper">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Bidder</th>
-                                <th>Group</th>
-                                <th>Ticket Number</th>
-                                <th>Reallotment Date</th>
-                                <th>Reason</th>
-                                <th>Authorized By</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let reallot of reallotments">
-                                <td>{{ reallot.bidder }}</td>
-                                <td>{{ reallot.groupName }}</td>
-                                <td>{{ reallot.ticketNumber }}</td>
-                                <td>{{ reallot.reallotmentDate }}</td>
-                                <td>{{ reallot.reason }}</td>
-                                <td>{{ reallot.authorizedBy }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="pagination-controls">
+                    <button class="page-btn prev" [disabled]="currentPage === 1" (click)="prevPage()">
+                        <span>&lt;</span> Previous
+                    </button>
+                    <div class="page-numbers">
+                        <button class="page-number" *ngFor="let p of getVisiblePages()"
+                            [class.active]="currentPage === p" (click)="goToPage(p)">
+                            {{ p }}
+                        </button>
+                    </div>
+                    <button class="page-btn next" [disabled]="currentPage === totalPages" (click)="nextPage()">
+                        Next <span>&gt;</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -203,12 +150,14 @@
                     <h2 *ngIf="operationType === 'removal'">Remove Member</h2>
                     <h2 *ngIf="operationType === 'transfer'">Transfer Member</h2>
                     <h2 *ngIf="operationType === 'reallotment'">Reallocate Member</h2>
-                    <button class="close-btn" (click)="toggleForm()">×</button>
+                    <button type="button" class="close-btn" (click)="closeForm()">×</button>
                 </div>
 
-                <!-- Error/Success Messages -->
-                <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
-                <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+                <div *ngIf="apiError" class="error-banner">
+                    <span>{{ apiError }}</span>
+                    <button type="button" class="error-close" (click)="dismissApiError()">×</button>
+                </div>
+                <div *ngIf="successMessage" class="success-banner">{{ successMessage }}</div>
 
                 <!-- Form Body -->
                 <div class="form-body">
@@ -217,40 +166,55 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Group Name <span class="required">*</span></label>
-                                <input type="text" class="form-control" [(ngModel)]="newRemoval.groupName" />
+                                <select class="form-control" [class.is-invalid]="hasError('groupName')"
+                                    [(ngModel)]="newRemoval.groupName">
+                                    <option value="">-- Select Group --</option>
+                                    <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
+                                </select>
+                                <span class="field-error" *ngIf="hasError('groupName')">{{ getError('groupName') }}</span>
                             </div>
                             <div class="form-group">
                                 <label>Ticket No <span class="required">*</span></label>
-                                <input type="text" class="form-control" [(ngModel)]="newRemoval.ticketNo" />
+                                <input type="text" class="form-control" [class.is-invalid]="hasError('ticketNo')"
+                                    [(ngModel)]="newRemoval.ticketNo" />
+                                <span class="field-error" *ngIf="hasError('ticketNo')">{{ getError('ticketNo') }}</span>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Subscriber Name <span class="required">*</span></label>
-                                <input type="text" class="form-control" [(ngModel)]="newRemoval.subscriber" />
+                                <input type="text" class="form-control" [class.is-invalid]="hasError('subscriber')"
+                                    [(ngModel)]="newRemoval.subscriber" />
+                                <span class="field-error" *ngIf="hasError('subscriber')">{{ getError('subscriber') }}</span>
                             </div>
                             <div class="form-group">
                                 <label>Removal Date <span class="required">*</span></label>
-                                <input type="date" class="form-control" [(ngModel)]="newRemoval.removalDate" />
+                                <input type="date" class="form-control" [class.is-invalid]="hasError('removalDate')"
+                                    [(ngModel)]="newRemoval.removalDate" />
+                                <span class="field-error" *ngIf="hasError('removalDate')">{{ getError('removalDate') }}</span>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Authorized By <span class="required">*</span></label>
-                                <select class="form-control" [(ngModel)]="newRemoval.authorizedBy">
+                                <select class="form-control" [class.is-invalid]="hasError('authorizedBy')"
+                                    [(ngModel)]="newRemoval.authorizedBy">
                                     <option value="">-- Select --</option>
                                     <option *ngFor="let auth of authorizedBy" [value]="auth">{{ auth }}</option>
                                 </select>
+                                <span class="field-error" *ngIf="hasError('authorizedBy')">{{ getError('authorizedBy') }}</span>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group full-width">
                                 <label>Reason for Removal <span class="required">*</span></label>
-                                <textarea class="form-control" [(ngModel)]="newRemoval.reason"
+                                <textarea class="form-control" [class.is-invalid]="hasError('reason')"
+                                    [(ngModel)]="newRemoval.reason"
                                     placeholder="Enter reason for member removal" rows="3"></textarea>
+                                <span class="field-error" *ngIf="hasError('reason')">{{ getError('reason') }}</span>
                             </div>
                         </div>
                     </div>
@@ -261,29 +225,42 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Transfer Date <span class="required">*</span></label>
-                                <input type="date" class="form-control" [(ngModel)]="newTransfer.transferDate" />
+                                <input type="date" class="form-control" [class.is-invalid]="hasError('transferDate')"
+                                    [(ngModel)]="newTransfer.transferDate" />
+                                <span class="field-error" *ngIf="hasError('transferDate')">{{ getError('transferDate') }}</span>
                             </div>
                             <div class="form-group">
                                 <label>Group <span class="required">*</span></label>
-                                <input type="text" class="form-control" [(ngModel)]="newTransfer.groupName" />
+                                <select class="form-control" [class.is-invalid]="hasError('groupName')"
+                                    [(ngModel)]="newTransfer.groupName">
+                                    <option value="">-- Select Group --</option>
+                                    <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
+                                </select>
+                                <span class="field-error" *ngIf="hasError('groupName')">{{ getError('groupName') }}</span>
                             </div>
                             <div class="form-group">
                                 <label>Ticket No <span class="required">*</span></label>
-                                <input type="text" class="form-control" [(ngModel)]="newTransfer.ticketNo" />
+                                <input type="text" class="form-control" [class.is-invalid]="hasError('ticketNo')"
+                                    [(ngModel)]="newTransfer.ticketNo" />
+                                <span class="field-error" *ngIf="hasError('ticketNo')">{{ getError('ticketNo') }}</span>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Subscriber Name <span class="required">*</span></label>
-                                <input type="text" class="form-control" [(ngModel)]="newTransfer.subscriber" />
+                                <input type="text" class="form-control" [class.is-invalid]="hasError('subscriber')"
+                                    [(ngModel)]="newTransfer.subscriber" />
+                                <span class="field-error" *ngIf="hasError('subscriber')">{{ getError('subscriber') }}</span>
                             </div>
                             <div class="form-group">
                                 <label>Transfer To (Group) <span class="required">*</span></label>
-                                <select class="form-control" [(ngModel)]="newTransfer.transferTo">
+                                <select class="form-control" [class.is-invalid]="hasError('transferTo')"
+                                    [(ngModel)]="newTransfer.transferTo">
                                     <option value="">-- Select Group --</option>
                                     <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
                                 </select>
+                                <span class="field-error" *ngIf="hasError('transferTo')">{{ getError('transferTo') }}</span>
                             </div>
                         </div>
 
@@ -364,8 +341,11 @@
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Transferee Name</label>
-                                <input type="text" class="form-control" [(ngModel)]="newTransfer.transferee" />
+                                <label>Transferee Name <span class="required">*</span></label>
+                                <input type="text" class="form-control" [class.is-invalid]="hasError('transferee')"
+                                    [(ngModel)]="newTransfer.transferee"
+                                    placeholder="Enter existing subscriber name" />
+                                <span class="field-error" *ngIf="hasError('transferee')">{{ getError('transferee') }}</span>
                             </div>
                             <div class="form-group">
                                 <label>Transferee Address</label>
@@ -377,18 +357,22 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Authorized By <span class="required">*</span></label>
-                                <select class="form-control" [(ngModel)]="newTransfer.authorizedBy">
+                                <select class="form-control" [class.is-invalid]="hasError('authorizedBy')"
+                                    [(ngModel)]="newTransfer.authorizedBy">
                                     <option value="">-- Select --</option>
                                     <option *ngFor="let auth of authorizedBy" [value]="auth">{{ auth }}</option>
                                 </select>
+                                <span class="field-error" *ngIf="hasError('authorizedBy')">{{ getError('authorizedBy') }}</span>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group full-width">
                                 <label>Reason for Transfer <span class="required">*</span></label>
-                                <textarea class="form-control" [(ngModel)]="newTransfer.reason"
+                                <textarea class="form-control" [class.is-invalid]="hasError('reason')"
+                                    [(ngModel)]="newTransfer.reason"
                                     placeholder="Enter reason for member transfer" rows="2"></textarea>
+                                <span class="field-error" *ngIf="hasError('reason')">{{ getError('reason') }}</span>
                             </div>
                         </div>
                     </div>
@@ -399,22 +383,34 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Group Name <span class="required">*</span></label>
-                                <input type="text" class="form-control" [(ngModel)]="newReallotment.groupName" />
+                                <select class="form-control" [class.is-invalid]="hasError('groupName')"
+                                    [(ngModel)]="newReallotment.groupName">
+                                    <option value="">-- Select Group --</option>
+                                    <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
+                                </select>
+                                <span class="field-error" *ngIf="hasError('groupName')">{{ getError('groupName') }}</span>
                             </div>
                             <div class="form-group">
                                 <label>Ticket Number <span class="required">*</span></label>
-                                <input type="text" class="form-control" [(ngModel)]="newReallotment.ticketNumber" />
+                                <input type="text" class="form-control" [class.is-invalid]="hasError('ticketNumber')"
+                                    [(ngModel)]="newReallotment.ticketNumber" />
+                                <span class="field-error" *ngIf="hasError('ticketNumber')">{{ getError('ticketNumber') }}</span>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Bidder Name <span class="required">*</span></label>
-                                <input type="text" class="form-control" [(ngModel)]="newReallotment.bidder" />
+                                <input type="text" class="form-control" [class.is-invalid]="hasError('bidder')"
+                                    [(ngModel)]="newReallotment.bidder"
+                                    placeholder="Enter existing subscriber name" />
+                                <span class="field-error" *ngIf="hasError('bidder')">{{ getError('bidder') }}</span>
                             </div>
                             <div class="form-group">
                                 <label>Reallotment Date <span class="required">*</span></label>
-                                <input type="date" class="form-control" [(ngModel)]="newReallotment.reallotmentDate" />
+                                <input type="date" class="form-control" [class.is-invalid]="hasError('reallotmentDate')"
+                                    [(ngModel)]="newReallotment.reallotmentDate" />
+                                <span class="field-error" *ngIf="hasError('reallotmentDate')">{{ getError('reallotmentDate') }}</span>
                             </div>
                         </div>
 
@@ -460,18 +456,22 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Authorized By <span class="required">*</span></label>
-                                <select class="form-control" [(ngModel)]="newReallotment.authorizedBy">
+                                <select class="form-control" [class.is-invalid]="hasError('authorizedBy')"
+                                    [(ngModel)]="newReallotment.authorizedBy">
                                     <option value="">-- Select --</option>
                                     <option *ngFor="let auth of authorizedBy" [value]="auth">{{ auth }}</option>
                                 </select>
+                                <span class="field-error" *ngIf="hasError('authorizedBy')">{{ getError('authorizedBy') }}</span>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group full-width">
                                 <label>Reason for Reallotment <span class="required">*</span></label>
-                                <textarea class="form-control" [(ngModel)]="newReallotment.reason"
+                                <textarea class="form-control" [class.is-invalid]="hasError('reason')"
+                                    [(ngModel)]="newReallotment.reason"
                                     placeholder="Enter reason for member reallotment" rows="2"></textarea>
+                                <span class="field-error" *ngIf="hasError('reason')">{{ getError('reason') }}</span>
                             </div>
                         </div>
                     </div>
@@ -479,10 +479,11 @@
 
                 <!-- Form Footer -->
                 <div class="form-footer">
-                    <button class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
-                    <button class="btn btn-primary"
+                    <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+                    <button type="button" class="btn btn-primary" [disabled]="isSaving"
                         (click)="operationType === 'removal' ? saveRemoval() : (operationType === 'transfer' ? saveTransfer() : saveReallotment())">
-                        Save {{ operationType | titlecase }}
+                        <span *ngIf="isSaving">Saving...</span>
+                        <span *ngIf="!isSaving">{{ operationType === 'removal' ? 'Save Removal' : (operationType === 'transfer' ? 'Save Transfer' : 'Save Reallotment') }}</span>
                     </button>
                 </div>
             </div>
