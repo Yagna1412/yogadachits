@@ -19,7 +19,7 @@ export interface AccountGroupCreateRequest {
 })
 export class AccountGroupService {
   private platformId = inject(PLATFORM_ID);
-  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/account-groups';
+  private apiUrl = '/chitfunds/api/v1/account-groups';
 
   constructor(private http: HttpClient) {}
 

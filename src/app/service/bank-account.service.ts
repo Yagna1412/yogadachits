@@ -4,8 +4,8 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-const DEPOSITS_URL = 'http://localhost:8080/chitfunds/api/v1/bank-deposits';
-const PAYMENTS_URL = 'http://localhost:8080/chitfunds/api/v1/bank-payments';
+const DEPOSITS_URL = '/chitfunds/api/v1/bank-deposits';
+const PAYMENTS_URL = '/chitfunds/api/v1/bank-payments';
 
 export interface ApiResponse<T> {
   success: boolean;

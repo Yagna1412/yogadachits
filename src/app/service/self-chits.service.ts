@@ -31,7 +31,7 @@ export interface SelfChitEntryRequest {
 })
 export class SelfChitsService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/self-chits';
+    private apiUrl = '/chitfunds/api/v1/self-chits';
 
     constructor(private http: HttpClient) { }
 

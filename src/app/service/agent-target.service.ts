@@ -28,7 +28,7 @@ export interface AgentTargetEntryRequest {
 })
 export class AgentTargetService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/agent-targets';
+    private apiUrl = '/chitfunds/api/v1/agent-targets';
     // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/agent-targets';
 
     constructor(private http: HttpClient) { }

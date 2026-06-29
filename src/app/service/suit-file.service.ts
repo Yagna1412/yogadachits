@@ -81,7 +81,7 @@ export interface SuitTimelineCreateRequest {
 })
 export class SuitFileService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/suit-files';
+    private apiUrl = '/chitfunds/api/v1/suit-files';
 
     constructor(private http: HttpClient) { }
 
