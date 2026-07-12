@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+import { environment } from '../../enviornment/enviornment';
 export interface KpiCard {
     count: number;
     label: string;
@@ -81,8 +82,7 @@ export interface ApiResponse<T> {
     providedIn: 'root',
 })
 export class MemberService {
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/members';
-    // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/members';
+    private apiUrl = environment.apiUrl + "/members";
 
     constructor(private http: HttpClient) { }
 
@@ -124,5 +124,20 @@ export class MemberService {
     updateMember(id: number, payload: any): Observable<MemberResponse> {
         return this.http.put<ApiResponse<MemberResponse>>(`${this.apiUrl}/${id}`, payload, this.getAuthHeaders())
             .pipe(map(response => response.data));
+    }
+
+    uploadFile(file: File): Observable<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        let headers = new HttpHeaders();
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+            if (token) {
+                headers = headers.set('Authorization', `Bearer ${token}`);
+            }
+        }
+
+        return this.http.post<ApiResponse<{url: string}>>(`${this.apiUrl}/upload`, formData, { headers });
     }
 }

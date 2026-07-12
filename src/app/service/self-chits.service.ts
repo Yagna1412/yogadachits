@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 
+import { environment } from '../../enviornment/enviornment';
 export interface SelfChitDropdownOption {
     id: number;
     name: string;
@@ -31,7 +32,7 @@ export interface SelfChitEntryRequest {
 })
 export class SelfChitsService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/self-chits';
+    private apiUrl = environment.apiUrl + "/self-chits";
 
     constructor(private http: HttpClient) { }
 

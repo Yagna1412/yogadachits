@@ -4,13 +4,13 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+import { environment } from '../../enviornment/enviornment';
 @Injectable({
     providedIn: 'root'
 })
 export class SuretyService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/sureties';
-    // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/sureties';
+    private apiUrl = environment.apiUrl + "/sureties";
 
     constructor(private http: HttpClient) { }
 

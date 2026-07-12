@@ -1,8 +1,11 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
+import { environment } from '../../enviornment/enviornment';
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -25,35 +28,23 @@ export interface EnrollmentResponse {
   createdAt?: string;
 }
 
-export interface EnrollmentPayload {
-  memberId: number;
-  subscriberId: number;
-  chitGroupId: number;
-  businessAgentId?: number | null;
-  collectionAgentId?: number | null;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class EnrollmentsService {
 
   private platformId = inject(PLATFORM_ID);
-  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/enrollments';
+  private apiUrl = environment.apiUrl + "/enrollments";
 
   constructor(private http: HttpClient) {}
-
-  private isBrowser(): boolean {
-    return isPlatformBrowser(this.platformId);
-  }
 
   private getHeaders(): { headers: HttpHeaders } {
     let headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'X-Tenant-Id': '1'
     });
-    if (this.isBrowser()) {
-      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (isPlatformBrowser(this.platformId)) {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
       if (token) {
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
@@ -62,11 +53,9 @@ export class EnrollmentsService {
             headers = headers.set('Authorization', `Bearer ${token}`);
           } else {
             localStorage.removeItem('authToken');
-            localStorage.removeItem('token');
           }
         } catch {
           localStorage.removeItem('authToken');
-          localStorage.removeItem('token');
         }
       }
     }
@@ -74,47 +63,51 @@ export class EnrollmentsService {
   }
 
   getEnrollments(): Observable<ApiResponse<EnrollmentResponse[]>> {
-    if (!this.isBrowser()) {
-      return of({ success: true, message: '', data: [] });
-    }
-    return this.http.get<ApiResponse<EnrollmentResponse[]>>(this.apiUrl, this.getHeaders());
+    return this.http.get<ApiResponse<EnrollmentResponse[]>>(
+      this.apiUrl, this.getHeaders()
+    ).pipe(
+      catchError(() => of({
+        success: false,
+        message: 'Failed to load enrollments',
+        data: null
+      } as ApiResponse<EnrollmentResponse[]>))
+    );
   }
 
   getEnrollmentById(enrollmentId: number): Observable<ApiResponse<EnrollmentResponse>> {
-    if (!this.isBrowser()) {
-      return of({ success: false, message: '', data: null });
-    }
     return this.http.get<ApiResponse<EnrollmentResponse>>(
       `${this.apiUrl}/${enrollmentId}`, this.getHeaders()
+    ).pipe(
+      catchError(() => of({
+        success: false,
+        message: 'Failed to load enrollment details',
+        data: null
+      } as ApiResponse<EnrollmentResponse>))
     );
   }
 
   getInstallmentsByEnrollmentId(enrollmentId: number): Observable<ApiResponse<any[]>> {
-    if (!this.isBrowser()) {
-      return of({ success: true, message: '', data: [] });
-    }
     return this.http.get<ApiResponse<any[]>>(
-      `http://localhost:8080/chitfunds/api/v1/installments?enrollmentId=${enrollmentId}`,
+      `${environment.apiUrl}/installments?enrollmentId=${enrollmentId}`,
       this.getHeaders()
+    ).pipe(
+      catchError(() => of({
+        success: false,
+        message: 'Failed to load installments',
+        data: []
+      } as ApiResponse<any[]>))
     );
   }
 
-  createEnrollment(payload: EnrollmentPayload): Observable<ApiResponse<EnrollmentResponse>> {
-    if (!this.isBrowser()) {
-      return of({ success: false, message: 'Not available on server', data: null });
-    }
+  createEnrollment(payload: any): Observable<ApiResponse<EnrollmentResponse>> {
     return this.http.post<ApiResponse<EnrollmentResponse>>(
       this.apiUrl, payload, this.getHeaders()
-    );
-  }
-
-  createSubscriberForMember(memberId: number, displayName: string): Observable<ApiResponse<any>> {
-    if (!this.isBrowser()) {
-      return of({ success: false, message: 'Not available on server', data: null });
-    }
-    const payload = { subscriberType: 'member', memberId, displayName };
-    return this.http.post<ApiResponse<any>>(
-      'http://localhost:8080/chitfunds/api/v1/subscribers', payload, this.getHeaders()
+    ).pipe(
+      catchError(() => of({
+        success: false,
+        message: 'Failed to create enrollment',
+        data: null
+      } as ApiResponse<EnrollmentResponse>))
     );
   }
 }

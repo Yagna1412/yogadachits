@@ -4,6 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+import { environment } from '../../enviornment/enviornment';
 export interface MemberReceiptTableResponse {
   id: number; // Added ID for delete action
   receiptNo: string;
@@ -35,8 +36,7 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class MemberReceiptService {
-  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/member-receipts';
-  // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/member-receipts';
+  private apiUrl = environment.apiUrl + "/member-receipts";
 
   constructor(
     private http: HttpClient,

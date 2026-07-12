@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../enviornment/enviornment';
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -48,8 +49,7 @@ export interface ReceiptCreateRequest {
 })
 export class ReceiptService {
   
-  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/receipts'; 
-  // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/receipts';
+  private apiUrl = environment.apiUrl + "/receipts"; 
 
   constructor(
     private http: HttpClient,

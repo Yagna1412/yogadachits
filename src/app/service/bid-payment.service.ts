@@ -4,7 +4,8 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of, timeout } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-const BASE_URL = 'http://localhost:8080/chitfunds/api/v1/bid-payments';
+import { environment } from '../../enviornment/enviornment';
+const BASE_URL = environment.apiUrl + "/bid-payments";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -81,7 +82,7 @@ export interface BidPaymentFormDetails {
   advanceAdjustment?: number;
 }
 
-/** Payload sent to POST /process — maps to backend BidPaymentDTO */
+/** Payload sent to POST /process â€” maps to backend BidPaymentDTO */
 export interface BidPaymentSaveRequest {
   auctionId: number;
   enrollmentId?: number;

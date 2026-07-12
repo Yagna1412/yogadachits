@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../enviornment/enviornment';
 export interface ApiResponse<T> {
     success: boolean;
     message: string;
@@ -89,7 +90,7 @@ export interface MemberLookupOptions {
 })
 export class MemberManagementService {
 
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/member-management';
+    private apiUrl = environment.apiUrl + "/member-management";
 
     constructor(
         private http: HttpClient,

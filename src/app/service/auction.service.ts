@@ -5,10 +5,9 @@ import { Observable, of, shareReplay } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Client } from '@stomp/stompjs';
 
-const BASE = 'http://localhost:8080/chitfunds/api/v1';
-// const BASE = 'http://3.108.194.139:8080/chitfunds/api/v1';
-const WS_BASE = 'ws://localhost:8080/chitfunds/ws/auctions';
-// const WS_BASE = 'ws://3.108.194.139:8080/chitfunds/ws/auctions';
+import { environment } from '../../enviornment/enviornment';
+const BASE = environment.apiUrl + "";
+const WS_BASE = environment.wsUrl;
 
 export interface ApiResponse<T> {
     success: boolean;
@@ -91,7 +90,7 @@ export class AuctionsService {
     private platformId = inject(PLATFORM_ID);
     constructor(private http: HttpClient) { }
 
-    // ── In-memory caches (singleton, survive route changes) ──────────────────
+    // â”€â”€ In-memory caches (singleton, survive route changes) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private _chitGroups$: Observable<ApiResponse<ChitGroupDto[]>> | null = null;
     private _auctions$: Observable<ApiResponse<AuctionResponse[]>> | null = null;
     private _enrollments$: Map<number, Observable<ApiResponse<EnrollmentResponse[]>>> = new Map();

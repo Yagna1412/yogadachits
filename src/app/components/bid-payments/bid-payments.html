@@ -140,11 +140,6 @@
                   {{ a.label }}
                 </option>
               </optgroup>
-              <optgroup *ngIf="disbursedAuctions.length > 0" label="Already Disbursed">
-                <option *ngFor="let a of disbursedAuctions" [ngValue]="a.id" disabled>
-                  {{ a.label }}
-                </option>
-              </optgroup>
             </select>
             <p *ngIf="isLoadingAuctions" class="field-hint">Loading completed auctions...</p>
             <p *ngIf="!isLoadingAuctions && completedAuctions.length === 0" class="field-hint warn">

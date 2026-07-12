@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 
+import { environment } from '../../enviornment/enviornment';
 export interface PreviousWinnerInfo {
     ticket: string;
     name: string;
@@ -74,10 +75,24 @@ export interface ApiResponse<T> {
     providedIn: 'root'
 })
 export class ReAuctionService {
-    private baseUrl = 'http://localhost:8080/chitfunds/api/v1/re-auctions';
-    // private baseUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/re-auctions';
+    private baseUrl = environment.apiUrl + "/re-auctions";
 
     constructor(private http: HttpClient) { }
+
+    private getAuthHeaders(): { headers: HttpHeaders } {
+        let headers = new HttpHeaders({
+            'Content-Type': 'application/json'
+        });
+
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+            if (token) {
+                headers = headers.set('Authorization', `Bearer ${token}`);
+            }
+        }
+
+        return { headers };
+    }
 
     private request<T>(obs: Observable<ApiResponse<T>>, fallbackMessage: string): Observable<ApiResponse<T>> {
         return obs.pipe(
@@ -92,42 +107,42 @@ export class ReAuctionService {
 
     getReAuctionDetails(auctionId: number): Observable<ApiResponse<ReAuctionDetailsResponse>> {
         return this.request(
-            this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/details/${auctionId}`),
+            this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/details/${auctionId}`, this.getAuthHeaders()),
             'Unable to load re-auction details.'
         );
     }
 
     getReAuctionDetailsByChitGroup(chitGroupId: number): Observable<ApiResponse<ReAuctionDetailsResponse>> {
         return this.request(
-            this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/chit-group/${chitGroupId}`),
+            this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/chit-group/${chitGroupId}`, this.getAuthHeaders()),
             'Unable to load re-auction details.'
         );
     }
 
     previewReAuction(request: ReAuctionPreviewRequest): Observable<ApiResponse<ReAuctionPreviewResponse>> {
         return this.request(
-            this.http.post<ApiResponse<ReAuctionPreviewResponse>>(`${this.baseUrl}/preview`, request),
+            this.http.post<ApiResponse<ReAuctionPreviewResponse>>(`${this.baseUrl}/preview`, request, this.getAuthHeaders()),
             'Unable to preview re-auction.'
         );
     }
 
     confirmReAuction(request: ReAuctionConfirmRequest): Observable<ApiResponse<string>> {
         return this.request(
-            this.http.post<ApiResponse<string>>(`${this.baseUrl}/confirm`, request),
+            this.http.post<ApiResponse<string>>(`${this.baseUrl}/confirm`, request, this.getAuthHeaders()),
             'Failed to confirm re-auction.'
         );
     }
 
     getReasonOptions(): Observable<ApiResponse<string[]>> {
         return this.request(
-            this.http.get<ApiResponse<string[]>>(`${this.baseUrl}/reasons`),
+            this.http.get<ApiResponse<string[]>>(`${this.baseUrl}/reasons`, this.getAuthHeaders()),
             'Unable to load reason options.'
         );
     }
 
     getLatestEligibleReAuction(): Observable<ApiResponse<ReAuctionDetailsResponse>> {
         return this.request(
-            this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/latest`),
+            this.http.get<ApiResponse<ReAuctionDetailsResponse>>(`${this.baseUrl}/latest`, this.getAuthHeaders()),
             'Unable to load re-auction details.'
         );
     }

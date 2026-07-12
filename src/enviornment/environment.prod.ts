@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8080/chitfunds/api/v1'
-  // apiUrl: 'http://3.108.194.139:8080/chitfunds/api/v1'
+  apiUrl: 'http://13.205.211.107/chitfunds/api/v1',
+  wsUrl: 'ws://13.205.211.107/chitfunds/ws/auctions'
 };

@@ -4,8 +4,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
-const BASE_URL = 'http://localhost:8080/chitfunds/api/v1/chit-groups';
-// const BASE_URL = 'http://3.108.194.139:8080/chitfunds/api/v1/chit-groups';
+import { environment } from '../../enviornment/enviornment';
+const BASE_URL = environment.apiUrl + "/chit-groups";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -23,13 +23,10 @@ export class ChitGroupsService {
 
   private getHeaders(): { headers: HttpHeaders } {
     let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'X-Tenant-Id': '1'
+      'Content-Type': 'application/json'
     });
     if (isPlatformBrowser(this.platformId)) {
-            const token = localStorage.getItem('authToken')
-              || localStorage.getItem('token')
-              || localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token');
       if (token) {
         headers = headers.set('Authorization', `Bearer ${token}`);
       }

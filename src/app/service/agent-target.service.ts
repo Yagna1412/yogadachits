@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+import { environment } from '../../enviornment/enviornment';
 export interface AgentTargetDropdownOption {
     id: number;
     name: string;
@@ -28,8 +29,7 @@ export interface AgentTargetEntryRequest {
 })
 export class AgentTargetService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = 'http://localhost:8080/chitfunds/api/v1/agent-targets';
-    // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/agent-targets';
+    private apiUrl = environment.apiUrl + "/agent-targets";
 
     constructor(private http: HttpClient) { }
 

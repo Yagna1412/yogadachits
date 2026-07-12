@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from './member.service'; 
 
+import { environment } from '../../enviornment/enviornment';
 export interface SubscriberResponse {
   id: number;
   subscriberType: string;
@@ -16,8 +17,7 @@ export interface SubscriberResponse {
   providedIn: 'root'
 })
 export class SubscriberService {
-  private apiUrl = 'http://localhost:8080/chitfunds/api/v1/subscribers';
-  // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/subscribers';
+  private apiUrl = environment.apiUrl + "/subscribers";
 
   constructor(private http: HttpClient) {}
 
