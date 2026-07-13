@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../enviornment/enviornment';
 // Adjust this base URL to match your environment
-const BASE_URL = '/chitfunds/api/v1/credit-balance-returns';
+const BASE_URL = environment.apiUrl + "/credit-balance-returns";
 // const BASE_URL = 'http://3.108.194.139:8080/chitfunds/api/v1/credit-balance-returns';
 
 @Injectable({

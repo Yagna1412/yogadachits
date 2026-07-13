@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MemberService, MemberResponse, MemberKpiSummary } from '../../service/member.service'; 
 import { SubscriberService } from '../../service/subscriber.service'; // Added import
+import { forkJoin, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-members',
@@ -242,6 +243,28 @@ export class MembersComponent implements OnInit {
   }
 
   submitForm(): void {
+    if (!this.newMember.fullName || !this.newMember.spouseOrFatherName || !this.newMember.registrationDate || !this.newMember.mobileNumber) {
+      alert("Please fill in all mandatory fields: Name, Father/Spouse Name, Registration Date, and Mobile Number.");
+      return;
+    }
+
+    const mobilePattern = /^[6-9]\d{9}$/;
+    if (this.newMember.mobileNumber && !mobilePattern.test(this.newMember.mobileNumber)) {
+      alert("Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.");
+      return;
+    }
+
+    const aadharPattern = /^\d{12}$/;
+    if (this.newMember.aadharNumber && !aadharPattern.test(this.newMember.aadharNumber)) {
+      alert("Please enter a valid 12-digit Aadhaar number.");
+      return;
+    }
+
+    if (this.newMember.nomineeMobileNumber && !mobilePattern.test(this.newMember.nomineeMobileNumber)) {
+      alert("Please enter a valid 10-digit nominee mobile number starting with 6, 7, 8, or 9.");
+      return;
+    }
+
     const payload = {
       title: this.newMember.title || null,
       name: this.newMember.fullName, 
@@ -257,9 +280,9 @@ export class MembersComponent implements OnInit {
       maritalStatus: this.newMember.maritalStatus || null,
       introducedAs: this.newMember.spouseName || null,
       
-      photoUrl: null, 
-      signatureUrl: null,
-      passbookUrl: null,
+      photoUrl: this.newMember.photoUrl || null, 
+      signatureUrl: this.newMember.signatureUrl || null,
+      passbookUrl: this.newMember.passbookUrl || null,
       
       bankAccountNumber: this.newMember.accountNumber || null,
       bankAccountHolderName: this.newMember.accountHolderName || null,
@@ -288,6 +311,43 @@ export class MembersComponent implements OnInit {
       route: this.newMember.route || null
     };
 
+    // Upload files if any are selected
+    const uploads: Record<string, Observable<any>> = {};
+    if (this.selectedFiles['photo']) {
+      uploads['photo'] = this.memberService.uploadFile(this.selectedFiles['photo']);
+    }
+    if (this.selectedFiles['signature']) {
+      uploads['signature'] = this.memberService.uploadFile(this.selectedFiles['signature']);
+    }
+    if (this.selectedFiles['passbook']) {
+      uploads['passbook'] = this.memberService.uploadFile(this.selectedFiles['passbook']);
+    }
+
+    if (Object.keys(uploads).length > 0) {
+      forkJoin(uploads).subscribe({
+        next: (results: any) => {
+          if (results.photo && results.photo.success) {
+            payload.photoUrl = results.photo.data.url;
+          }
+          if (results.signature && results.signature.success) {
+            payload.signatureUrl = results.signature.data.url;
+          }
+          if (results.passbook && results.passbook.success) {
+            payload.passbookUrl = results.passbook.data.url;
+          }
+          this.executeSave(payload);
+        },
+        error: (err) => {
+          console.error('File upload failed:', err);
+          alert('Failed to upload files. Please try again.');
+        }
+      });
+    } else {
+      this.executeSave(payload);
+    }
+  }
+
+  private executeSave(payload: any): void {
     const saveObservable = this.isEditMode && this.editingMemberId
       ? this.memberService.updateMember(this.editingMemberId, payload)
       : this.memberService.createMember(payload);
@@ -345,6 +405,26 @@ export class MembersComponent implements OnInit {
     if (this.currentStep === 1) {
       if (!this.newMember.fullName || !this.newMember.spouseOrFatherName || !this.newMember.registrationDate || !this.newMember.mobileNumber) {
         alert("Please fill in all mandatory fields: Name, Father/Spouse Name, Registration Date, and Mobile Number.");
+        return false;
+      }
+      
+      const mobilePattern = /^[6-9]\d{9}$/;
+      if (this.newMember.mobileNumber && !mobilePattern.test(this.newMember.mobileNumber)) {
+        alert("Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.");
+        return false;
+      }
+
+      const aadharPattern = /^\d{12}$/;
+      if (this.newMember.aadharNumber && !aadharPattern.test(this.newMember.aadharNumber)) {
+        alert("Please enter a valid 12-digit Aadhaar number.");
+        return false;
+      }
+    }
+
+    if (this.currentStep === 6) {
+      const mobilePattern = /^[6-9]\d{9}$/;
+      if (this.newMember.nomineeMobileNumber && !mobilePattern.test(this.newMember.nomineeMobileNumber)) {
+        alert("Please enter a valid 10-digit nominee mobile number starting with 6, 7, 8, or 9.");
         return false;
       }
     }

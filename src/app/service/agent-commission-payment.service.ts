@@ -2,13 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../enviornment/enviornment';
 @Injectable({
   providedIn: 'root'
 })
 export class AgentCommissionPaymentService {
   // Matched to standard Spring Boot port and path
-  private apiUrl = '/chitfunds/api/admin/agent-commission-payment';
-  // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/admin/agent-commission-payment';
+  private apiUrl = environment.apiUrl.replace('/api/v1', '/api/admin') + '/agent-commission-payment';
 
   constructor(private http: HttpClient) {}
 

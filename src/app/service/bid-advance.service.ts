@@ -4,7 +4,8 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 
-const BASE_URL = '/chitfunds/api/v1/bid-advances';
+import { environment } from '../../enviornment/enviornment';
+const BASE_URL = environment.apiUrl + "/bid-advances";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -95,9 +96,6 @@ export interface BidAdvanceSaveRequest {
 })
 export class BidAdvanceService {
   private platformId = inject(PLATFORM_ID);
-  // Update this to match your actual backend URL/port
-  private apiUrl = '/chitfunds/api/v1/bid-advances';
-  // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/bid-advances';
 
   constructor(private http: HttpClient) {}
 

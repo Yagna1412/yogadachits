@@ -2,15 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../enviornment/enviornment';
 @Injectable({ providedIn: 'root' })
 export class JournalVoucherService {
-    private apiUrl = '/chitfunds/api/admin/journal-voucher';
-    // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/admin/journal-voucher';
+    private apiUrl = environment.apiUrl.replace('/api/v1', '/api/admin') + '/journal-voucher';
 
     constructor(private http: HttpClient) { }
 
     getJournals(tenantId: number): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/list?tenantId=${tenantId}`);
+        return this.http.get<any[]>(`${this.apiUrl}?tenantId=${tenantId}`);
     }
 
     saveJournal(data: any): Observable<any> {

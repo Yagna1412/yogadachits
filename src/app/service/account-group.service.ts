@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 
+import { environment } from '../../enviornment/enviornment';
 export interface AccountGroupRecord {
   accountGroupId: number;
   groupName: string;
@@ -19,7 +20,7 @@ export interface AccountGroupCreateRequest {
 })
 export class AccountGroupService {
   private platformId = inject(PLATFORM_ID);
-  private apiUrl = '/chitfunds/api/v1/account-groups';
+  private apiUrl = environment.apiUrl + "/account-groups";
 
   constructor(private http: HttpClient) {}
 

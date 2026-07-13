@@ -67,6 +67,7 @@ export class ChitGroupsComponent implements OnInit, AfterViewInit {
   viewMode: 'grid' | 'list' = 'grid';
   searchTerm = '';
   statusFilter = '';
+  isCreatingGroup = false;
 
   // Pagination & Sorting state
   currentPage = 1;
@@ -246,6 +247,7 @@ export class ChitGroupsComponent implements OnInit, AfterViewInit {
 
   createGroup(): void {
     if (this.isFormValid()) {
+      this.isCreatingGroup = true;
       const monthlyAmount =
         this.newGroup.installmentAmount ||
         Math.round((this.newGroup.chitAmount ?? 0) / (this.newGroup.noOfInstallments ?? 1));
@@ -340,9 +342,11 @@ export class ChitGroupsComponent implements OnInit, AfterViewInit {
           this.currentPage = 1;
           this.sortColumn = 'id';
           this.sortDirection = 'desc';
+          this.isCreatingGroup = false;
           this.toggleAddGroupForm();
           this.loadGroupsFromDatabase(); // Background fetch syncs quietly securely
         } else {
+          this.isCreatingGroup = false;
           // Provide silent fallback or fail-soft logging rather than breaking UI flow
           console.error(response?.message || 'Failed to create group. Check inputs.');
         }

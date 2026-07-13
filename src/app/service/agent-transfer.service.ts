@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+import { environment } from '../../enviornment/enviornment';
 export interface AgentTransferDropdownOption {
     id: number;
     name: string;
@@ -33,8 +34,7 @@ export interface AgentTransferRequest {
 })
 export class AgentTransferService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = '/chitfunds/api/v1/agent-transfers';
-    // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/agent-transfers';
+    private apiUrl = environment.apiUrl + "/agent-transfers";
 
     constructor(private http: HttpClient) { }
 

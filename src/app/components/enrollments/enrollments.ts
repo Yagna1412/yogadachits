@@ -1,12 +1,10 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   EnrollmentsService,
   EnrollmentResponse,
-  ApiResponse,
-  EnrollmentPayload
+  ApiResponse
 } from '../../service/enrollments.service';
 import { ChitGroupsService } from '../../service/chit-groups.service';
 import { MemberService, MemberResponse } from '../../service/member.service';
@@ -24,7 +22,6 @@ interface EnrollmentChitGroupOption {
   styleUrls: ['./enrollments.scss']
 })
 export class EnrollmentsComponent implements OnInit, AfterViewInit {
-  private platformId = inject(PLATFORM_ID);
 
   isLoading = false;
   errorMessage = '';
@@ -173,9 +170,6 @@ export class EnrollmentsComponent implements OnInit, AfterViewInit {
   ) { }
 
   ngOnInit(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
     this.loadEnrollments();
     this.loadChitGroups();
     this.loadMembers();
@@ -192,24 +186,21 @@ export class EnrollmentsComponent implements OnInit, AfterViewInit {
     this.errorMessage = '';
 
     this.enrollmentsService.getEnrollments().subscribe({
-      next: (res) => {
-        if (res?.success === false) {
+      next: (res: any) => {
+        const data = res?.data || res || [];
+        if (Array.isArray(data)) {
+          this.enrollments = data;
+          this.filteredEnrollments = [...this.enrollments];
+        } else {
           this.enrollments = [];
           this.filteredEnrollments = [];
-          this.errorMessage = res.message || 'Failed to load enrollments.';
-        } else {
-          const data = res?.data ?? [];
-          this.enrollments = Array.isArray(data) ? data : [];
-          this.filteredEnrollments = [...this.enrollments];
-          this.errorMessage = '';
+          this.errorMessage = res?.message || 'Failed to load enrollments.';
         }
         this.isLoading = false;
-        this.cdr.detectChanges();
+        this.cdr.detectChanges(); // Manually flush explicitly so native `fetch` API doesn't maroon UI
       },
-      error: (err) => {
-        this.enrollments = [];
-        this.filteredEnrollments = [];
-        this.errorMessage = err?.error?.message || 'Failed to load enrollments. Please ensure the backend is running on port 8080.';
+      error: () => {
+        this.errorMessage = 'Failed to load enrollments. Please check the backend is running.';
         this.isLoading = false;
         this.cdr.detectChanges();
       }
@@ -326,43 +317,11 @@ export class EnrollmentsComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const assignedMember = this.membersList.find(m => m.id === this.memberId);
-
-    if (!assignedMember) {
-      this.saveError = 'Selected Member could not be found.';
-      return;
-    }
-
-    // Auto-generate Subscriber if missing!
-    if (assignedMember.subscriberId === undefined || assignedMember.subscriberId === null) {
-      this.saving = true;
-      this.enrollmentsService.createSubscriberForMember(this.memberId, assignedMember.name).subscribe({
-        next: (subRes: any) => {
-          if (subRes && subRes.success && subRes.data) {
-            // Update the locally cached member to now hold the newly created subscriber ID
-            assignedMember.subscriberId = subRes.data.id;
-            this._proceedWithEnrollment(assignedMember.subscriberId);
-          } else {
-            this.saving = false;
-            this.saveError = subRes?.message || 'Failed to generate Subscriber ID automatically.';
-          }
-        },
-        error: (err: any) => {
-          this.saving = false;
-          this.saveError = err?.error?.message || 'Error generating Subscriber ID automatically.';
-        }
-      });
-      return;
-    }
-
-    this._proceedWithEnrollment(assignedMember.subscriberId);
-  }
-
-  private _proceedWithEnrollment(subscriberId: number): void {
-    const payload: EnrollmentPayload = {
-      subscriberId: subscriberId,
-      memberId: this.memberId!,
-      chitGroupId: this.selectedGroupId!,
+    const payload = {
+      subscriberId: this.memberId,
+      memberId: this.memberId,
+      chitGroupId: this.selectedGroupId,
+      // ticketNo is purposely completely omitted so the backend calculates it
       businessAgentId: this.businessAgentId || null,
       collectionAgentId: this.collectionAgentId || null
     };

@@ -4,8 +4,9 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-const RECEIPTS_URL = '/chitfunds/api/v1/cash-receipts';
-const PAYMENTS_URL = '/chitfunds/api/v1/cash-payments';
+import { environment } from '../../enviornment/enviornment';
+const RECEIPTS_URL = environment.apiUrl + "/cash-receipts";
+const PAYMENTS_URL = environment.apiUrl + "/cash-payments";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -43,8 +44,6 @@ export interface CashTransactionForm {
 @Injectable({ providedIn: 'root' })
 export class CashAccountService {
   private platformId = inject(PLATFORM_ID);
-  private apiUrl = '/chitfunds/api/admin/account-cash';
-  // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/admin/account-cash';
 
   constructor(private http: HttpClient) {}
 

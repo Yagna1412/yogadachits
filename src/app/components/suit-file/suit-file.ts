@@ -8,6 +8,7 @@ import {
   SuitTimelineEntry,
   SuitFileRecord
 } from '../../service/suit-file.service';
+import { environment } from '../../../enviornment/enviornment';
 
 interface Member {
   id: string;
@@ -475,8 +476,18 @@ export class SuitFileInfoComponent implements OnInit {
   }
 
   private resolveAvatar(photoUrl?: string): string {
-    if (photoUrl && photoUrl !== 'string' && (photoUrl.startsWith('http') || photoUrl.startsWith('assets/'))) {
-      return photoUrl;
+    if (photoUrl && photoUrl !== 'string') {
+      if (photoUrl.startsWith('http') || photoUrl.startsWith('assets/')) {
+        return photoUrl;
+      }
+      if (photoUrl.startsWith('/')) {
+        try {
+          const urlObj = new URL(environment.apiUrl);
+          return `${urlObj.protocol}//${urlObj.host}${photoUrl}`;
+        } catch {
+          return photoUrl;
+        }
+      }
     }
     return this.defaultAvatar;
   }

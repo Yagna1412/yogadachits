@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../enviornment/enviornment';
 export interface ApiResponse<T> {
     success: boolean;
     message: string;
@@ -37,8 +38,7 @@ export interface ChequeSummary {
 })
 export class ChequeService {
 
-    private baseUrl = '/chitfunds/api/v1/cheque-management';
-    // private baseUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/cheque-management';
+    private baseUrl = environment.apiUrl + "/cheque-management";
 
     constructor(
         private http: HttpClient,
