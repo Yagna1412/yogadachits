@@ -110,9 +110,16 @@ export class MemberService {
         });
 
         if (typeof window !== 'undefined' && window.localStorage) {
-            const token = localStorage.getItem('token');
+            const token =
+                localStorage.getItem('authToken') ||
+                localStorage.getItem('token') ||
+                localStorage.getItem('auth_token');
             if (token) {
                 headers = headers.set('Authorization', `Bearer ${token}`);
+            }
+            const tenantId = localStorage.getItem('tenantId');
+            if (tenantId) {
+                headers = headers.set('X-Tenant-Id', tenantId);
             }
         }
 

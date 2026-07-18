@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuctionReportService } from '../../../../service/auction-report.service';
 
 @Component({
   selector: 'app-group-wise-successful-bidders-list',
@@ -14,6 +15,8 @@ export class GroupWiseSuccessfulBiddersListComponent {
   bidders = signal<any[]>([]);
   showResults = signal(false);
   submitted = false;
+  isLoading = false;
+  loadError = '';
 
   groupStatuses = [
     { label: 'Running', value: 'Running' },
@@ -21,7 +24,10 @@ export class GroupWiseSuccessfulBiddersListComponent {
     { label: 'Both', value: 'Both' }
   ];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: AuctionReportService
+  ) {
     this.groupForm = this.fb.group({
       groupName: [''],
       groupStatus: ['Both', Validators.required],
@@ -42,26 +48,28 @@ export class GroupWiseSuccessfulBiddersListComponent {
 
   onGenerate() {
     this.submitted = true;
+    this.loadError = '';
     if (this.groupForm.invalid) return;
-    // Mocked data
-    this.bidders.set([
-      {
-        groupName: this.groupForm.value.groupName || 'Group 1',
-        groupStatus: this.groupForm.value.groupStatus,
-        fromDate: this.groupForm.value.fromDate,
-        toDate: this.groupForm.value.toDate,
-        bidder: 'John Doe',
-        amount: 100000
+
+    const { groupName, groupStatus, fromDate, toDate } = this.groupForm.value;
+    this.isLoading = true;
+    this.reportService.groupWiseSuccessfulBidders({
+      groupName,
+      groupStatus,
+      fromDate,
+      toDate
+    }).subscribe({
+      next: (rows) => {
+        this.bidders.set(rows);
+        this.showResults.set(true);
+        this.isLoading = false;
       },
-      {
-        groupName: this.groupForm.value.groupName || 'Group 2',
-        groupStatus: this.groupForm.value.groupStatus,
-        fromDate: this.groupForm.value.fromDate,
-        toDate: this.groupForm.value.toDate,
-        bidder: 'Jane Smith',
-        amount: 95000
+      error: (err) => {
+        this.bidders.set([]);
+        this.showResults.set(true);
+        this.loadError = err?.error?.message || 'Unable to load successful bidders list.';
+        this.isLoading = false;
       }
-    ]);
-    this.showResults.set(true);
+    });
   }
 }

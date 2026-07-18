@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuctionReportService } from '../../../../service/auction-report.service';
 
 @Component({
   selector: 'app-gst-report',
@@ -14,15 +15,17 @@ export class GstReportComponent {
   results = signal<any[]>([]);
   showResults = signal(false);
   submitted = false;
+  isLoading = false;
+  loadError = '';
 
   orders = ['Order 1', 'Order 2', 'Order 3'];
-  months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  months = [...AuctionReportService.MONTHS];
   years = [2024, 2025, 2026];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: AuctionReportService
+  ) {
     this.gstForm = this.fb.group({
       order: ['', Validators.required],
       month: ['', Validators.required],
@@ -32,13 +35,28 @@ export class GstReportComponent {
 
   onGenerate() {
     this.submitted = true;
+    this.loadError = '';
     if (this.gstForm.invalid) return;
-    // Mocked data for preview
-    this.results.set([
-      { order: this.gstForm.value.order, month: this.gstForm.value.month, year: this.gstForm.value.year, subscriber: 'John Doe', chitAmount: 10000, gst: 1800, total: 11800 },
-      { order: this.gstForm.value.order, month: this.gstForm.value.month, year: this.gstForm.value.year, subscriber: 'Jane Smith', chitAmount: 8000, gst: 1440, total: 9440 }
-    ]);
-    this.showResults.set(true);
+
+    const { order, month, year } = this.gstForm.value;
+    this.isLoading = true;
+    this.reportService.gstReport({
+      order,
+      month: this.reportService.monthToNumber(month),
+      year: Number(year)
+    }).subscribe({
+      next: (rows) => {
+        this.results.set(rows);
+        this.showResults.set(true);
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.results.set([]);
+        this.showResults.set(true);
+        this.loadError = err?.error?.message || 'Unable to load GST report.';
+        this.isLoading = false;
+      }
+    });
   }
 
   onPrint() {

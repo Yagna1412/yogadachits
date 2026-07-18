@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuctionReportService } from '../../../../service/auction-report.service';
 
 @Component({
   selector: 'app-auction-turnover-statement',
@@ -14,14 +15,16 @@ export class AuctionTurnoverStatementComponent {
   turnovers = signal<any[]>([]);
   showResults = signal(false);
   submitted = false;
+  isLoading = false;
+  loadError = '';
 
-  months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  months = [...AuctionReportService.MONTHS];
   years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: AuctionReportService
+  ) {
     this.turnoverForm = this.fb.group({
       month: ['', Validators.required],
       year: ['', Validators.required]
@@ -30,24 +33,26 @@ export class AuctionTurnoverStatementComponent {
 
   onGenerate() {
     this.submitted = true;
+    this.loadError = '';
     if (this.turnoverForm.invalid) return;
-    // Mocked data
-    this.turnovers.set([
-      {
-        order: 1,
-        month: this.turnoverForm.value.month,
-        year: this.turnoverForm.value.year,
-        chitGroup: 'Group A',
-        turnover: 150000
+
+    const { month, year } = this.turnoverForm.value;
+    this.isLoading = true;
+    this.reportService.turnoverStatement(
+      this.reportService.monthToNumber(month),
+      Number(year)
+    ).subscribe({
+      next: (rows) => {
+        this.turnovers.set(rows);
+        this.showResults.set(true);
+        this.isLoading = false;
       },
-      {
-        order: 2,
-        month: this.turnoverForm.value.month,
-        year: this.turnoverForm.value.year,
-        chitGroup: 'Group B',
-        turnover: 120000
+      error: (err) => {
+        this.turnovers.set([]);
+        this.showResults.set(true);
+        this.loadError = err?.error?.message || 'Unable to load turnover statement.';
+        this.isLoading = false;
       }
-    ]);
-    this.showResults.set(true);
+    });
   }
 }

@@ -1,20 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MeProfile, MeService } from '../../service/me.service';
 
-interface UserProfile {
-  name: string;
-  memberId: string;
-  joinDate: string;
+interface EditableProfile {
   mobile: string;
-  email: string;
-  aadharNumber: string;
-  panNumber: string;
   address: string;
   bankName: string;
   accountNumber: string;
   ifscCode: string;
-  status: string;
 }
 
 @Component({
@@ -25,122 +19,179 @@ interface UserProfile {
   styleUrl: './user-profile.scss'
 })
 export class UserProfileComponent implements OnInit {
+  isLoading = true;
+  isSaving = false;
+  loadError: string | null = null;
   isEditing = false;
   successMessage = '';
   validationError = '';
-  profilePicture = 'https://ui-avatars.com/api/?name=Rajesh+Kumar&background=6366f1&color=fff&size=128';
+  profilePicture = '';
 
-  // Original Profile Data
-  profile: UserProfile = {
-    name: 'Rajesh Kumar',
-    memberId: '#YCF-2026-001',
-    joinDate: '15 Jan 2024',
-    mobile: '9876543210',
-    email: 'rajesh.kumar@example.com',
-    aadharNumber: 'XXXX-XXXX-1234',
-    panNumber: 'ABCPE1234F',
-    address: '123, Anna Salai, Chennai, Tamil Nadu - 600002',
-    bankName: 'HDFC Bank',
-    accountNumber: 'XXXXXXXXX1234',
-    ifscCode: 'HDFC0001234',
-    status: 'Active Member'
+  profile: MeProfile | null = null;
+  editProfile: EditableProfile = {
+    mobile: '',
+    address: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: ''
   };
 
-  // Mutable copy for editing
-  editProfile: Partial<UserProfile> = {};
+  constructor(private meService: MeService) {}
 
-  ngOnInit() {
-    this.resetEditProfile();
+  ngOnInit(): void {
+    this.loadProfile();
   }
 
-  toggleEditMode() {
+  loadProfile(): void {
+    this.isLoading = true;
+    this.loadError = null;
+    this.isEditing = false;
+
+    this.meService.getProfile().subscribe({
+      next: (profile) => {
+        this.profile = profile;
+        this.profilePicture = this.resolvePhotoUrl(profile);
+        this.resetEditProfile();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.profile = null;
+        this.loadError = err?.error?.message || 'Unable to load your profile. Please try again.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  toggleEditMode(): void {
     this.successMessage = '';
     this.validationError = '';
-    
+
     if (this.isEditing) {
-      // Cancel Edit
       this.resetEditProfile();
       this.isEditing = false;
-    } else {
-      // Enter Edit Mode
-      this.resetEditProfile();
-      this.isEditing = true;
+      return;
     }
+
+    this.resetEditProfile();
+    this.isEditing = true;
   }
 
-  resetEditProfile() {
+  resetEditProfile(): void {
     this.editProfile = {
-      mobile: this.profile.mobile,
-      email: this.profile.email,
-      address: this.profile.address,
-      bankName: this.profile.bankName,
-      accountNumber: this.profile.accountNumber,
-      ifscCode: this.profile.ifscCode
+      mobile: this.profile?.phone || '',
+      address: this.displayOrEmpty(this.profile?.address),
+      bankName: this.displayOrEmpty(this.profile?.bankName),
+      accountNumber: this.displayOrEmpty(this.profile?.accountNumber),
+      ifscCode: this.displayOrEmpty(this.profile?.ifscCode)
     };
   }
 
-  onProfilePictureChange(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.profilePicture = e.target.result;
-        this.successMessage = 'Profile picture updated locally!';
-        setTimeout(() => (this.successMessage = ''), 2000);
-      };
-      reader.readAsDataURL(file);
+  onProfilePictureChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.profilePicture = String(reader.result || this.profilePicture);
+      this.successMessage = 'Photo preview updated locally. Upload will be available soon.';
+      setTimeout(() => (this.successMessage = ''), 2500);
+    };
+    reader.readAsDataURL(file);
   }
 
-  saveProfile() {
+  saveProfile(): void {
+    if (!this.profile) {
+      return;
+    }
+
     this.validationError = '';
     this.successMessage = '';
 
-    // Validation Rules: Mandatory fields required
-    if (!this.editProfile.mobile || !this.editProfile.email || !this.editProfile.address || 
-        !this.editProfile.bankName || !this.editProfile.accountNumber || !this.editProfile.ifscCode) {
+    const mobile = (this.editProfile.mobile || '').trim();
+    const address = (this.editProfile.address || '').trim();
+    const bankName = (this.editProfile.bankName || '').trim();
+    const accountNumber = (this.editProfile.accountNumber || '').trim();
+    const ifscCode = (this.editProfile.ifscCode || '').trim().toUpperCase();
+
+    if (!mobile || !address || !bankName || !accountNumber || !ifscCode) {
       this.validationError = 'All editable fields are mandatory. Please fill out all fields.';
       return;
     }
 
-    // Email format validation
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailPattern.test(this.editProfile.email)) {
-      this.validationError = 'Please enter a valid email address.';
-      return;
-    }
-
-    // Mobile validation (simplified 10 digit)
     const mobilePattern = /^[6-9]\d{9}$/;
-    if (!mobilePattern.test(this.editProfile.mobile)) {
+    if (!mobilePattern.test(mobile)) {
       this.validationError = 'Please enter a valid 10-digit mobile number.';
       return;
     }
 
-    // IFSC Code validation (Standard IFSC pattern)
     const ifscPattern = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-    if (!ifscPattern.test(this.editProfile.ifscCode)) {
+    if (!ifscPattern.test(ifscCode)) {
       this.validationError = 'Please enter a valid 11-character IFSC code (e.g. ABCD0123456).';
       return;
     }
 
-    // Account Number validation (Generic range 9 to 18 characters)
     const accountPattern = /^\d{9,18}$/;
-    if (!accountPattern.test(this.editProfile.accountNumber)) {
+    if (!accountPattern.test(accountNumber)) {
       this.validationError = 'Please enter a valid bank account number (9-18 digits).';
       return;
     }
 
-    // Update real profile with edit copy (Limited Edit Access)
-    // Note: Name, memberId, joinDate, aadhar, pan are NOT transferred over
-    Object.assign(this.profile, this.editProfile);
-    
-    this.isEditing = false;
-    this.successMessage = 'Profile updated successfully!';
-    
-    // Auto-hide success message after 3 seconds
-    setTimeout(() => {
-      this.successMessage = '';
-    }, 3000);
+    this.isSaving = true;
+    this.meService.updateProfile({
+      phone: mobile,
+      address,
+      bankName,
+      accountNumber,
+      ifscCode
+    }).subscribe({
+      next: (updated) => {
+        this.profile = updated;
+        this.profilePicture = this.resolvePhotoUrl(updated);
+        this.resetEditProfile();
+        this.isEditing = false;
+        this.isSaving = false;
+        this.successMessage = 'Profile updated successfully!';
+        setTimeout(() => (this.successMessage = ''), 3000);
+      },
+      error: (err) => {
+        this.isSaving = false;
+        this.validationError = err?.error?.message || 'Unable to update profile. Please try again.';
+      }
+    });
+  }
+
+  formatDate(value: string | null | undefined): string {
+    if (!value) {
+      return '—';
+    }
+    return new Date(value).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  }
+
+  displayValue(value: string | null | undefined): string {
+    if (!value || value === '—') {
+      return '—';
+    }
+    return value;
+  }
+
+  private displayOrEmpty(value: string | null | undefined): string {
+    if (!value || value === '—') {
+      return '';
+    }
+    return value;
+  }
+
+  private resolvePhotoUrl(profile: MeProfile): string {
+    if (profile.photoUrl) {
+      return profile.photoUrl;
+    }
+    const name = encodeURIComponent(profile.fullName || 'Member');
+    return `https://ui-avatars.com/api/?name=${name}&background=2563eb&color=fff&size=128`;
   }
 }

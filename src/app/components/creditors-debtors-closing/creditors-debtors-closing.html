@@ -63,7 +63,7 @@
                             (input)="filterMembers()" />
                     </div>
                     <div class="search-filter">
-                        <select [(ngModel)]="searchGroup" (change)="filterMembers()">
+                        <select [(ngModel)]="searchGroup" (change)="onGroupFilterChange()">
                             <option value="">All Groups</option>
                             <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
                         </select>

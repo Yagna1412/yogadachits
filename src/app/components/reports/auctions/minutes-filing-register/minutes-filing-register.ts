@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuctionReportService } from '../../../../service/auction-report.service';
 
 @Component({
   selector: 'app-minutes-filing-register',
@@ -14,10 +15,15 @@ export class MinutesFilingRegisterComponent {
   results = signal<any[]>([]);
   showResults = signal(false);
   submitted = false;
+  isLoading = false;
+  loadError = '';
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: AuctionReportService
+  ) {
     this.registerForm = this.fb.group({
-      groupName: ['', Validators.required],
+      groupName: [''],
       noticeDate: ['', Validators.required],
       toDate: ['', Validators.required]
     }, { validators: this.dateRangeValidator });
@@ -35,13 +41,28 @@ export class MinutesFilingRegisterComponent {
 
   onPreview() {
     this.submitted = true;
+    this.loadError = '';
     if (this.registerForm.invalid) return;
-    // Mocked data for preview
-    this.results.set([
-      { group: this.registerForm.value.groupName, noticeDate: this.registerForm.value.noticeDate, toDate: this.registerForm.value.toDate, minutesFiled: 5 },
-      { group: this.registerForm.value.groupName, noticeDate: this.registerForm.value.noticeDate, toDate: this.registerForm.value.toDate, minutesFiled: 3 }
-    ]);
-    this.showResults.set(true);
+
+    const { groupName, noticeDate, toDate } = this.registerForm.value;
+    this.isLoading = true;
+    this.reportService.minutesFilingRegister({
+      groupName,
+      fromDate: noticeDate,
+      toDate
+    }).subscribe({
+      next: (rows) => {
+        this.results.set(rows);
+        this.showResults.set(true);
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.results.set([]);
+        this.showResults.set(true);
+        this.loadError = err?.error?.message || 'Unable to load minutes filing register.';
+        this.isLoading = false;
+      }
+    });
   }
 
   onPrint() {

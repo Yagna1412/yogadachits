@@ -1,20 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface BidHistory {
-  id: string;
-  auctionMonth: string;
-  chitGroup: string;
-  groupCode: string;
-  bidAmount: string;
-  discount: string;
-  dividendPerMember: string;
-  netPayable: string;
-  bidDate: string;
-  bidStatus: 'Won' | 'Lost' | 'Pending';
-  winnerName: string;
-  winningBid: string;
-}
+import { MeBidItem, MeService } from '../../service/me.service';
 
 @Component({
   selector: 'app-user-bids-history',
@@ -23,73 +9,80 @@ interface BidHistory {
   templateUrl: './user-bids-history.html',
   styleUrl: './user-bids-history.scss'
 })
-export class UserBidsHistoryComponent {
-  selectedBid: BidHistory | null = null;
-  
-  bidHistoryRecords: BidHistory[] = [
-    {
-      id: 'BID-1001',
-      auctionMonth: 'March 2026',
-      chitGroup: 'Gold Chit 50L',
-      groupCode: '#GRP-2024-001',
-      bidAmount: '₹2,10,000',
-      discount: '42%',
-      dividendPerMember: '₹4,200',
-      netPayable: '₹5,800',
-      bidDate: '05 Mar 2026, 10:30 AM',
-      bidStatus: 'Lost',
-      winnerName: 'Member #YCF-038',
-      winningBid: '₹2,50,000'
-    },
-    {
-      id: 'BID-1002',
-      auctionMonth: 'February 2026',
-      chitGroup: 'Silver Chit 10L',
-      groupCode: '#GRP-2025-014',
-      bidAmount: '₹85,000',
-      discount: '34%',
-      dividendPerMember: '₹4,250',
-      netPayable: '₹750',
-      bidDate: '10 Feb 2026, 11:15 AM',
-      bidStatus: 'Won',
-      winnerName: 'You',
-      winningBid: '₹85,000'
-    },
-    {
-      id: 'BID-1003',
-      auctionMonth: 'January 2026',
-      chitGroup: 'Diamond Chit 1Cr',
-      groupCode: '#GRP-2025-022',
-      bidAmount: '₹6,00,000',
-      discount: '30%',
-      dividendPerMember: '₹15,000',
-      netPayable: '₹10,000',
-      bidDate: '15 Jan 2026, 02:45 PM',
-      bidStatus: 'Lost',
-      winnerName: 'Member #YCF-012',
-      winningBid: '₹6,64,000'
-    },
-    {
-      id: 'BID-1004',
-      auctionMonth: 'December 2025',
-      chitGroup: 'Gold Chit 50L',
-      groupCode: '#GRP-2024-001',
-      bidAmount: '₹1,50,000',
-      discount: '30%',
-      dividendPerMember: '₹3,000',
-      netPayable: '₹7,000',
-      bidDate: '05 Dec 2025, 10:00 AM',
-      bidStatus: 'Lost',
-      winnerName: 'Member #YCF-102',
-      winningBid: '₹1,95,000'
-    }
-  ];
+export class UserBidsHistoryComponent implements OnInit {
+  selectedBid: MeBidItem | null = null;
+  bidHistoryRecords: MeBidItem[] = [];
+  isLoading = true;
+  loadError: string | null = null;
 
-  openBidDetails(bid: BidHistory) {
+  constructor(private meService: MeService) {}
+
+  ngOnInit(): void {
+    this.loadBids();
+  }
+
+  loadBids(): void {
+    this.isLoading = true;
+    this.loadError = null;
+    this.selectedBid = null;
+
+    this.meService.getBids().subscribe({
+      next: (items) => {
+        this.bidHistoryRecords = items || [];
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.bidHistoryRecords = [];
+        this.loadError = err?.error?.message || 'Unable to load your bid history. Please try again.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  openBidDetails(bid: MeBidItem): void {
     this.selectedBid = bid;
   }
 
-  goBack() {
+  goBack(): void {
     this.selectedBid = null;
+  }
+
+  formatCurrency(value: number | null | undefined): string {
+    if (value == null) {
+      return '—';
+    }
+    return `₹${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+  }
+
+  formatPercent(value: number | null | undefined): string {
+    if (value == null) {
+      return '—';
+    }
+    const amount = Number(value);
+    return `${amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(2)}%`;
+  }
+
+  formatDateTime(value: string | null | undefined): string {
+    if (!value) {
+      return '—';
+    }
+    return new Date(value).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  statusClass(status: string | null | undefined): string {
+    const normalized = (status || '').toLowerCase();
+    if (normalized === 'won') {
+      return 'shipped';
+    }
+    if (normalized === 'lost') {
+      return 'cancelled';
+    }
+    return 'pending';
   }
 }

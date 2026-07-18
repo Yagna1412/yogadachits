@@ -1,19 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-// Data models
-export interface DebtorCreditor {
-  groupName: string;
-  ticketNumber: string;
-  paidTo: string;
-  transactionDate: string;
-  amount: number;
-  payable: number;
-  paidAmount: number;
-  balance: number;
-  id?: string;
-}
+import {
+  ClosingMemberDto,
+  ClosingRequestDto,
+  CreditorDebtorClosingService
+} from '../../service/credit-debtor-closing.service';
 
 export interface ClosingRequest {
   groupName: string;
@@ -28,15 +20,18 @@ export interface ClosingRequest {
   paidAmount?: number;
   balance?: number;
   id?: string;
+  subscriberId?: number;
 }
 
 export interface Member {
   id: string;
+  subscriberId: number;
+  enrollmentId?: number;
   name: string;
   groupName: string;
   ticketNo: string;
   mobile: string;
-  status: 'Active' | 'Inactive';
+  status: 'Active' | 'Inactive' | string;
   payable: number;
   paid: number;
   balance: number;
@@ -50,113 +45,96 @@ export interface Member {
   standalone: true
 })
 export class CreditorsDebtorsClosingComponent implements OnInit {
-  // UI State
   showForm = false;
   closingType: 'debtor' | 'creditor' = 'debtor';
-  searchTerm: string = '';
-  searchGroup: string = '';
-  searchDate: string = '';
-  filterClosingType: string = '';
+  searchTerm = '';
+  searchGroup = '';
+  searchDate = '';
+  filterClosingType = '';
+  isLoading = false;
+  isSaving = false;
 
-  // Form data
   newClosing: ClosingRequest = this.initClosing();
+  errorMessage = '';
+  successMessage = '';
 
-  errorMessage: string = '';
-  successMessage: string = '';
-
-  // Data arrays
-  allMembers: Member[] = [
-    {
-      id: 'MEM001',
-      name: 'Rajesh Kumar',
-      groupName: 'Group A',
-      ticketNo: '101',
-      mobile: '9876543210',
-      status: 'Active',
-      payable: 50000,
-      paid: 35000,
-      balance: 15000
-    },
-    {
-      id: 'MEM002',
-      name: 'Priya Sharma',
-      groupName: 'Group B',
-      ticketNo: '202',
-      mobile: '9876543211',
-      status: 'Active',
-      payable: 60000,
-      paid: 45000,
-      balance: 15000
-    },
-    {
-      id: 'MEM003',
-      name: 'Amit Patel',
-      groupName: 'Group A',
-      ticketNo: '102',
-      mobile: '9876543212',
-      status: 'Active',
-      payable: 55000,
-      paid: 40000,
-      balance: 15000
-    },
-    {
-      id: 'MEM004',
-      name: 'Sunita Devi',
-      groupName: 'Group C',
-      ticketNo: '303',
-      mobile: '9876543213',
-      status: 'Active',
-      payable: 45000,
-      paid: 30000,
-      balance: 15000
-    },
-    {
-      id: 'MEM005',
-      name: 'Vikram Singh',
-      groupName: 'Group B',
-      ticketNo: '203',
-      mobile: '9876543214',
-      status: 'Active',
-      payable: 70000,
-      paid: 50000,
-      balance: 20000
-    }
-  ];
-
-  debtorCreditorsHistory: DebtorCreditor[] = [
-    {
-      groupName: 'Group A',
-      ticketNumber: '101',
-      paidTo: 'Rajesh Kumar',
-      transactionDate: '2026-02-28',
-      amount: 5000,
-      payable: 50000,
-      paidAmount: 35000,
-      balance: 15000,
-      id: 'DC001'
-    },
-    {
-      groupName: 'Group B',
-      ticketNumber: '202',
-      paidTo: 'Priya Sharma',
-      transactionDate: '2026-02-27',
-      amount: 8000,
-      payable: 60000,
-      paidAmount: 45000,
-      balance: 15000,
-      id: 'DC002'
-    }
-  ];
-
+  allMembers: Member[] = [];
   closings: ClosingRequest[] = [];
   filteredClosings: ClosingRequest[] = [];
-  filteredMembers: Member[] = [...this.allMembers];
+  filteredMembers: Member[] = [];
+  groups: string[] = [];
 
-  groups: string[] = ['Group A', 'Group B', 'Group C'];
+  constructor(private closingService: CreditorDebtorClosingService) {}
 
   ngOnInit(): void {
-    this.filteredMembers = [...this.allMembers];
-    this.filterClosings();
+    this.loadMembers();
+    this.loadHistory();
+  }
+
+  private tenantId(): number {
+    return Number(localStorage.getItem('tenantId') || '1');
+  }
+
+  loadMembers(): void {
+    this.isLoading = true;
+    this.closingService.getMembers(this.tenantId(), this.searchGroup || undefined).subscribe({
+      next: (rows) => {
+        this.allMembers = (rows || []).map((m: ClosingMemberDto) => this.mapMember(m));
+        this.groups = Array.from(new Set(this.allMembers.map((m) => m.groupName).filter(Boolean))).sort();
+        this.filterMembers();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.allMembers = [];
+        this.filteredMembers = [];
+        this.errorMessage = err?.error?.message || 'Unable to load members.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  loadHistory(): void {
+    this.closingService.getHistory(this.tenantId()).subscribe({
+      next: (rows) => {
+        this.closings = (rows || []).map((c: ClosingRequestDto) => ({
+          id: c.id != null ? String(c.id) : undefined,
+          subscriberId: c.subscriberId,
+          groupName: c.groupName || '',
+          ticketNumber: c.ticketNumber || '',
+          member: c.member || '',
+          closingBalance: Number(c.closingBalance || 0),
+          closingDate: c.closingDate || '',
+          debtorCreditorType: (c.debtorCreditorType as 'Debtor' | 'Creditor') || 'Debtor',
+          authorizedBy: c.authorizedBy || '',
+          remarks: c.remarks || '',
+          payable: c.payable != null ? Number(c.payable) : undefined,
+          paidAmount: c.paidAmount != null ? Number(c.paidAmount) : undefined,
+          balance: c.balance != null ? Number(c.balance) : undefined
+        }));
+        this.filterClosings();
+      },
+      error: (err) => {
+        this.closings = [];
+        this.filteredClosings = [];
+        this.errorMessage = err?.error?.message || 'Unable to load closing history.';
+      }
+    });
+  }
+
+  private mapMember(m: ClosingMemberDto): Member {
+    return {
+      id: String(m.subscriberId),
+      subscriberId: m.subscriberId,
+      enrollmentId: m.enrollmentId,
+      name: m.name,
+      groupName: m.groupName,
+      ticketNo: m.ticketNo,
+      mobile: m.mobile || '',
+      status: m.status || 'Active',
+      payable: Number(m.payable || 0),
+      paid: Number(m.paid || 0),
+      balance: Number(m.balance || 0)
+    };
   }
 
   initClosing(): ClosingRequest {
@@ -168,13 +146,13 @@ export class CreditorsDebtorsClosingComponent implements OnInit {
       closingDate: this.getCurrentDate(),
       debtorCreditorType: 'Debtor',
       authorizedBy: '',
-      remarks: ''
+      remarks: '',
+      subscriberId: undefined
     };
   }
 
   getCurrentDate(): string {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+    return new Date().toISOString().split('T')[0];
   }
 
   toggleForm(): void {
@@ -193,29 +171,32 @@ export class CreditorsDebtorsClosingComponent implements OnInit {
   }
 
   filterMembers(): void {
-    this.filteredMembers = this.allMembers.filter(m => {
-      const matchesSearch = !this.searchTerm ||
+    this.filteredMembers = this.allMembers.filter((m) => {
+      const matchesSearch =
+        !this.searchTerm ||
         m.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         m.ticketNo.toLowerCase().includes(this.searchTerm.toLowerCase());
-
       const matchesGroup = !this.searchGroup || m.groupName === this.searchGroup;
-      const matchesStatus = m.status === 'Active';
-
+      const matchesStatus = !m.status || m.status.toLowerCase() === 'active';
       return matchesSearch && matchesGroup && matchesStatus;
     });
   }
 
+  onGroupFilterChange(): void {
+    this.loadMembers();
+    this.filterClosings();
+  }
+
   filterClosings(): void {
-    this.filteredClosings = this.closings.filter(c => {
-      const matchesSearch = !this.searchTerm ||
+    this.filteredClosings = this.closings.filter((c) => {
+      const matchesSearch =
+        !this.searchTerm ||
         c.member.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         c.ticketNumber.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         c.groupName.toLowerCase().includes(this.searchTerm.toLowerCase());
-
       const matchesGroup = !this.searchGroup || c.groupName === this.searchGroup;
       const matchesDate = !this.searchDate || c.closingDate === this.searchDate;
       const matchesType = !this.filterClosingType || c.debtorCreditorType === this.filterClosingType;
-
       return matchesSearch && matchesGroup && matchesDate && matchesType;
     });
   }
@@ -224,77 +205,127 @@ export class CreditorsDebtorsClosingComponent implements OnInit {
     this.newClosing.member = member.name;
     this.newClosing.groupName = member.groupName;
     this.newClosing.ticketNumber = member.ticketNo;
+    this.newClosing.subscriberId = member.subscriberId;
     this.newClosing.payable = member.payable;
     this.newClosing.paidAmount = member.paid;
     this.newClosing.balance = member.balance;
+    if (!this.newClosing.closingBalance) {
+      this.newClosing.closingBalance = member.balance;
+    }
   }
 
   saveClosing(): void {
-    // Validation
-    if (!this.newClosing.member) {
+    if (!this.newClosing.member || !this.newClosing.subscriberId) {
       this.errorMessage = 'Please select a member';
       return;
     }
-
     if (!this.newClosing.closingBalance || this.newClosing.closingBalance === 0) {
       this.errorMessage = 'Closing balance must be numeric and greater than 0';
       return;
     }
-
     if (!this.newClosing.authorizedBy) {
       this.errorMessage = 'Authorized by field is required';
       return;
     }
-
-    // Check if numeric
-    if (isNaN(this.newClosing.closingBalance)) {
+    if (isNaN(Number(this.newClosing.closingBalance))) {
       this.errorMessage = 'Closing balance must be a valid number';
       return;
     }
 
-    // Add to closings array
-    const closing: ClosingRequest = {
-      ...this.newClosing,
+    const payload: ClosingRequestDto = {
+      subscriberId: this.newClosing.subscriberId,
+      groupName: this.newClosing.groupName,
+      ticketNumber: this.newClosing.ticketNumber,
+      member: this.newClosing.member,
       closingBalance: Number(this.newClosing.closingBalance),
-      id: 'CLG' + Date.now()
+      closingDate: this.newClosing.closingDate,
+      debtorCreditorType: this.newClosing.debtorCreditorType,
+      authorizedBy: this.newClosing.authorizedBy,
+      remarks: this.newClosing.remarks,
+      payable: this.newClosing.payable,
+      paidAmount: this.newClosing.paidAmount,
+      balance: this.newClosing.balance
     };
 
-    this.closings.unshift(closing);
-    this.successMessage = 'Balance closed successfully';
-    this.newClosing = this.initClosing();
-    this.showForm = false;
+    this.isSaving = true;
     this.errorMessage = '';
-
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      this.successMessage = '';
-    }, 3000);
-
-    this.filterClosings();
+    this.closingService.saveClosing(this.tenantId(), payload).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.successMessage = 'Balance closed successfully';
+        this.newClosing = this.initClosing();
+        this.showForm = false;
+        this.loadHistory();
+        setTimeout(() => (this.successMessage = ''), 3000);
+      },
+      error: (err) => {
+        this.isSaving = false;
+        this.errorMessage =
+          typeof err?.error === 'string'
+            ? err.error
+            : err?.error?.message || 'Unable to save closing.';
+      }
+    });
   }
 
   deleteClosing(id: string): void {
-    if (confirm('Are you sure you want to delete this closing record?')) {
-      this.closings = this.closings.filter(c => c.id !== id);
-      this.filterClosings();
+    if (!id) {
+      return;
     }
+    if (!confirm('Are you sure you want to delete this closing record?')) {
+      return;
+    }
+    this.closingService.deleteClosing(this.tenantId(), id).subscribe({
+      next: () => this.loadHistory(),
+      error: (err) => {
+        this.errorMessage =
+          typeof err?.error === 'string'
+            ? err.error
+            : err?.error?.message || 'Unable to delete closing.';
+      }
+    });
+  }
+
+  /** Historical table derived from saved closings (replaces former mock list). */
+  get debtorCreditorsHistory(): Array<{
+    groupName: string;
+    ticketNumber: string;
+    paidTo: string;
+    transactionDate: string;
+    amount: number;
+    payable: number;
+    paidAmount: number;
+    balance: number;
+    id?: string;
+  }> {
+    return this.closings.map((c) => ({
+      id: c.id,
+      groupName: c.groupName,
+      ticketNumber: c.ticketNumber,
+      paidTo: c.member,
+      transactionDate: c.closingDate,
+      amount: Number(c.closingBalance || 0),
+      payable: Number(c.payable || 0),
+      paidAmount: Number(c.paidAmount || 0),
+      balance: Number(c.balance || 0)
+    }));
   }
 
   getTotalDebtors(): number {
-    return this.closings.filter(c => c.debtorCreditorType === 'Debtor').length;
+    return this.closings.filter((c) => c.debtorCreditorType === 'Debtor').length;
   }
 
   getTotalCreditors(): number {
-    return this.closings.filter(c => c.debtorCreditorType === 'Creditor').length;
+    return this.closings.filter((c) => c.debtorCreditorType === 'Creditor').length;
   }
 
   getTotalClosingAmount(): number {
-    return this.filteredClosings.reduce((sum, c) => sum + c.closingBalance, 0);
+    return this.filteredClosings.reduce((sum, c) => sum + Number(c.closingBalance || 0), 0);
   }
 
   exportToCSV(): void {
     const headers = ['Member', 'Group', 'Ticket No', 'Closing Date', 'Closing Balance', 'Type', 'Authorized By'];
-    const data = this.filteredClosings.map(c => [
+    const data = this.filteredClosings.map((c) => [
       c.member,
       c.groupName,
       c.ticketNumber,
@@ -305,7 +336,7 @@ export class CreditorsDebtorsClosingComponent implements OnInit {
     ]);
 
     let csv = headers.join(',') + '\n';
-    data.forEach(row => {
+    data.forEach((row) => {
       csv += row.join(',') + '\n';
     });
 

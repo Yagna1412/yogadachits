@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuctionReportService } from '../../../../service/auction-report.service';
 
 @Component({
   selector: 'app-successful-bidders-list',
@@ -14,14 +15,16 @@ export class SuccessfulBiddersListComponent {
   bidders = signal<any[]>([]);
   showResults = signal(false);
   submitted = false;
+  isLoading = false;
+  loadError = '';
 
-  months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  months = [...AuctionReportService.MONTHS];
   years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: AuctionReportService
+  ) {
     this.biddersForm = this.fb.group({
       month: ['', Validators.required],
       year: ['', Validators.required]
@@ -30,26 +33,26 @@ export class SuccessfulBiddersListComponent {
 
   onGenerate() {
     this.submitted = true;
+    this.loadError = '';
     if (this.biddersForm.invalid) return;
-    // Mocked data
-    this.bidders.set([
-      {
-        order: 1,
-        month: this.biddersForm.value.month,
-        year: this.biddersForm.value.year,
-        chitGroup: 'Group Alpha',
-        bidder: 'John Doe',
-        amount: 100000
+
+    const { month, year } = this.biddersForm.value;
+    this.isLoading = true;
+    this.reportService.successfulBidders(
+      this.reportService.monthToNumber(month),
+      Number(year)
+    ).subscribe({
+      next: (rows) => {
+        this.bidders.set(rows);
+        this.showResults.set(true);
+        this.isLoading = false;
       },
-      {
-        order: 2,
-        month: this.biddersForm.value.month,
-        year: this.biddersForm.value.year,
-        chitGroup: 'Group Beta',
-        bidder: 'Jane Smith',
-        amount: 95000
+      error: (err) => {
+        this.bidders.set([]);
+        this.showResults.set(true);
+        this.loadError = err?.error?.message || 'Unable to load successful bidders.';
+        this.isLoading = false;
       }
-    ]);
-    this.showResults.set(true);
+    });
   }
 }

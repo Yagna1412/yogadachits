@@ -19,7 +19,10 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Group Name *</label>
-          <input formControlName="groupName" class="form-control" placeholder="Enter group name" />
+          <select formControlName="chitGroupId" class="form-control">
+            <option value="">Select group</option>
+            <option *ngFor="let g of chitGroups" [value]="g.id">{{ g.groupName }}</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Ticket From *</label>
@@ -36,8 +39,11 @@
         <div *ngIf="submitted && cardForm.errors?.['invalidTicketRange']" class="error-message">Ticket From cannot be greater than Ticket To.</div>
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Preview / Print / Send via WhatsApp</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          {{ isLoading ? 'Loading...' : 'Preview / Print / Send via WhatsApp' }}
+        </button>
       </div>
+      <div class="error-message" *ngIf="loadError">{{ loadError }}</div>
     </form>
   </div>
 
@@ -50,8 +56,9 @@
         <thead>
           <tr>
             <th>Group Name</th>
-            <th>Ticket From</th>
-            <th>Ticket To</th>
+            <th>Ticket No</th>
+            <th>Subscriber</th>
+            <th>Mobile</th>
             <th>Notice Date</th>
             <th>Message</th>
           </tr>
@@ -59,8 +66,9 @@
         <tbody>
           <tr *ngFor="let c of cards()">
             <td>{{ c.groupName }}</td>
-            <td>{{ c.ticketFrom }}</td>
-            <td>{{ c.ticketTo }}</td>
+            <td>{{ c.ticketNo }}</td>
+            <td>{{ c.subscriberName }}</td>
+            <td>{{ c.mobileNumber }}</td>
             <td>{{ c.noticeDate }}</td>
             <td>{{ c.message }}</td>
           </tr>

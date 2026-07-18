@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuctionReportService } from '../../../../service/auction-report.service';
 
 @Component({
   selector: 'app-company-investment-own-chits',
@@ -14,14 +15,16 @@ export class CompanyInvestmentOwnChitsComponent {
   investments = signal<any[]>([]);
   showResults = signal(false);
   submitted = false;
+  isLoading = false;
+  loadError = '';
 
-  months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  months = [...AuctionReportService.MONTHS];
   years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: AuctionReportService
+  ) {
     this.investmentForm = this.fb.group({
       month: ['', Validators.required],
       year: ['', Validators.required]
@@ -30,24 +33,26 @@ export class CompanyInvestmentOwnChitsComponent {
 
   onGenerate() {
     this.submitted = true;
+    this.loadError = '';
     if (this.investmentForm.invalid) return;
-    // Mocked data
-    this.investments.set([
-      {
-        order: 1,
-        month: this.investmentForm.value.month,
-        year: this.investmentForm.value.year,
-        chitGroup: 'Group X',
-        investment: 50000
+
+    const { month, year } = this.investmentForm.value;
+    this.isLoading = true;
+    this.reportService.companyInvestment(
+      this.reportService.monthToNumber(month),
+      Number(year)
+    ).subscribe({
+      next: (rows) => {
+        this.investments.set(rows);
+        this.showResults.set(true);
+        this.isLoading = false;
       },
-      {
-        order: 2,
-        month: this.investmentForm.value.month,
-        year: this.investmentForm.value.year,
-        chitGroup: 'Group Y',
-        investment: 75000
+      error: (err) => {
+        this.investments.set([]);
+        this.showResults.set(true);
+        this.loadError = err?.error?.message || 'Unable to load company investment report.';
+        this.isLoading = false;
       }
-    ]);
-    this.showResults.set(true);
+    });
   }
 }

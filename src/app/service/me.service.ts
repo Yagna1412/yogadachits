@@ -21,6 +21,23 @@ export interface MeProfile {
   userCode?: string;
   memberId?: number;
   memberDisplayId?: string;
+  joinDate?: string | null;
+  status?: string;
+  aadharNumber?: string | null;
+  panNumber?: string | null;
+  address?: string | null;
+  bankName?: string | null;
+  accountNumber?: string | null;
+  ifscCode?: string | null;
+  photoUrl?: string | null;
+}
+
+export interface MeProfileUpdateRequest {
+  phone: string;
+  address: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
 }
 
 export interface UpcomingPayment {
@@ -47,6 +64,13 @@ export interface MeEnrollmentItem {
   groupName: string;
   groupCode?: string;
   chitAmount: number;
+  installmentAmount?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  auctionDay?: number | null;
+  auctionDate?: string | null;
+  durationMonths?: number | null;
+  totalMembers?: number | null;
   installmentsPaid: number;
   totalInstallments: number;
   progressPercent: number;
@@ -88,6 +112,48 @@ export interface MeDueItem {
   status?: string;
 }
 
+export interface MeBidItem {
+  bidId: number;
+  bidDisplayId: string;
+  auctionId?: number;
+  auctionMonth?: string | null;
+  auctionDate?: string | null;
+  groupName: string;
+  groupCode?: string | null;
+  bidAmount: number;
+  discountPercent?: number | null;
+  dividendPerMember?: number | null;
+  netPayable?: number | null;
+  bidTime?: string | null;
+  bidStatus: 'Won' | 'Lost' | 'Pending' | string;
+  winnerName?: string | null;
+  winningBidAmount?: number | null;
+}
+
+export interface MeLiveAuction {
+  auctionId: number;
+  auctionDisplayId: string;
+  enrollmentId?: number;
+  groupName: string;
+  groupCode?: string | null;
+  chitAmount: number;
+  installmentAmount?: number | null;
+  minBidLimit?: number | null;
+  maxBidLimit?: number | null;
+  currentHighBid: number;
+  hasMyBid: boolean;
+  myBidAmount?: number | null;
+  sessionStatus: string;
+  remainingSeconds?: number | null;
+  durationSeconds?: number | null;
+  auctionDate?: string | null;
+  canBid: boolean;
+}
+
+export interface MePlaceBidRequest {
+  bidAmount: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -106,6 +172,12 @@ export class MeService {
     );
   }
 
+  updateProfile(payload: MeProfileUpdateRequest): Observable<MeProfile> {
+    return this.http.patch<ApiResponse<MeProfile>>(this.apiUrl, payload, this.getHeaders()).pipe(
+      map(res => res.data)
+    );
+  }
+
   getDashboard(): Observable<MeDashboard> {
     return this.http.get<ApiResponse<MeDashboard>>(`${this.apiUrl}/dashboard`, this.getHeaders()).pipe(
       map(res => res.data)
@@ -115,6 +187,28 @@ export class MeService {
   getEnrollments(): Observable<MeEnrollmentItem[]> {
     return this.http.get<ApiResponse<MeEnrollmentItem[]>>(`${this.apiUrl}/enrollments`, this.getHeaders()).pipe(
       map(res => res.data || [])
+    );
+  }
+
+  getBids(): Observable<MeBidItem[]> {
+    return this.http.get<ApiResponse<MeBidItem[]>>(`${this.apiUrl}/bids`, this.getHeaders()).pipe(
+      map(res => res.data || [])
+    );
+  }
+
+  getLiveAuctions(): Observable<MeLiveAuction[]> {
+    return this.http.get<ApiResponse<MeLiveAuction[]>>(`${this.apiUrl}/auctions/live`, this.getHeaders()).pipe(
+      map(res => res.data || [])
+    );
+  }
+
+  placeBid(auctionId: number, payload: MePlaceBidRequest): Observable<unknown> {
+    return this.http.post<ApiResponse<unknown>>(
+      `${this.apiUrl}/auctions/${auctionId}/bids`,
+      payload,
+      this.getHeaders()
+    ).pipe(
+      map(res => res.data)
     );
   }
 

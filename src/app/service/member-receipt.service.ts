@@ -54,18 +54,24 @@ export class MemberReceiptService {
   ) { }
 
   private getAuthHeaders(): { headers: HttpHeaders } {
-    let token = '';
-    
+    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
     if (isPlatformBrowser(this.platformId)) {
-      token = localStorage.getItem('token') || '';
+      const token =
+        localStorage.getItem('authToken') ||
+        localStorage.getItem('token') ||
+        localStorage.getItem('auth_token') ||
+        '';
+      if (token) {
+        headers = headers.set('Authorization', `Bearer ${token}`);
+      }
+      const tenantId = localStorage.getItem('tenantId');
+      if (tenantId) {
+        headers = headers.set('X-Tenant-Id', tenantId);
+      }
     }
 
-    return {
-      headers: new HttpHeaders({
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      })
-    };
+    return { headers };
   }
 
 

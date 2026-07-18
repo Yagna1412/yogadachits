@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuctionReportService } from '../../../../service/auction-report.service';
+import { AuctionsService, ChitGroupDto } from '../../../../service/auction.service';
 
 @Component({
   selector: 'app-intimation-card',
@@ -9,19 +11,34 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
   templateUrl: './intimation-card.html',
   styleUrls: ['./intimation-card.scss']
 })
-export class IntimationCardComponent {
+export class IntimationCardComponent implements OnInit {
   cardForm: FormGroup;
   cards = signal<any[]>([]);
   showResults = signal(false);
   submitted = false;
+  isLoading = false;
+  loadError = '';
+  chitGroups: ChitGroupDto[] = [];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: AuctionReportService,
+    private auctionsService: AuctionsService
+  ) {
     this.cardForm = this.fb.group({
-      groupName: ['', Validators.required],
+      chitGroupId: ['', Validators.required],
       ticketFrom: ['', Validators.required],
       ticketTo: ['', Validators.required],
       noticeDate: ['', Validators.required]
     }, { validators: this.ticketRangeValidator });
+  }
+
+  ngOnInit(): void {
+    this.auctionsService.listChitGroups().subscribe({
+      next: (res) => {
+        this.chitGroups = res.data || [];
+      }
+    });
   }
 
   ticketRangeValidator(control: any): { [key: string]: any } | null {
@@ -36,17 +53,28 @@ export class IntimationCardComponent {
 
   onGenerate() {
     this.submitted = true;
+    this.loadError = '';
     if (this.cardForm.invalid) return;
-    // Mocked data
-    this.cards.set([
-      {
-        groupName: this.cardForm.value.groupName,
-        ticketFrom: this.cardForm.value.ticketFrom,
-        ticketTo: this.cardForm.value.ticketTo,
-        noticeDate: this.cardForm.value.noticeDate,
-        message: 'Auction Intimation Card for tickets ' + this.cardForm.value.ticketFrom + ' to ' + this.cardForm.value.ticketTo
+
+    const { chitGroupId, ticketFrom, ticketTo, noticeDate } = this.cardForm.value;
+    this.isLoading = true;
+    this.reportService.intimationCard({
+      chitGroupId: Number(chitGroupId),
+      ticketFrom: ticketFrom != null && ticketFrom !== '' ? Number(ticketFrom) : null,
+      ticketTo: ticketTo != null && ticketTo !== '' ? Number(ticketTo) : null,
+      noticeDate
+    }).subscribe({
+      next: (rows) => {
+        this.cards.set(rows);
+        this.showResults.set(true);
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.cards.set([]);
+        this.showResults.set(true);
+        this.loadError = err?.error?.message || 'Unable to load intimation cards.';
+        this.isLoading = false;
       }
-    ]);
-    this.showResults.set(true);
+    });
   }
 }

@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuctionReportService } from '../../../../service/auction-report.service';
+import { AuctionsService, ChitGroupDto } from '../../../../service/auction.service';
 
 @Component({
   selector: 'app-gst-summary',
@@ -9,23 +11,37 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
   templateUrl: './gst-summary.html',
   styleUrls: ['./gst-summary.scss']
 })
-export class GstSummaryComponent {
+export class GstSummaryComponent implements OnInit {
   summaryForm: FormGroup;
   results = signal<any[]>([]);
   showResults = signal(false);
   submitted = false;
+  isLoading = false;
+  loadError = '';
+  chitGroups: ChitGroupDto[] = [];
 
-  groups = ['Group A', 'Group B', 'Group C'];
   charges = ['Subscription', 'Penalty', 'Other'];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: AuctionReportService,
+    private auctionsService: AuctionsService
+  ) {
     this.summaryForm = this.fb.group({
-      group: ['', Validators.required],
+      chitGroupId: [''],
       fromDate: ['', Validators.required],
       toDate: ['', Validators.required],
       gstPercent: ['', [Validators.required, Validators.pattern(/^[0-9]+(\.[0-9]+)?$/)]],
       charge: ['', Validators.required]
     }, { validators: this.dateRangeValidator });
+  }
+
+  ngOnInit(): void {
+    this.auctionsService.listChitGroups().subscribe({
+      next: (res) => {
+        this.chitGroups = res.data || [];
+      }
+    });
   }
 
   dateRangeValidator(control: any): { [key: string]: any } | null {
@@ -40,13 +56,30 @@ export class GstSummaryComponent {
 
   onGenerate() {
     this.submitted = true;
+    this.loadError = '';
     if (this.summaryForm.invalid) return;
-    // Mocked data for preview
-    this.results.set([
-      { group: this.summaryForm.value.group, charge: this.summaryForm.value.charge, gstPercent: this.summaryForm.value.gstPercent, fromDate: this.summaryForm.value.fromDate, toDate: this.summaryForm.value.toDate, totalCharges: 10000, gstCollected: 1800 },
-      { group: this.summaryForm.value.group, charge: this.summaryForm.value.charge, gstPercent: this.summaryForm.value.gstPercent, fromDate: this.summaryForm.value.fromDate, toDate: this.summaryForm.value.toDate, totalCharges: 8000, gstCollected: 1440 }
-    ]);
-    this.showResults.set(true);
+
+    const { chitGroupId, fromDate, toDate, gstPercent, charge } = this.summaryForm.value;
+    this.isLoading = true;
+    this.reportService.gstSummary({
+      chitGroupId: chitGroupId ? Number(chitGroupId) : null,
+      fromDate,
+      toDate,
+      gstPercent,
+      charge
+    }).subscribe({
+      next: (rows) => {
+        this.results.set(rows);
+        this.showResults.set(true);
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.results.set([]);
+        this.showResults.set(true);
+        this.loadError = err?.error?.message || 'Unable to load GST summary.';
+        this.isLoading = false;
+      }
+    });
   }
 
   onPrint() {

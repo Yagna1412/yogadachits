@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuctionReportService } from '../../../../service/auction-report.service';
 
 @Component({
   selector: 'app-dividend-list-for-month',
@@ -14,15 +15,17 @@ export class DividendListForMonthComponent {
   results = signal<any[]>([]);
   showResults = signal(false);
   submitted = false;
+  isLoading = false;
+  loadError = '';
 
   orders = ['Order 1', 'Order 2', 'Order 3'];
-  months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  months = [...AuctionReportService.MONTHS];
   years = [2024, 2025, 2026];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private reportService: AuctionReportService
+  ) {
     this.dividendForm = this.fb.group({
       order: ['', Validators.required],
       month: ['', Validators.required],
@@ -32,13 +35,28 @@ export class DividendListForMonthComponent {
 
   onGenerate() {
     this.submitted = true;
+    this.loadError = '';
     if (this.dividendForm.invalid) return;
-    // Mocked data for preview
-    this.results.set([
-      { order: this.dividendForm.value.order, month: this.dividendForm.value.month, year: this.dividendForm.value.year, subscriber: 'John Doe', amount: 1200 },
-      { order: this.dividendForm.value.order, month: this.dividendForm.value.month, year: this.dividendForm.value.year, subscriber: 'Jane Smith', amount: 950 }
-    ]);
-    this.showResults.set(true);
+
+    const { order, month, year } = this.dividendForm.value;
+    this.isLoading = true;
+    this.reportService.dividendListForMonth({
+      order,
+      month: this.reportService.monthToNumber(month),
+      year: Number(year)
+    }).subscribe({
+      next: (rows) => {
+        this.results.set(rows);
+        this.showResults.set(true);
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.results.set([]);
+        this.showResults.set(true);
+        this.loadError = err?.error?.message || 'Unable to load dividend list.';
+        this.isLoading = false;
+      }
+    });
   }
 
   onPrint() {
