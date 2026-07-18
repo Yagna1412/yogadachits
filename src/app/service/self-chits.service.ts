@@ -2,6 +2,14 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environment } from '../../enviornment/enviornment';
+
+export interface ApiResponse<T> {
+    success: boolean;
+    message: string;
+    data: T;
+}
 
 export interface SelfChitDropdownOption {
     id: number;
@@ -31,7 +39,7 @@ export interface SelfChitEntryRequest {
 })
 export class SelfChitsService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = '/chitfunds/api/v1/self-chits';
+    private apiUrl = `${environment.apiUrl}/self-chits`;
 
     constructor(private http: HttpClient) { }
 
@@ -41,8 +49,7 @@ export class SelfChitsService {
 
     private getHeaders(): { headers: HttpHeaders } {
         let headers = new HttpHeaders({
-            'Content-Type': 'application/json',
-            'X-Tenant-Id': '1'
+            'Content-Type': 'application/json'
         });
         if (this.isBrowser()) {
             const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -61,34 +68,35 @@ export class SelfChitsService {
         if (searchTerm && searchTerm.trim() !== '') {
             params = params.set('searchTerm', searchTerm.trim());
         }
-        return this.http.get<SelfChitEntry[]>(this.apiUrl, { ...this.getHeaders(), params });
+        return this.http.get<ApiResponse<SelfChitEntry[]>>(this.apiUrl, { ...this.getHeaders(), params }).pipe(
+            map(res => res.data || [])
+        );
     }
 
     createEntry(entryData: SelfChitEntryRequest): Observable<SelfChitEntry> {
         if (!this.isBrowser()) {
             return of({} as SelfChitEntry);
         }
-        return this.http.post<SelfChitEntry>(this.apiUrl, entryData, this.getHeaders());
-    }
-
-    getSubscribers(): Observable<SelfChitDropdownOption[]> {
-        if (!this.isBrowser()) {
-            return of([]);
-        }
-        return this.http.get<SelfChitDropdownOption[]>(`${this.apiUrl}/subscribers`, this.getHeaders());
+        return this.http.post<ApiResponse<SelfChitEntry>>(this.apiUrl, entryData, this.getHeaders()).pipe(
+            map(res => res.data)
+        );
     }
 
     getChitGroups(): Observable<SelfChitDropdownOption[]> {
         if (!this.isBrowser()) {
             return of([]);
         }
-        return this.http.get<SelfChitDropdownOption[]>(`${this.apiUrl}/chit-groups`, this.getHeaders());
+        return this.http.get<ApiResponse<SelfChitDropdownOption[]>>(`${this.apiUrl}/chit-groups`, this.getHeaders()).pipe(
+            map(res => res.data || [])
+        );
     }
 
     getPersons(): Observable<SelfChitDropdownOption[]> {
         if (!this.isBrowser()) {
             return of([]);
         }
-        return this.http.get<SelfChitDropdownOption[]>(`${this.apiUrl}/persons`, this.getHeaders());
+        return this.http.get<ApiResponse<SelfChitDropdownOption[]>>(`${this.apiUrl}/persons`, this.getHeaders()).pipe(
+            map(res => res.data || [])
+        );
     }
 }

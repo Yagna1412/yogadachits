@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../service/auth';
 
 @Component({
   selector: 'app-admin-layout',
@@ -31,7 +32,7 @@ export class AdminLayout {
   auctionSubmenuExpanded = false;
   searchResults: any[] = [];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
   onSearch() {
     if (this.searchQuery.length > 2) {
@@ -201,6 +202,7 @@ export class AdminLayout {
   }
 
   logout() {
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 }

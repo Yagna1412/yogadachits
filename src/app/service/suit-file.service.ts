@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { environment } from '../../enviornment/enviornment';
 
 export interface SuitMemberOption {
     id: number;
@@ -81,7 +82,7 @@ export interface SuitTimelineCreateRequest {
 })
 export class SuitFileService {
     private platformId = inject(PLATFORM_ID);
-    private apiUrl = '/chitfunds/api/v1/suit-files';
+    private apiUrl = `${environment.apiUrl}/suit-files`;
 
     constructor(private http: HttpClient) { }
 

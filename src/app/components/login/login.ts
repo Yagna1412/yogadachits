@@ -15,19 +15,20 @@ export class LoginComponent {
   email: string = '';
   password: string = '';
   rememberMe: boolean = false;
+  isLoading = false;
 
   errorMessage: string = '';
 
   constructor(private router: Router, private authService: AuthService) { }
 
-  private extractToken(response: any): string | null {
-    return response?.token
-      || response?.accessToken
-      || response?.jwt
-      || response?.data?.token
-      || response?.data?.accessToken
-      || response?.data?.jwt
-      || null;
+  private extractAuthPayload(response: any): { token: string | null; user: any } {
+    const payload = response?.data ?? response;
+    const token =
+      payload?.token ||
+      payload?.accessToken ||
+      payload?.jwt ||
+      null;
+    return { token, user: payload?.user };
   }
 
   setRole(role: 'Admin' | 'User') {
@@ -36,42 +37,41 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    this.errorMessage = ''; // Reset error
+    this.errorMessage = '';
 
     if (!this.email || !this.password) {
       this.errorMessage = 'Please enter both email and password';
       return;
     }
 
-    const credentials = {
-      email: this.email,
-      password: this.password,
-      role: this.selectedRole
-    };
+    this.isLoading = true;
 
-    this.authService.login(credentials).subscribe({
+    this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response: any) => {
-        const token = this.extractToken(response);
+        this.isLoading = false;
+        const { token, user } = this.extractAuthPayload(response);
 
-        if (response && (token || response.success)) {
-          // Save token if present, and keep both keys for compatibility with existing services
-          if (token) {
-            localStorage.setItem('authToken', token);
-            localStorage.setItem('token', token);
-          }
-          const route = this.selectedRole === 'Admin' ? '/admin/members' : '/user/dashboard';
-          this.router.navigate([route]);
-        } else {
-          this.errorMessage = response?.message || 'Invalid credentials';
+        if (!token) {
+          this.errorMessage =
+            response?.message || 'Login failed: no authentication token received.';
+          return;
         }
+
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('token', token);
+        localStorage.setItem('tenantId', '1');
+        localStorage.setItem('userRole', this.selectedRole);
+
+        this.authService.setUserSession(user);
+
+        this.router.navigate([this.authService.getHomeRoute()]);
       },
       error: (err: any) => {
+        this.isLoading = false;
         console.error('Login error', err);
-        if (err?.error?.message) {
-          this.errorMessage = err.error.message;
-        } else {
-          this.errorMessage = 'Login failed. Please check your credentials and try again.';
-        }
+        this.errorMessage =
+          err?.error?.message ||
+          'Login failed. Please check your credentials and try again.';
       }
     });
   }

@@ -18,11 +18,6 @@
   </button>
 </div>
 
-<div class="error-banner" *ngIf="errorMessage">
-  <span>{{ errorMessage }}</span>
-  <button class="error-close" (click)="errorMessage = ''">×</button>
-</div>
-
 <div class="members-container">
 
   <div class="stats-grid" *ngIf="!isLoading">
@@ -40,8 +35,17 @@
         <img src="assets/images/icons/user-round-check.png" alt="Active" />
       </div>
       <div class="stat-content">
-        <div class="stat-label">Active Enrollments</div>
+        <div class="stat-label">Active</div>
         <div class="stat-value">{{ activeEnrollments }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">
+        <img src="assets/images/icons/users-round.png" alt="Pending Approval" />
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Pending Approval</div>
+        <div class="stat-value">{{ pendingApprovalCount }}</div>
       </div>
     </div>
     <div class="stat-card">
@@ -56,7 +60,6 @@
   </div>
 
   <div *ngIf="!showAddModal">
-
     <div class="loading-state" *ngIf="isLoading">
       <div class="spinner"></div>
       <span>Loading enrollments...</span>
@@ -66,164 +69,389 @@
       <div class="table-header">
         <h2 class="table-title">All Enrollments</h2>
         <div class="table-controls">
+          <select class="status-filter" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+            <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+          <select class="status-filter" [(ngModel)]="chitGroupFilter" (ngModelChange)="onFilterChange()">
+            <option [ngValue]="null">All Chit Groups</option>
+            <option *ngFor="let g of chitGroups" [ngValue]="g.id">{{ g.groupName }}</option>
+          </select>
+          <input type="date" class="date-filter" [(ngModel)]="dateFromFilter" (ngModelChange)="onFilterChange()" title="From date" />
+          <input type="date" class="date-filter" [(ngModel)]="dateToFilter" (ngModelChange)="onFilterChange()" title="To date" />
           <div class="search-box">
             <span class="search-icon">
               <img src="assets/images/icons/Search.png" alt="Search" />
             </span>
-            <input type="text" placeholder="Search by member, group, ticket..." [(ngModel)]="searchTerm"
-              (input)="filterEnrollments()" class="search-input" />
+            <input type="text" placeholder="Search member, group, ticket..." [(ngModel)]="searchTerm"
+              (input)="onSearchChange()" class="search-input" />
           </div>
         </div>
       </div>
 
       <div class="table-wrapper">
-        <table class="table">
+        <table class="table" *ngIf="enrollments.length > 0">
           <thead>
             <tr>
-              <th>
-                <input type="checkbox" (change)="toggleSelectAll($event)" [checked]="allSelected" />
-              </th>
-              <th (click)="sort('id')" style="cursor: pointer; user-select: none;">
+              <th (click)="sort('id')" style="cursor: pointer;">
                 ID
+                <span *ngIf="sortColumn === 'id'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
               </th>
-              <th (click)="sort('memberName')" style="cursor: pointer; user-select: none;">
+              <th (click)="sort('memberName')" style="cursor: pointer;">
                 Member
+                <span *ngIf="sortColumn === 'memberName'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
               </th>
-              <th (click)="sort('chitGroupName')" style="cursor: pointer; user-select: none;">
+              <th (click)="sort('chitGroupName')" style="cursor: pointer;">
                 Chit Group
+                <span *ngIf="sortColumn === 'chitGroupName'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
               </th>
-              <th>Ticket No</th>
+              <th (click)="sort('ticketNo')" style="cursor: pointer;">
+                Ticket
+                <span *ngIf="sortColumn === 'ticketNo'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+              </th>
               <th>Business Agent</th>
               <th>Collection Agent</th>
-              <th>Enrolled On</th>
-              <th>Status</th>
+              <th (click)="sort('enrollmentDate')" style="cursor: pointer;">
+                Enrolled On
+                <span *ngIf="sortColumn === 'enrollmentDate'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+              </th>
+              <th (click)="sort('status')" style="cursor: pointer;">
+                Status
+                <span *ngIf="sortColumn === 'status'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+              </th>
+              <th>Approval</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let e of paginatedEnrollments" class="table-row">
-              <td>
-                <input type="checkbox" [checked]="selectedEnrollments.includes(e.id)"
-                  (change)="toggleSelection(e.id)" />
-              </td>
+            <tr *ngFor="let e of enrollments" class="table-row">
               <td class="member-id">{{ e.id }}</td>
-              <td class="member-name">{{ e.memberName || '-' }}</td>
-              <td class="member-location">{{ e.chitGroupName || '-' }}</td>
-              <td class="member-mobile">#{{ e.ticketNo }}</td>
-              <td class="member-location">{{ e.businessAgentName || '-' }}</td>
-              <td class="member-location">{{ e.collectionAgentName || '-' }}</td>
-              <td class="member-location">{{ formatDate(e.createdAt || '') }}</td>
-              <td class="member-status">
+              <td class="member-name">{{ e.memberName || e.subscriberName || '—' }}</td>
+              <td>{{ e.chitGroupName || '—' }}</td>
+              <td>#{{ e.ticketNo }}</td>
+              <td>{{ e.businessAgentName || '—' }}</td>
+              <td>{{ e.collectionAgentName || '—' }}</td>
+              <td>{{ formatDate(e.enrollmentDate || e.createdAt) }}</td>
+              <td>
                 <span class="status-badge" [ngClass]="'status-' + (e.status ? e.status.toLowerCase() : 'active')">
-                  {{ e.status ? e.status : 'active' }}
+                  {{ formatStatusLabel(e.status) }}
                 </span>
+              </td>
+              <td>
+                <span class="approval-badge" [ngClass]="'approval-' + (e.approvalStatus ? e.approvalStatus.toLowerCase() : 'approved')">
+                  {{ formatStatusLabel(e.approvalStatus || 'APPROVED') }}
+                </span>
+              </td>
+              <td class="member-actions">
+                <button class="action-btn view-btn" (click)="viewEnrollment(e.id)" title="View" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button class="action-btn edit" (click)="openEditModal(e)" title="Edit" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button class="action-btn approve" *ngIf="canApprove(e)" (click)="approveEnrollment(e)" title="Approve" type="button">
+                  ✓
+                </button>
+                <button class="action-btn delete" (click)="deleteEnrollment(e)" title="Delete" type="button" *ngIf="canManageEnrollments">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
 
-        <div *ngIf="filteredEnrollments.length === 0 && !isLoading" class="empty-state">
+        <div *ngIf="enrollments.length === 0" class="empty-state">
           <div class="empty-icon">📋</div>
           <h3>No Enrollments Found</h3>
-          <p>{{ searchTerm ? 'Try adjusting your search'
-            : 'Start by adding your first enrollment' }}</p>
+          <p>{{ searchTerm || statusFilter || chitGroupFilter ? 'Try adjusting your search or filters' : 'Start by adding your first enrollment' }}</p>
+          <button
+            class="btn btn-primary add-member-btn empty-add-btn"
+            type="button"
+            (click)="openAddModal()"
+            *ngIf="!searchTerm && !statusFilter && !chitGroupFilter && !dateFromFilter && !dateToFilter">
+            <span class="btn-icon">+</span> Add Enrollment
+          </button>
         </div>
 
-        <!-- Pagination Footer -->
-        <div class="pagination-footer" *ngIf="filteredEnrollments.length > itemsPerPage">
+        <div class="pagination-footer" *ngIf="totalElements > 0">
           <div class="pagination-info">
-            Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }} to
-            {{ (currentPage * itemsPerPage) > filteredEnrollments.length ? filteredEnrollments.length : (currentPage *
-            itemsPerPage) }}
-            of {{ filteredEnrollments.length }} entries
+            Showing {{ getVisibleStartIndex() }} to {{ getVisibleEndIndex() }} of {{ totalElements }} entries
           </div>
           <div class="pagination-controls">
-            <button class="btn-page" [disabled]="currentPage === 1" (click)="goToFirstPage()"
-              *ngIf="totalPages > 2">First</button>
+            <button class="btn-page" [disabled]="currentPage === 1" (click)="goToPage(1)" *ngIf="totalPages > 2">First</button>
             <button class="btn-page" [disabled]="currentPage === 1" (click)="previousPage()">Previous</button>
-
-            <button class="btn-page" *ngFor="let page of pages" [class.active]="currentPage === page"
-              (click)="goToPage(page)">
-              {{ page }}
-            </button>
-
+            <button class="btn-page" *ngFor="let page of getVisiblePages()" [class.active]="currentPage === page"
+              (click)="goToPage(page)">{{ page }}</button>
             <button class="btn-page" [disabled]="currentPage === totalPages" (click)="nextPage()">Next</button>
-            <button class="btn-page" [disabled]="currentPage === totalPages" (click)="goToLastPage()"
-              *ngIf="totalPages > 2">Last</button>
+            <button class="btn-page" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)" *ngIf="totalPages > 2">Last</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Add Enrollment -->
   <div class="add-member-form" *ngIf="showAddModal">
     <div class="form-container">
       <div class="form-content">
-
         <div class="form-header">
           <h2>Add Enrollment</h2>
-          <button class="close-btn" (click)="closeAddModal()">×</button>
+          <button class="close-btn" (click)="closeAddModal()" type="button">×</button>
         </div>
 
-        <div class="error-message" *ngIf="saveError">
-          ⚠️ {{ saveError }}
-        </div>
-        <div class="success-message" *ngIf="saveSuccess">
-          ✅ {{ saveSuccess }}
-        </div>
-
-        <div class="form-body">
+        <form class="form-body" [formGroup]="addForm" (ngSubmit)="saveEnrollment()">
           <div class="form-row">
-            <div class="form-group">
+            <div class="form-group member-search-group">
               <label>Select Member <span class="text-danger">*</span></label>
-              <select [(ngModel)]="memberId" class="form-control" [disabled]="membersLoading">
-                <option [ngValue]="null" disabled>
-                  {{ membersLoading ? 'Loading members...' : '-- Choose a Member --' }}
-                </option>
-                <option *ngFor="let member of membersList" [ngValue]="member.id">
+              <input type="text" class="form-control" [(ngModel)]="memberSearchTerm"
+                [ngModelOptions]="{standalone: true}"
+                (input)="onMemberSearchInput()" (focus)="showMemberDropdown = true"
+                placeholder="Type name or mobile (min 2 chars)..." autocomplete="off"
+                [class.is-invalid]="addFormSubmitted && !memberId" />
+              <div class="invalid-feedback" *ngIf="addFormSubmitted && !memberId">Member is required.</div>
+              <button type="button" class="clear-member-btn" *ngIf="memberId" (click)="clearMemberSelection()">×</button>
+              <div class="member-dropdown" *ngIf="showMemberDropdown && (membersSearching || memberSearchResults.length > 0)">
+                <div class="dropdown-loading" *ngIf="membersSearching">Searching...</div>
+                <button type="button" class="dropdown-item" *ngFor="let member of memberSearchResults"
+                  (click)="selectMember(member)">
                   {{ member.name }} (Mob: {{ member.mobileNumber }})
-                </option>
-              </select>
+                </button>
+              </div>
             </div>
-
             <div class="form-group">
               <label>Chit Group <span class="text-danger">*</span></label>
-              <select [(ngModel)]="selectedGroupId" class="form-control" [disabled]="groupsLoading">
+              <select formControlName="chitGroupId" class="form-control" [disabled]="groupsLoading"
+                (change)="onGroupChange()" [class.is-invalid]="isAddFieldInvalid('chitGroupId')">
                 <option [ngValue]="null" disabled>
                   {{ groupsLoading ? 'Loading chit groups...' : 'Select Chit Group' }}
                 </option>
-                <option *ngFor="let g of chitGroups" [ngValue]="g.id">
-                  {{ g.groupName }}
-                </option>
+                <option *ngFor="let g of chitGroups" [ngValue]="g.id">{{ g.groupName }}</option>
               </select>
+              <small class="text-muted" *ngIf="selectedGroupCapacityHint">{{ selectedGroupCapacityHint }}</small>
+              <small class="text-muted" *ngIf="groupSummaryLoading">Loading group summary...</small>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>Business Agent ID (optional)</label>
-              <input type="number" placeholder="Optional" [(ngModel)]="businessAgentId" class="form-control">
+              <label>List No</label>
+              <input type="number" formControlName="listNo" class="form-control" min="1" placeholder="Optional"
+                [class.is-invalid]="isAddFieldInvalid('listNo')" />
             </div>
             <div class="form-group">
-              <label>Collection Agent ID (optional)</label>
-              <input type="number" placeholder="Optional" [(ngModel)]="collectionAgentId" class="form-control">
+              <label>Enrollment Date <span class="text-danger">*</span></label>
+              <input type="date" formControlName="enrollmentDate" class="form-control"
+                [class.is-invalid]="isAddFieldInvalid('enrollmentDate')" />
             </div>
           </div>
 
-        </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Route</label>
+              <input type="text" formControlName="routeName" class="form-control" placeholder="Prefilled from member"
+                [class.is-invalid]="isAddFieldInvalid('routeName')" />
+            </div>
+            <div class="form-group">
+              <label>Area</label>
+              <input type="text" formControlName="areaName" class="form-control" placeholder="Prefilled from member city"
+                [class.is-invalid]="isAddFieldInvalid('areaName')" />
+            </div>
+          </div>
 
-        <div class="form-footer mt-4">
-          <button class="btn btn-secondary" (click)="closeAddModal()">
-            Cancel
-          </button>
-          <button class="btn btn-success" (click)="saveEnrollment()" [disabled]="!isFormValid() || saving"
-            [style.opacity]="!isFormValid() ? 0.6 : 1"
-            [style.cursor]="(!isFormValid() || saving) ? 'not-allowed' : 'pointer'">
-            {{ saving ? 'Saving...' : 'Save Enrollment' }}
-          </button>
-        </div>
+          <div class="form-row" *ngIf="groupEnrollmentFee > 0">
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="enrollmentFeePaid" />
+                Enrollment fee paid (₹{{ groupEnrollmentFee }})
+              </label>
+              <small class="text-muted">If unchecked, enrollment will be created as <strong>Pending</strong> until fee is paid.</small>
+            </div>
+          </div>
+          <div class="form-row" *ngIf="!canApproveEnrollments">
+            <div class="form-group">
+              <small class="text-muted info-note">Agent enrollments require administrator approval before becoming active.</small>
+            </div>
+          </div>
 
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nominee Name</label>
+              <input type="text" formControlName="nomineeName" class="form-control" placeholder="Prefilled from member if available"
+                [class.is-invalid]="isAddFieldInvalid('nomineeName')" />
+            </div>
+            <div class="form-group">
+              <label>Nominee Relation</label>
+              <input type="text" formControlName="nomineeRelation" class="form-control"
+                [class.is-invalid]="isAddFieldInvalid('nomineeRelation')" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nominee Mobile</label>
+              <input type="text" formControlName="nomineeMobile" class="form-control" maxlength="15"
+                [class.is-invalid]="isAddFieldInvalid('nomineeMobile')" />
+            </div>
+            <div class="form-group"></div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Business Agent</label>
+              <select formControlName="businessAgentId" class="form-control" [disabled]="agentsLoading">
+                <option [ngValue]="null">-- None --</option>
+                <option *ngFor="let agent of agents" [ngValue]="agent.id">{{ agent.agentName }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Collection Agent</label>
+              <select formControlName="collectionAgentId" class="form-control" [disabled]="agentsLoading">
+                <option [ngValue]="null">-- None --</option>
+                <option *ngFor="let agent of agents" [ngValue]="agent.id">{{ agent.agentName }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-footer mt-4">
+            <button class="btn btn-secondary" (click)="closeAddModal()" type="button">Cancel</button>
+            <button class="btn btn-success" type="submit" [disabled]="saving">
+              {{ saving ? 'Saving...' : 'Save Enrollment' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
+<!-- View Modal -->
+<div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+  <div class="modal-content view-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Enrollment Details</h3>
+      <button class="modal-close" (click)="closeViewModal()" type="button">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="isLoadingDetail">Loading...</div>
+    <div class="modal-body" *ngIf="!isLoadingDetail && viewingEnrollment">
+      <div class="view-grid">
+        <div><strong>ID</strong><span>{{ viewingEnrollment.id }}</span></div>
+        <div><strong>Member</strong><span>{{ viewingEnrollment.memberName || '—' }}</span></div>
+        <div><strong>Subscriber</strong><span>{{ viewingEnrollment.subscriberName || '—' }}</span></div>
+        <div><strong>Chit Group</strong><span>{{ viewingEnrollment.chitGroupName || '—' }}</span></div>
+        <div><strong>Ticket No</strong><span>#{{ viewingEnrollment.ticketNo }}</span></div>
+        <div *ngIf="viewingEnrollment.listNo"><strong>List No</strong><span>{{ viewingEnrollment.listNo }}</span></div>
+        <div *ngIf="viewingEnrollment.routeName"><strong>Route</strong><span>{{ viewingEnrollment.routeName }}</span></div>
+        <div *ngIf="viewingEnrollment.areaName"><strong>Area</strong><span>{{ viewingEnrollment.areaName }}</span></div>
+        <div><strong>Enrollment Date</strong><span>{{ formatDate(viewingEnrollment.enrollmentDate) }}</span></div>
+        <div><strong>Business Agent</strong><span>{{ viewingEnrollment.businessAgentName || '—' }}</span></div>
+        <div><strong>Collection Agent</strong><span>{{ viewingEnrollment.collectionAgentName || '—' }}</span></div>
+        <div><strong>Status</strong><span>{{ formatStatusLabel(viewingEnrollment.status) }}</span></div>
+        <div><strong>Approval</strong><span>{{ formatStatusLabel(viewingEnrollment.approvalStatus || 'APPROVED') }}</span></div>
+        <div *ngIf="viewingEnrollment.createdByName"><strong>Created By</strong><span>{{ viewingEnrollment.createdByName }}</span></div>
+        <div *ngIf="viewingEnrollment.approvedByName"><strong>Approved By</strong><span>{{ viewingEnrollment.approvedByName }}</span></div>
+        <div *ngIf="viewingEnrollment.approvedAt"><strong>Approved On</strong><span>{{ formatDate(viewingEnrollment.approvedAt) }}</span></div>
+        <div *ngIf="viewingEnrollment.rejectionReason"><strong>Rejection Reason</strong><span>{{ viewingEnrollment.rejectionReason }}</span></div>
+        <div *ngIf="viewingEnrollment.enrollmentFee != null && viewingEnrollment.enrollmentFee > 0">
+          <strong>Enrollment Fee</strong>
+          <span>{{ formatCurrency(viewingEnrollment.enrollmentFee) }}
+            ({{ viewingEnrollment.enrollmentFeePaid ? 'Paid' : 'Unpaid' }})</span>
+        </div>
+        <div *ngIf="viewingEnrollment.nominee?.nomineeName">
+          <strong>Nominee</strong>
+          <span>{{ viewingEnrollment.nominee?.nomineeName }}
+            <span *ngIf="viewingEnrollment.nominee?.nomineeRelation">({{ viewingEnrollment.nominee?.nomineeRelation }})</span>
+            <span *ngIf="viewingEnrollment.nominee?.nomineeMobile"> — {{ viewingEnrollment.nominee?.nomineeMobile }}</span>
+          </span>
+        </div>
+        <div><strong>Installments</strong><span>{{ viewingEnrollment.installmentCount ?? 0 }} scheduled</span></div>
+        <div><strong>Created</strong><span>{{ formatDate(viewingEnrollment.createdAt) }}</span></div>
+      </div>
+
+      <div class="installments-section" *ngIf="!installmentsLoading && viewingInstallments.length > 0">
+        <h4>Installment Schedule</h4>
+        <table class="installments-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Due Date</th>
+              <th>Amount</th>
+              <th>Paid</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let inst of viewingInstallments">
+              <td>{{ inst.installmentNo }}</td>
+              <td>{{ formatDate(inst.dueDate) }}</td>
+              <td>{{ formatCurrency(inst.dueAmount) }}</td>
+              <td>{{ formatCurrency(inst.paidAmount) }}</td>
+              <td>{{ formatStatusLabel(inst.status) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="installmentsLoading" class="installments-loading">Loading installments...</div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeViewModal()" type="button">Close</button>
+        <button class="btn btn-outline" (click)="downloadAgreement(viewingEnrollment)" type="button">Download Agreement PDF</button>
+        <button class="btn btn-success" *ngIf="canApprove(viewingEnrollment)" (click)="approveEnrollment(viewingEnrollment)" [disabled]="saving" type="button">
+          {{ saving ? 'Approving...' : 'Approve' }}
+        </button>
+        <button class="btn btn-danger" *ngIf="canApprove(viewingEnrollment)" (click)="rejectEnrollment(viewingEnrollment)" [disabled]="saving" type="button">Reject</button>
+        <button class="btn btn-primary" (click)="openEditModal(viewingEnrollment); closeViewModal()" type="button" *ngIf="canManageEnrollments">Edit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay edit-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-content edit-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Edit Enrollment #{{ editingEnrollment?.id }}</h3>
+      <button class="modal-close" (click)="closeEditModal()" type="button">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="editingEnrollment">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Business Agent</label>
+          <select [(ngModel)]="editForm.businessAgentId" class="form-control">
+            <option [ngValue]="null">-- None --</option>
+            <option *ngFor="let agent of agents" [ngValue]="agent.id">{{ agent.agentName }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Collection Agent</label>
+          <select [(ngModel)]="editForm.collectionAgentId" class="form-control">
+            <option [ngValue]="null">-- None --</option>
+            <option *ngFor="let agent of agents" [ngValue]="agent.id">{{ agent.agentName }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select [(ngModel)]="editForm.status" class="form-control">
+          <option *ngFor="let option of enrollmentStatusOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+      <div class="form-group" *ngIf="editingEnrollment && editingEnrollment.enrollmentFee && editingEnrollment.enrollmentFee > 0">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="editForm.enrollmentFeePaid" />
+          Enrollment fee paid ({{ formatCurrency(editingEnrollment.enrollmentFee) }})
+        </label>
+        <small class="text-muted">Mark paid before setting status to Active.</small>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeEditModal()" type="button">Cancel</button>
+        <button class="btn btn-primary" (click)="saveEdit()" [disabled]="saving" type="button">
+          {{ saving ? 'Saving...' : 'Update Enrollment' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

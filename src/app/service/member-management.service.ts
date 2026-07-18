@@ -2,6 +2,7 @@ import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable } from 'rxjs';
+import { environment } from '../../enviornment/enviornment';
 
 export interface ApiResponse<T> {
     success: boolean;
@@ -89,8 +90,7 @@ export interface MemberLookupOptions {
 })
 export class MemberManagementService {
 
-    private apiUrl = '/chitfunds/api/v1/member-management';
-    // private apiUrl = 'http://3.108.194.139:8080/chitfunds/api/v1/member-management';
+    private apiUrl = `${environment.apiUrl}/member-management`;
 
     constructor(
         private http: HttpClient,

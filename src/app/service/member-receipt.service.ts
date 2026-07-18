@@ -25,6 +25,16 @@ export interface MemberReceiptCreateRequest {
   notes?: string;
 }
 
+export interface MemberReceiptCreatedResponse {
+  id: number;
+  receiptNo: string;
+  memberName: string;
+  groupName: string;
+  amount: number;
+  paymentMode: string;
+  receiptDate: string;
+}
+
 export interface ApiResponse<T> {
   status: string;
   message: string;
@@ -73,12 +83,12 @@ export class MemberReceiptService {
     ).pipe(map(response => response.data));
   }
 
-  createReceipt(request: MemberReceiptCreateRequest): Observable<string> {
-    return this.http.post<ApiResponse<string>>(
+  createReceipt(request: MemberReceiptCreateRequest): Observable<MemberReceiptCreatedResponse> {
+    return this.http.post<ApiResponse<MemberReceiptCreatedResponse>>(
       this.apiUrl, 
       request, 
       this.getAuthHeaders() 
-    ).pipe(map(response => response.message));
+    ).pipe(map(response => response.data));
   }
 
   deleteReceipt(id: number): Observable<ApiResponse<void>> {

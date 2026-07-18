@@ -1,18 +1,21 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef, NgZone, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
-import { finalize, switchMap } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 import {
   AuctionsService,
   AuctionResponse,
   AuctionBidResponse,
   AuctionSessionResponse,
+  AuctionNotifyResultResponse,
   EnrollmentResponse,
   ChitGroupDto,
   ApiResponse,
 } from '../../service/auction.service';
+import { AuthService } from '../../service/auth';
+import { ToastService } from '../../service/toast.service';
 
 interface AuctionItem {
   id              : number;
@@ -28,7 +31,10 @@ interface AuctionItem {
   bidLossAmount  ?: number;
   dividendPerMember?: number;
   netPayable     ?: number;
-  status          : string;
+    status: string;
+    approvalStatus?: string;
+    approvedByName?: string;
+    rejectionReason?: string;
 }
 
 interface BidRow {
@@ -75,9 +81,21 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   isLoading          = false;
   isSubmittingBid    = false;
   isConfirmingWinner = false;
+  isSendingIntimation = false;
+  lastIntimationResult: AuctionNotifyResultResponse | null = null;
   showConfirmModal   = false;
   showSuccessModal   = false;
   errorMessage       = '';
+  isGenerating       = false;
+  kpiSummary: {
+    totalAuctions: number;
+    upcomingAuctions: number;
+    todaysAuctions: number;
+    completedAuctions: number;
+    liveSessions: number;
+    pendingWinnerConfirmation: number;
+    distinctChitGroups: number;
+  } | null = null;
 
   // Data arrays
   chitGroups      : ChitGroupDto[] = [];
@@ -86,14 +104,49 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   bids            : BidRow[]      = [];
   
   // Timer state
-  timerValue: number = 180; // 3 minutes in seconds
+  timerValue: number = 0;
   timerInterval: any;
   isTimerRunning = false;
-  auctionLocked = false;
+  auctionLocked = true;
+
+  get canConductAuction(): boolean { return this.auth.canManageAuctions(); }
+  get canConfirmWinner(): boolean { return this.auth.canConfirmAuctionWinner(); }
+  get canSubmitBids(): boolean { return this.canConductAuction && this.isTimerRunning && !this.auctionLocked; }
+  get canGenerateSchedule(): boolean { return this.auth.canConfirmAuctionWinner(); }
+  get isWinnerPendingApproval(): boolean {
+    return this.selected?.approvalStatus?.toUpperCase() === 'PENDING'
+      || this.selected?.status === 'pending_approval';
+  }
+  get isWinnerApproved(): boolean {
+    return !!this.selected?.winningBidId
+      && (this.selected?.approvalStatus?.toUpperCase() === 'APPROVED'
+        || this.selected?.status === 'processing_payout');
+  }
 
   // Selections
   selectedGroupId : number | null = null;
   selected        : AuctionItem | null = null;
+
+  // List filters (server-side)
+  statusFilter    = '';
+  searchTerm      = '';
+  dateFrom        = '';
+  dateTo          = '';
+  hasWinnerFilter = '';
+  totalAuctionElements = 0;
+
+  readonly statusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'scheduled', label: 'Scheduled' },
+    { value: 'pending_approval', label: 'Pending Approval' },
+    { value: 'processing_payout', label: 'Processing Payout' },
+  ];
+
+  readonly winnerFilterOptions = [
+    { value: '', label: 'All Auctions' },
+    { value: 'false', label: 'No Winner Yet' },
+    { value: 'true', label: 'Has Winner' },
+  ];
 
   header: Header = {
     auctionNumber: 0, groupName: '', currentAuction: 0,
@@ -110,6 +163,8 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private svc: AuctionsService,
+    private auth: AuthService,
+    private toastService: ToastService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) {}
@@ -118,7 +173,53 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    setTimeout(() => this.loadPage(), 0);
+    setTimeout(() => {
+      this.loadKpis();
+      this.loadPage();
+    }, 0);
+  }
+
+  private loadKpis(): void {
+    this.svc.getKpiSummary(this.selectedGroupId).subscribe({
+      next: (res) => {
+        this.kpiSummary = res.data ?? null;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.kpiSummary = null;
+      },
+    });
+  }
+
+  generateAuctionSchedule(): void {
+    if (!this.canGenerateSchedule) {
+      this.errorMessage = 'Only administrators can generate the auction schedule.';
+      return;
+    }
+    if (!this.selectedGroupId) {
+      this.errorMessage = 'Select a chit group first.';
+      return;
+    }
+    this.isGenerating = true;
+    this.errorMessage = '';
+    this.svc.generateAuctionsForGroup(this.selectedGroupId).subscribe({
+      next: (res) => {
+        this.isGenerating = false;
+        if (res.data && res.data.length > 0) {
+          this.svc.clearAuctionsCache();
+          this.loadKpis();
+          this.loadGroupAuctions(true);
+        } else {
+          this.errorMessage = res.message ?? 'Could not generate auction schedule.';
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isGenerating = false;
+        this.errorMessage = 'Failed to generate auction schedule.';
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   ngOnDestroy(): void {
@@ -127,6 +228,10 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   startAuction(): void {
+    if (!this.canConductAuction) {
+      this.errorMessage = 'Only administrators and agents can start an auction.';
+      return;
+    }
     if (this.isTimerRunning || !this.selected) return;
     this.svc.startAuction(this.selected.id).subscribe({
       next: (res) => {
@@ -145,13 +250,13 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   handleSessionUpdate(session: AuctionSessionResponse): void {
-      if (session.sessionStatus === 'live') {
+      if (session.sessionStatus === 'live' && session.remainingSeconds > 0) {
           this.timerValue = session.remainingSeconds;
           this.isTimerRunning = true;
           this.auctionLocked = false;
           this.startLocalTimer();
       } else {
-          this.timerValue = session.remainingSeconds; // might be 0
+          this.timerValue = session.remainingSeconds ?? 0;
           this.isTimerRunning = false;
           this.auctionLocked = true;
           this.stopLocalTimer();
@@ -206,61 +311,73 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.errorMessage = '';
     this.cdr.detectChanges();
 
-    // Fetch BOTH Chit Groups and Auctions
-    forkJoin({
-      groups  : this.svc.listChitGroups(),
-      auctions: this.svc.listAuctions()
-    }).pipe(
-      switchMap(({ groups, auctions }) => {
+    this.svc.listChitGroups().subscribe({
+      next: (groups) => {
         this.chitGroups = groups.data ?? [];
-        const aList = auctions.data ?? [];
-
-        if (!aList.length) {
-          return of({ items: [] as AuctionItem[], bids: [] as AuctionBidResponse[], enrollments: [] as EnrollmentResponse[], first: null });
-        }
-
-        const items: AuctionItem[] = aList.map((a: AuctionResponse): AuctionItem => ({
-          id              : a.id,
-          auctionNumber   : a.auctionNumber,
-          groupName       : a.groupName ?? `Group #${a.chitGroupId}`,
-          auctionDate     : a.auctionDate,
-          chitGroupId     : a.chitGroupId,
-          chitAmount      : a.chitAmount ?? 0,
-          maxMembers      : a.maxMembers ?? 0,
-          commissionPct   : a.companyCommissionPct ?? 5,
-          winningBidId    : a.winningBidId,
-          winningBidAmount: a.winningBidAmount,
-          bidLossAmount   : a.bidLossAmount,
-          dividendPerMember: a.dividendPerMember,
-          netPayable      : a.netPayable,
-          status          : a.status,
-        }));
-
-        this.allAuctions = items;
-
-        if (this.chitGroups.length > 0) {
+        if (this.chitGroups.length > 0 && this.selectedGroupId == null) {
           this.selectedGroupId = this.chitGroups[0].id;
-          this.filterAuctionsByGroup();
         }
+        this.loadGroupAuctions(true);
+      },
+      error: () => {
+        this.isLoading = false;
+        this.errorMessage = 'Failed to load chit groups. Please check the backend.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
 
-        const first = this.groupAuctions.length > 0 ? this.groupAuctions[0] : items[0];
+  private mapToAuctionItem(a: AuctionResponse): AuctionItem {
+    return {
+      id              : a.id,
+      auctionNumber   : a.auctionNumber,
+      groupName       : a.groupName ?? `Group #${a.chitGroupId}`,
+      auctionDate     : a.auctionDate,
+      chitGroupId     : a.chitGroupId,
+      chitAmount      : a.chitAmount ?? 0,
+      maxMembers      : a.maxMembers ?? 0,
+      commissionPct   : a.companyCommissionPct ?? 5,
+      winningBidId    : a.winningBidId,
+      winningBidAmount: a.winningBidAmount,
+      bidLossAmount   : a.bidLossAmount,
+      dividendPerMember: a.dividendPerMember,
+      netPayable      : a.netPayable,
+      status          : a.status,
+      approvalStatus  : a.approvalStatus,
+      approvedByName  : a.approvedByName,
+      rejectionReason : a.rejectionReason,
+    };
+  }
 
-        if (!first) {
-           return of({ items, bids: [], enrollments: [], first: null });
-        }
+  loadGroupAuctions(selectFirst = false): void {
+    if (!this.selectedGroupId) {
+      this.groupAuctions = [];
+      this.allAuctions = [];
+      this.selected = null;
+      this.isLoading = false;
+      this.cdr.detectChanges();
+      return;
+    }
 
-        return forkJoin({
-          bids       : this.svc.listBids(first.id),
-          enrollments: this.svc.getEnrollments(first.chitGroupId),
-        }).pipe(
-          switchMap(({ bids, enrollments }) => of({
-            items,
-            bids       : bids.data ?? [] as AuctionBidResponse[],
-            enrollments: enrollments.data ?? [] as EnrollmentResponse[],
-            first,
-          }))
-        );
-      }),
+    this.isLoading = true;
+    this.cdr.detectChanges();
+
+    const hasWinner = this.hasWinnerFilter === ''
+      ? null
+      : this.hasWinnerFilter === 'true';
+
+    this.svc.listAuctionsPaged({
+      page: 0,
+      size: 200,
+      chitGroupId: this.selectedGroupId,
+      search: this.searchTerm,
+      status: this.statusFilter,
+      hasWinner,
+      dateFrom: this.dateFrom || undefined,
+      dateTo: this.dateTo || undefined,
+      sortBy: 'auctionNumber',
+      sortDir: 'asc',
+    }).pipe(
       finalize(() => {
         this.ngZone.run(() => {
           this.isLoading = false;
@@ -268,40 +385,80 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         });
       })
     ).subscribe({
-      next: ({ items, bids, enrollments, first }: any) => {
-        this.ngZone.run(() => {
-          if (!first) {
-            this.selected = null;
-          } else {
-            this.selected = first;
-            this.setHeader(first, this.groupAuctions.length);
-            this.setCalcBase(first);
+      next: (page) => {
+        const items = (page.content ?? []).map(a => this.mapToAuctionItem(a));
+        this.groupAuctions = items;
+        this.allAuctions = items;
+        this.totalAuctionElements = page.totalElements ?? items.length;
 
-            this.bids = this.buildRows(enrollments, bids);
-            this.header.totalMembers = this.bids.length;
-
-            if (bids.length) { this.recalculate(); }
-
-            this.svc.connectToAuction(
-                first.id,
-                (session) => this.handleSessionUpdate(session),
-                (bid) => this.handleBidUpdate(bid)
-            );
-
-            this.svc.getAuctionSession(first.id).subscribe(res => {
-                if (res.data) this.handleSessionUpdate(res.data);
-            });
+        if (selectFirst && items.length > 0) {
+          this.selectFirstAuction(items[0]);
+        } else if (items.length === 0) {
+          this.selected = null;
+          this.bids = [];
+          this.loadKpis();
+        } else if (this.selected) {
+          const stillExists = items.find(a => a.id === this.selected!.id);
+          if (stillExists) {
+            this.selected = stillExists;
+          } else if (selectFirst) {
+            this.selectFirstAuction(items[0]);
           }
-          this.cdr.detectChanges();
-        });
+        }
+        this.cdr.detectChanges();
       },
       error: () => {
-        this.ngZone.run(() => {
-          this.errorMessage = 'Failed to load data. Please check the backend.';
-          this.cdr.detectChanges();
-        });
+        this.errorMessage = 'Failed to load auctions for this group.';
+        this.cdr.detectChanges();
       },
     });
+  }
+
+  private selectFirstAuction(first: AuctionItem): void {
+    this.selected = first;
+    this.lastIntimationResult = null;
+    this.setHeader(first, this.groupAuctions.length);
+    this.setCalcBase(first);
+
+    forkJoin({
+      bids       : this.svc.listBids(first.id),
+      enrollments: this.svc.getEnrollments(first.chitGroupId),
+    }).subscribe({
+      next: ({ bids, enrollments }) => {
+        this.bids = this.buildRows(enrollments.data ?? [], bids.data ?? []);
+        this.header.totalMembers = this.bids.length;
+        if ((bids.data ?? []).length) { this.recalculate(); }
+
+        this.svc.connectToAuction(
+          first.id,
+          (session) => this.handleSessionUpdate(session),
+          (bid) => this.handleBidUpdate(bid)
+        );
+
+        this.svc.getAuctionSession(first.id).subscribe(res => {
+          if (res.data) this.handleSessionUpdate(res.data);
+        });
+
+        this.loadKpis();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  onFiltersChange(): void {
+    this.loadGroupAuctions(true);
+  }
+
+  clearFilters(): void {
+    this.statusFilter = '';
+    this.searchTerm = '';
+    this.dateFrom = '';
+    this.dateTo = '';
+    this.hasWinnerFilter = '';
+    this.loadGroupAuctions(true);
   }
 
   // ── Selections & Filtering ──────────────────────────────────────────────────
@@ -309,34 +466,25 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   onGroupSelect(event: Event): void {
     const groupId = Number((event.target as HTMLSelectElement).value);
     this.selectedGroupId = groupId;
-    this.filterAuctionsByGroup();
-    
-    if (this.groupAuctions.length > 0) {
-      this.switchTo(this.groupAuctions[0]);
-    } else {
-      this.selected = null;
-      this.bids = [];
-    }
+    this.loadKpis();
+    this.loadGroupAuctions(true);
   }
 
   onAuctionSelect(event: Event): void {
     const id = Number((event.target as HTMLSelectElement).value);
-    const item = this.allAuctions.find(a => a.id === id);
+    const item = this.groupAuctions.find(a => a.id === id);
     if (item && item.id !== this.selected?.id) { this.switchTo(item); }
-  }
-
-  private filterAuctionsByGroup(): void {
-    if (!this.selectedGroupId) {
-      this.groupAuctions = [];
-      return;
-    }
-    this.groupAuctions = this.allAuctions.filter(a => a.chitGroupId === this.selectedGroupId);
   }
 
   private switchTo(item: AuctionItem): void {
     this.isLoading = true;
     this.bids      = [];
     this.selected  = item;
+    this.lastIntimationResult = null;
+    this.stopLocalTimer();
+    this.isTimerRunning = false;
+    this.auctionLocked = true;
+    this.timerValue = 0;
     
     this.setHeader(item, this.groupAuctions.length);
     this.setCalcBase(item);
@@ -374,6 +522,14 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   // ── Bid actions ───────────────────────────────────────────────────────────────
 
   submitBid(bid: BidRow): void {
+    if (!this.canConductAuction) {
+      this.errorMessage = 'Only administrators and agents can submit bids.';
+      return;
+    }
+    if (!this.canSubmitBids) {
+      this.errorMessage = 'Bidding is closed. Start the auction to accept bids.';
+      return;
+    }
     if (!this.selected || bid.bidAmount <= 0) {
       this.errorMessage = 'Enter a valid bid amount greater than zero.';
       return;
@@ -392,7 +548,7 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         if (res.data) {
           // No need to manually update and recalculate row since WebSocket push will handle it globally
         } else {
-          this.errorMessage = res.message ?? 'Bid rejected — must be lower than current lowest bid.';
+          this.errorMessage = res.message ?? 'Bid rejected. Enter an amount higher than the current highest bid.';
         }
       },
       error: () => {
@@ -439,6 +595,18 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   openConfirmModal(): void {
+    if (!this.canConductAuction) {
+      this.errorMessage = 'Only administrators and agents can submit the auction winner.';
+      return;
+    }
+    if (this.isWinnerPendingApproval) {
+      this.errorMessage = 'Winner is already pending administrator approval.';
+      return;
+    }
+    if (this.isWinnerApproved) {
+      this.errorMessage = 'Winner already approved for this auction.';
+      return;
+    }
     if (!this.highestBid) {
       this.errorMessage = 'No bids placed yet. Enter a bid amount and click Submit.';
       return;
@@ -486,6 +654,10 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
   closeConfirmModal(): void { this.showConfirmModal = false; }
 
   confirmWinner(): void {
+    if (!this.canConductAuction) {
+      this.errorMessage = 'Only administrators and agents can submit the auction winner.';
+      return;
+    }
     if (!this.selected) {
       this.errorMessage = 'No auction selected.';
       return;
@@ -512,6 +684,10 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
             winningBidId    : res.data.winningBidId,
             winningBidAmount: res.data.winningBidAmount,
             netPayable      : res.data.netPayable,
+            status          : res.data.status,
+            approvalStatus  : res.data.approvalStatus,
+            approvedByName  : res.data.approvedByName,
+            rejectionReason : res.data.rejectionReason,
           };
           this.allAuctions[idx] = updated;
           const groupIndex = this.groupAuctions.findIndex(a => a.id === updated.id);
@@ -523,6 +699,12 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         this.showConfirmModal = false;
         this.showSuccessModal = true;
+        if (res.data.approvalStatus?.toUpperCase() === 'PENDING') {
+          this.toastService.success('Winner submitted for administrator approval.');
+        } else {
+          this.toastService.success('Auction winner confirmed successfully.');
+        }
+        this.loadKpis();
         this.cdr.detectChanges();
           setTimeout(() => { this.showSuccessModal = false; this.cdr.detectChanges(); }, 3000);
         } else {
@@ -536,6 +718,122 @@ export class AuctionsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.errorMessage       = 'Failed to confirm winner.';
       },
     });
+  }
+
+  approveWinner(): void {
+    if (!this.canConfirmWinner || !this.selected) {
+      this.toastService.warning('Only administrators can approve auction winners.');
+      return;
+    }
+    this.isConfirmingWinner = true;
+    this.svc.approveWinner(this.selected.id).subscribe({
+      next: (res) => {
+        this.isConfirmingWinner = false;
+        if (res.data) {
+          this.applySelectedUpdate(res.data);
+          this.toastService.success('Auction winner approved.');
+          this.loadKpis();
+        } else {
+          this.errorMessage = res.message ?? 'Failed to approve winner.';
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isConfirmingWinner = false;
+        this.errorMessage = 'Failed to approve winner.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  rejectWinner(): void {
+    if (!this.canConfirmWinner || !this.selected) {
+      this.toastService.warning('Only administrators can reject auction winners.');
+      return;
+    }
+    const reason = window.prompt('Enter rejection reason (optional):') ?? '';
+    this.isConfirmingWinner = true;
+    this.svc.rejectWinner(this.selected.id, reason || undefined).subscribe({
+      next: (res) => {
+        this.isConfirmingWinner = false;
+        if (res.data) {
+          this.applySelectedUpdate(res.data);
+          this.bids.forEach(b => {
+            b.isWinning = false;
+            if (b.status === 'Highest Bid') {
+              b.status = b.bidAmount > 0 ? 'Bid Paid' : 'No Bid';
+            }
+          });
+          this.toastService.success('Auction winner rejected.');
+          this.loadKpis();
+          this.refreshSelectedAuction();
+        } else {
+          this.errorMessage = res.message ?? 'Failed to reject winner.';
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isConfirmingWinner = false;
+        this.errorMessage = 'Failed to reject winner.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  sendIntimation(): void {
+    if (!this.canConductAuction || !this.selected) {
+      this.toastService.warning('Only administrators and agents can send auction intimations.');
+      return;
+    }
+    this.isSendingIntimation = true;
+    this.svc.sendAuctionIntimation(this.selected.id).subscribe({
+      next: (res) => {
+        this.isSendingIntimation = false;
+        if (res.data) {
+          this.lastIntimationResult = res.data;
+          if (res.data.sentCount > 0) {
+            this.toastService.success(`Intimation sent to ${res.data.sentCount} member(s).`);
+          } else {
+            this.toastService.info('No new members to notify (already sent or no mobile number).');
+          }
+        } else {
+          this.toastService.error(res.message ?? 'Failed to send auction intimation.');
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isSendingIntimation = false;
+        this.toastService.error('Failed to send auction intimation.');
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private applySelectedUpdate(data: AuctionResponse): void {
+    if (!this.selected) {
+      return;
+    }
+    const updated: AuctionItem = {
+      ...this.selected,
+      winningBidId: data.winningBidId,
+      winningBidAmount: data.winningBidAmount,
+      netPayable: data.netPayable,
+      status: data.status,
+      approvalStatus: data.approvalStatus,
+      approvedByName: data.approvedByName,
+      rejectionReason: data.rejectionReason,
+    };
+    this.selected = updated;
+    const allIdx = this.allAuctions.findIndex(a => a.id === updated.id);
+    if (allIdx >= 0) {
+      this.allAuctions[allIdx] = updated;
+    }
+    const groupIdx = this.groupAuctions.findIndex(a => a.id === updated.id);
+    if (groupIdx >= 0) {
+      this.groupAuctions[groupIdx] = updated;
+    }
+    this.setHeader(updated, this.groupAuctions.length);
+    this.setCalcBase(updated);
   }
 
   closeSuccessModal(): void { this.showSuccessModal = false; }

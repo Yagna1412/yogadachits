@@ -6,6 +6,127 @@
   min-height: 100vh;
   width: 100%;
 
+  .dashboard-loading,
+  .dashboard-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+    gap: 12px;
+    color: #6b7280;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: dashboard-spin 0.8s linear infinite;
+  }
+
+  @keyframes dashboard-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .empty-panel {
+    padding: 32px 16px;
+    text-align: center;
+    color: #6b7280;
+
+    p {
+      margin: 0 0 12px;
+    }
+  }
+
+  .pay-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+  }
+
+  .pay-modal {
+    width: min(460px, 100%);
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+  }
+
+  .pay-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .close-btn {
+      border: none;
+      background: transparent;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+      color: #6b7280;
+    }
+  }
+
+  .pay-modal-body {
+    padding: 16px 20px;
+  }
+
+  .pay-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e5e7eb;
+    font-size: 0.95rem;
+    color: #4b5563;
+
+    strong {
+      color: #111827;
+      text-align: right;
+    }
+  }
+
+  .pay-note,
+  .pay-success {
+    margin: 16px 0 0;
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+
+  .pay-success {
+    color: #047857;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .pay-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .notification-item {
+    cursor: pointer;
+  }
+
   // Dashboard Header
   .dashboard-header {
     background: white;

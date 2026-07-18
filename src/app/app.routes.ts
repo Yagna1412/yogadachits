@@ -12,6 +12,7 @@ import { CompanyInvestmentOwnChitsComponent } from './components/reports/auction
 import { AuctionTurnoverStatementComponent } from './components/reports/auctions/auction-turnover-statement/auction-turnover-statement';
 import { GstSummaryComponent } from './components/reports/auctions/gst-summary/gst-summary';
 import { Routes } from '@angular/router';
+import { authGuard, adminGuard, loginGuard, userGuard } from './guards/auth.guard';
 import { LoginComponent } from './components/login/login';
 import { DashboardComponent } from './components/dashboard/dashboard';
 import { MembersComponent } from './components/members/members';
@@ -103,12 +104,13 @@ import { UserSupportComponent } from './components/user-support/user-support';
 // Exporting routing definitions
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
+  { path: 'login', component: LoginComponent, canActivate: [loginGuard] },
   {
     path: 'admin',
     component: AdminLayout,
+    canActivate: [authGuard, adminGuard],
     children: [
-      { path: '', redirectTo: 'members', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'members', component: MembersComponent },
       { path: 'agents-target-entry', component: AgentsTargetEntryComponent },
@@ -202,6 +204,7 @@ export const routes: Routes = [
   {
     path: 'user',
     component: UserLayout,
+    canActivate: [authGuard, userGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: UserDashboardComponent },

@@ -17,9 +17,48 @@
       </div>
       <button class="btn btn-primary btn-sm start-btn" 
               (click)="startAuction()" 
-              [disabled]="isTimerRunning">
+              [disabled]="!canConductAuction || isTimerRunning || !!selected?.winningBidId">
         {{ isTimerRunning ? 'Auction Live' : 'Start Auction' }}
       </button>
+    </div>
+  </div>
+</div>
+
+<div class="stats-grid" *ngIf="!isLoading && kpiSummary">
+  <div class="stat-card">
+    <div class="stat-content">
+      <div class="stat-label">Total Auctions</div>
+      <div class="stat-value">{{ kpiSummary.totalAuctions }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-content">
+      <div class="stat-label">Today's Auctions</div>
+      <div class="stat-value">{{ kpiSummary.todaysAuctions }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-content">
+      <div class="stat-label">Upcoming</div>
+      <div class="stat-value">{{ kpiSummary.upcomingAuctions }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-content">
+      <div class="stat-label">Completed</div>
+      <div class="stat-value">{{ kpiSummary.completedAuctions }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-content">
+      <div class="stat-label">Live Now</div>
+      <div class="stat-value">{{ kpiSummary.liveSessions }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-content">
+      <div class="stat-label">Pending Winner</div>
+      <div class="stat-value">{{ kpiSummary.pendingWinnerConfirmation }}</div>
     </div>
   </div>
 </div>
@@ -31,6 +70,41 @@
       {{ group.groupName }} (Amount: {{ formatCurrency(group.chitAmount) }})
     </option>
   </select>
+</div>
+
+<div class="auction-filters-bar" *ngIf="!isLoading && chitGroups.length > 0">
+  <div class="filter-field">
+    <label class="selector-label">Search</label>
+    <input class="filter-input" type="text" [(ngModel)]="searchTerm" placeholder="Auction # or group name"
+      (keyup.enter)="onFiltersChange()" />
+  </div>
+  <div class="filter-field">
+    <label class="selector-label">Status</label>
+    <select class="auction-select" [(ngModel)]="statusFilter" (change)="onFiltersChange()">
+      <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
+  </div>
+  <div class="filter-field">
+    <label class="selector-label">Winner</label>
+    <select class="auction-select" [(ngModel)]="hasWinnerFilter" (change)="onFiltersChange()">
+      <option *ngFor="let opt of winnerFilterOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
+  </div>
+  <div class="filter-field">
+    <label class="selector-label">From</label>
+    <input class="filter-input" type="date" [(ngModel)]="dateFrom" (change)="onFiltersChange()" />
+  </div>
+  <div class="filter-field">
+    <label class="selector-label">To</label>
+    <input class="filter-input" type="date" [(ngModel)]="dateTo" (change)="onFiltersChange()" />
+  </div>
+  <div class="filter-actions">
+    <button type="button" class="btn btn-secondary btn-sm" (click)="onFiltersChange()">Apply</button>
+    <button type="button" class="btn btn-secondary btn-sm" (click)="clearFilters()">Clear</button>
+  </div>
+  <div class="filter-summary" *ngIf="totalAuctionElements > 0">
+    {{ totalAuctionElements }} auction(s) found
+  </div>
 </div>
 
 <div class="auction-selector-bar" *ngIf="!isLoading && groupAuctions.length > 0">
@@ -55,7 +129,13 @@
 </div>
 
 <div *ngIf="!isLoading && !selected && !errorMessage" class="empty-state">
-  No auctions have been generated for this Chit Group yet.
+  <p>No auctions have been generated for this Chit Group yet.</p>
+  <button class="btn btn-primary btn-sm"
+          *ngIf="canGenerateSchedule && selectedGroupId"
+          [disabled]="isGenerating"
+          (click)="generateAuctionSchedule()">
+    {{ isGenerating ? 'Generating…' : 'Generate Auction Schedule' }}
+  </button>
 </div>
 
 <div class="auction-main" *ngIf="!isLoading && selected">
@@ -83,6 +163,12 @@
       <div class="header-item">
         <span class="header-label">Total Members</span>
         <span class="header-value">{{ header.totalMembers }}</span>
+      </div>
+      <div class="header-item" *ngIf="selected?.approvalStatus">
+        <span class="header-label">Approval</span>
+        <span class="header-value approval-badge" [class.pending]="isWinnerPendingApproval" [class.approved]="isWinnerApproved">
+          {{ selected!.approvalStatus || selected!.status }}
+        </span>
       </div>
     </div>
   </div>
@@ -144,10 +230,34 @@
         <div class="action-buttons">
           <button class="btn btn-secondary" (click)="downloadDetails()">Download Detail</button>
           <button class="btn btn-primary"
-            [disabled]="!highestBid || isConfirmingWinner || !!selected!.winningBidId"
+            *ngIf="canConductAuction"
+            [disabled]="!highestBid || isConfirmingWinner || isWinnerPendingApproval || isWinnerApproved"
             (click)="openConfirmModal()">
-            {{ selected!.winningBidId ? 'Winner Confirmed' : 'Confirm Winner' }}
+            {{ isWinnerApproved ? 'Winner Approved' : (isWinnerPendingApproval ? 'Pending Approval' : (canConfirmWinner ? 'Confirm Winner' : 'Submit for Approval')) }}
           </button>
+          <button class="btn btn-success"
+            *ngIf="canConfirmWinner && isWinnerPendingApproval"
+            [disabled]="isConfirmingWinner"
+            (click)="approveWinner()">
+            Approve Winner
+          </button>
+          <button class="btn btn-secondary reject-btn"
+            *ngIf="canConfirmWinner && isWinnerPendingApproval"
+            [disabled]="isConfirmingWinner"
+            (click)="rejectWinner()">
+            Reject
+          </button>
+          <button class="btn btn-secondary"
+            *ngIf="canConductAuction"
+            [disabled]="isSendingIntimation"
+            (click)="sendIntimation()">
+            {{ isSendingIntimation ? 'Sending...' : 'Send Auction Intimation' }}
+          </button>
+        </div>
+        <div class="intimation-summary" *ngIf="lastIntimationResult">
+          Sent {{ lastIntimationResult.sentCount }} / {{ lastIntimationResult.totalEligible }} member(s)
+          <span *ngIf="lastIntimationResult.skippedCount"> · {{ lastIntimationResult.skippedCount }} already notified/no mobile</span>
+          <span *ngIf="lastIntimationResult.failedCount"> · {{ lastIntimationResult.failedCount }} failed</span>
         </div>
       </div>
 
@@ -174,11 +284,11 @@
                       [(ngModel)]="bid.bidAmount"
                       (ngModelChange)="recalculate()"
                       placeholder="Enter bid"
-                      [disabled]="!!selected!.winningBidId || (timerValue === 0 && !isTimerRunning)" />
+                      [disabled]="!!selected!.winningBidId || !canSubmitBids || isWinnerPendingApproval || isWinnerApproved" />
                   </td>
                   <td>
                     <button
-                      *ngIf="!selected!.winningBidId && (isTimerRunning || timerValue > 0)"
+                      *ngIf="!selected!.winningBidId && canSubmitBids"
                       class="btn btn-sm btn-primary"
                       [disabled]="bid.bidAmount <= 0 || isSubmittingBid"
                       (click)="submitBid(bid)">

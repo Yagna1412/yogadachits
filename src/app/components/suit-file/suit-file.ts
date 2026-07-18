@@ -1,7 +1,9 @@
-import { Component, OnInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import {
   SuitFileService,
   SuitMemberOption,
@@ -38,9 +40,11 @@ interface TimelineEntry {
   templateUrl: './suit-file.html',
   styleUrl: './suit-file.scss',
 })
-export class SuitFileInfoComponent implements OnInit {
+export class SuitFileInfoComponent implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private readonly defaultAvatar = 'assets/images/icons/user.png';
+  private destroy$ = new Subject<void>();
+  private searchQuery$ = new Subject<string>();
 
   searchQuery: string = '';
   selectedMember: Member | null = null;
@@ -112,6 +116,15 @@ export class SuitFileInfoComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+
+    this.searchQuery$
+      .pipe(debounceTime(350), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((term) => this.runSearch(term));
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadMembers(searchTerm?: string) {
@@ -132,7 +145,11 @@ export class SuitFileInfoComponent implements OnInit {
   }
 
   onSearch() {
-    const term = this.searchQuery.trim();
+    this.searchQuery$.next(this.searchQuery);
+  }
+
+  private runSearch(rawTerm: string) {
+    const term = rawTerm.trim();
     if (!term) {
       this.searchResults = [];
       return;
@@ -479,6 +496,22 @@ export class SuitFileInfoComponent implements OnInit {
       return photoUrl;
     }
     return this.defaultAvatar;
+  }
+
+  /**
+   * Member photo URLs are free-text/uploaded values that can go stale or point at
+   * unreachable hosts (e.g. seeded/demo data). Fall back to the local default avatar
+   * instead of showing a broken image icon.
+   */
+  onAvatarError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img && img.src !== this.absoluteDefaultAvatarUrl()) {
+      img.src = this.defaultAvatar;
+    }
+  }
+
+  private absoluteDefaultAvatarUrl(): string {
+    return new URL(this.defaultAvatar, document.baseURI).href;
   }
 
   private mapTimelineEntry(e: SuitTimelineEntry): TimelineEntry {

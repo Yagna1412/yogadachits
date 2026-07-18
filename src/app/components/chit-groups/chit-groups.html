@@ -4,12 +4,10 @@
     <nav class="breadcrumb">
       <span class="breadcrumb-item">Master</span>
       <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
-      <span class="breadcrumb-item">Members</span>
-      <span class="breadcrumb-separator"><img src="assets/images/icons/bredcrum.png" alt="Separator" /></span>
       <span class="breadcrumb-item active">Chit Groups</span>
     </nav>
   </div>
-  <button class="btn btn-primary add-group-btn" (click)="toggleAddGroupForm()" *ngIf="!showAddGroupForm">
+  <button class="btn btn-primary add-group-btn" (click)="openAddForm()" *ngIf="!showAddGroupForm">
     <span class="btn-icon">+</span>
     <span>Add New Group</span>
   </button>
@@ -18,26 +16,53 @@
 
 
   <div class="add-group-form" *ngIf="showAddGroupForm">
-    <div class="form-header">
-      <h2>Add New Group</h2>
-      <button class="close-btn" (click)="toggleAddGroupForm()">
-        ×
-      </button>
-    </div>
+    <div class="form-container">
+      <div class="step-sidebar">
+        <div class="step-item" *ngFor="let step of steps"
+             [class.active]="step.number === currentStep"
+             [class.completed]="step.completed"
+             [class.disabled]="!canGoToStep(step.number)">
+          <div class="step-circle"
+               [class.not-allowed]="!canGoToStep(step.number)"
+               (click)="goToStep(step.number)">
+            <span *ngIf="!step.completed">{{ step.number }}</span>
+            <span *ngIf="step.completed" class="checkmark">✓</span>
+          </div>
+          <div class="step-content">
+            <div class="step-number">Step {{ step.number }}</div>
+            <div class="step-title">{{ step.title }}</div>
+          </div>
+        </div>
+      </div>
 
-    <form class="group-form" (ngSubmit)="createGroup()">
-      <div class="sub-form">
-        <h3>General Information</h3>
+      <div class="form-content">
+        <div class="form-header">
+          <h2>{{ isEditMode ? 'Edit Group' : 'Add New Group' }}</h2>
+          <button class="close-btn" (click)="closeForm()" type="button" aria-label="Close form">×</button>
+        </div>
+
+        <div class="form-loading" *ngIf="isLoadingGroup">Loading group details...</div>
+
+        <form class="group-form" (ngSubmit)="saveGroup()" *ngIf="!isLoadingGroup">
+          <div class="form-body">
+            <div class="step-form" *ngIf="currentStep === 1">
+              <h3 class="step-heading">General Information</h3>
         <div class="form-row">
           <div class="form-group">
             <label for="groupName">Group Name <span class="text-danger">*</span></label>
             <input id="groupName" type="text" [(ngModel)]="newGroup.name" name="groupName" placeholder="e.g XYZ"
-              class="form-control" />
+              class="form-control" [class.is-invalid]="nameError" (input)="nameError = null" />
+            <div class="invalid-feedback d-block" *ngIf="nameError">{{ nameError }}</div>
           </div>
           <div class="form-group">
             <label for="chitAmount">Chit Amount (₹) <span class="text-danger">*</span></label>
             <input id="chitAmount" type="number" [(ngModel)]="newGroup.chitAmount" name="chitAmount"
-              placeholder="e.g 123456789" class="form-control" />
+              placeholder="e.g 123456789" class="form-control" [class.is-invalid]="chitAmountError"
+              (input)="onChitAmountOrInstallmentsChange()" />
+            <small class="text-muted" *ngIf="getComputedInstallmentAmount() > 0">
+              Monthly installment: ₹{{ formatCurrency(getComputedInstallmentAmount()) }}
+            </small>
+            <div class="invalid-feedback d-block" *ngIf="chitAmountError">{{ chitAmountError }}</div>
           </div>
           <div class="form-group">
             <label for="chitSeries">Chit Series</label>
@@ -48,7 +73,8 @@
         <div class="form-group">
           <label for="maxMembers">Max Members (Auto-fills if 0)</label>
           <input id="maxMembers" type="number" [(ngModel)]="newGroup.maxMembers" name="maxMembers" class="form-control"
-            placeholder="Optional" />
+            placeholder="Optional" [class.is-invalid]="maxMembersError" (input)="maxMembersError = null" />
+          <div class="invalid-feedback d-block" *ngIf="maxMembersError">{{ maxMembersError }}</div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -59,7 +85,8 @@
           <div class="form-group">
             <label for="noOfInstallments">No. of Installments <span class="text-danger">*</span></label>
             <input id="noOfInstallments" type="number" [(ngModel)]="newGroup.noOfInstallments" name="noOfInstallments"
-              class="form-control" />
+              class="form-control" [class.is-invalid]="installmentsError" (input)="onChitAmountOrInstallmentsChange()" />
+            <div class="invalid-feedback d-block" *ngIf="installmentsError">{{ installmentsError }}</div>
           </div>
           <div class="form-group">
             <label for="psoDate">PSO Date</label>
@@ -74,7 +101,8 @@
           <div class="form-group">
             <label for="commencementDate">Commencement Date <span class="text-danger">*</span></label>
             <input id="commencementDate" type="date" [(ngModel)]="newGroup.commencementDate" name="commencementDate"
-              class="form-control" />
+              class="form-control" [class.is-invalid]="commencementDateError" (input)="commencementDateError = null" />
+            <div class="invalid-feedback d-block" *ngIf="commencementDateError">{{ commencementDateError }}</div>
           </div>
           <div class="form-group">
             <label for="termDate">Term Date</label>
@@ -98,8 +126,8 @@
         </div>
       </div>
 
-      <div class="sub-form">
-        <h3>Company Information</h3>
+            <div class="step-form" *ngIf="currentStep === 2">
+              <h3 class="step-heading">Company Information</h3>
         <div class="form-row">
           <div class="form-group">
             <label for="companyChitNumber">Company Chit Number</label>
@@ -114,7 +142,8 @@
           <div class="form-group">
             <label for="companyCommission">Company Commission (%)</label>
             <input id="companyCommission" type="number" [(ngModel)]="newGroup.companyCommission"
-              name="companyCommission" class="form-control" />
+              name="companyCommission" class="form-control" [class.is-invalid]="commissionError" (input)="commissionError = null" />
+            <div class="invalid-feedback d-block" *ngIf="commissionError">{{ commissionError }}</div>
           </div>
         </div>
         <div class="form-row">
@@ -134,10 +163,16 @@
               class="form-control" />
           </div>
         </div>
+        <div class="form-group">
+          <label for="groupStatus">Status</label>
+          <select id="groupStatus" [(ngModel)]="newGroup.status" name="groupStatus" class="form-control">
+            <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
       </div>
 
-      <div class="sub-form">
-        <h3>Auction Information</h3>
+            <div class="step-form" *ngIf="currentStep === 3">
+              <h3 class="step-heading">Auction Information</h3>
         <div class="form-row">
           <div class="form-group">
             <label for="auctionsPerMonth">Auctions Per Month</label>
@@ -197,8 +232,8 @@
         </div>
       </div>
 
-      <div class="sub-form">
-        <h3>FDR Information</h3>
+            <div class="step-form" *ngIf="currentStep === 4">
+              <h3 class="step-heading">FDR Information</h3>
         <div class="form-row">
           <div class="form-group">
             <label for="fdrNumber">FDR Number</label>
@@ -248,11 +283,19 @@
           </div>
         </div>
       </div>
+          </div>
 
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary" [disabled]="!isFormValid()" [style.opacity]="!isFormValid() ? 0.6 : 1" [style.cursor]="!isFormValid() ? 'not-allowed' : 'pointer'">Create Group</button>
+          <div class="form-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeForm()" [disabled]="isSaving">Cancel</button>
+            <button type="button" class="btn btn-secondary" (click)="previousStep()" *ngIf="currentStep > 1" [disabled]="isSaving">Previous</button>
+            <button type="button" class="btn btn-primary" (click)="nextStep()" *ngIf="currentStep < totalSteps" [disabled]="isSaving">Save &amp; Continue</button>
+            <button type="submit" class="btn btn-success" *ngIf="currentStep === totalSteps" [disabled]="!canSubmit() || isSaving">
+              {{ isSaving ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Group' : 'Create Group') }}
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
 
   <div class="groups-controls" *ngIf="!showAddGroupForm">
@@ -262,8 +305,7 @@
     <div class="controls-right">
       <div class="search-box">
         <img src="assets/images/icons/Search.png" alt="search" class="search-icon" />
-        <input type="text" placeholder="Search" [(ngModel)]="searchTerm" class="search-input" />
-        <span class="search-shortcut">Ctrl Shift K</span>
+        <input type="text" placeholder="Search groups..." [(ngModel)]="searchTerm" (input)="onSearchChange()" class="search-input" aria-label="Search chit groups" />
       </div>
 
       <div class="view-toggle">
@@ -275,25 +317,53 @@
         </button>
       </div>
 
-      <select class="status-filter" [(ngModel)]="statusFilter">
+      <select class="status-filter" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()">
         <option value="">All Status</option>
-        <option value="Active">Active</option>
-        <option value="Upcoming">Upcoming</option>
-        <option value="Completed">Completed</option>
-        <option value="Inactive">Inactive</option>
+        <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
       </select>
     </div>
   </div>
-  <div class="groups-content" *ngIf="!showAddGroupForm">
+  <div class="groups-content" *ngIf="!showAddGroupForm" [class.is-loading]="isLoading">
+    <div class="table-loading-overlay" *ngIf="isLoading" aria-live="polite" aria-busy="true">
+      <div class="table-spinner" aria-hidden="true"></div>
+      <p>Loading chit groups...</p>
+    </div>
 
+    <div *ngIf="!isLoading && chitGroups.length === 0" class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>No Chit Groups Found</h3>
+      <p>{{ searchTerm || statusFilter ? 'Try adjusting your search or filter.' : 'Start by adding your first chit group.' }}</p>
+      <button
+        class="btn btn-primary add-group-btn empty-add-btn"
+        type="button"
+        (click)="openAddForm()"
+        *ngIf="!searchTerm && !statusFilter">
+        <span class="btn-icon">+</span>
+        <span>Add New Group</span>
+      </button>
+    </div>
 
-    <div class="groups-grid" *ngIf="viewMode === 'grid'">
-      <div class="group-card" *ngFor="let group of paginatedGroups">
+    <div class="groups-grid" *ngIf="viewMode === 'grid' && !isLoading && chitGroups.length > 0">
+      <div class="group-card" *ngFor="let group of chitGroups">
         <div class="card-header">
           <h4 class="group-name">{{ group.name }}</h4>
-          <button class="card-menu-btn">
-            <img src="assets/images/icons/Group.png" alt="menu" />
-          </button>
+          <div class="card-actions">
+            <button class="action-btn view-btn" (click)="viewGroup(group.id)" title="View" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+            <button class="action-btn edit" (click)="editGroup(group.id)" title="Edit" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button class="action-btn delete" (click)="deleteGroup(group.id, group.name)" title="Delete" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="card-amount" style="flex-direction: column; align-items: flex-start;">
           <div>
@@ -328,13 +398,13 @@
             <span>Auction: {{ group.auctionSchedule }}</span>
           </div>
           <div class="status-badge" [ngClass]="'status-' + (group.status ? group.status.toLowerCase() : 'active')">
-            {{ group.status | titlecase }}
+            {{ formatStatusLabel(group.status) }}
           </div>
         </div>
       </div>
     </div>
 
-    <div class="table-wrapper" *ngIf="viewMode === 'list'">
+    <div class="table-wrapper" *ngIf="viewMode === 'list' && !isLoading && chitGroups.length > 0">
       <table class="table">
         <thead>
           <tr>
@@ -348,10 +418,11 @@
             <th>Members</th>
             <th>Auction Day</th>
             <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let group of paginatedGroups" class="table-row">
+          <tr *ngFor="let group of chitGroups" class="table-row">
             <td><input type="checkbox" /></td>
             <td class="group-id">{{ group.id }}</td>
             <td class="group-name">{{ group.name }}</td>
@@ -363,17 +434,34 @@
             <td>{{ group.auctionDay }}</td>
             <td>
               <span class="status-badge" [ngClass]="'status-' + (group.status ? group.status.toLowerCase() : 'active')">
-                {{ group.status | titlecase }}
+                {{ formatStatusLabel(group.status) }}
               </span>
+            </td>
+            <td class="group-actions">
+              <button class="action-btn view-btn" (click)="viewGroup(group.id)" title="View" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+              <button class="action-btn edit" (click)="editGroup(group.id)" title="Edit" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button class="action-btn delete" (click)="deleteGroup(group.id, group.name)" title="Delete" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div class="table-pagination" *ngIf="filteredGroups.length > 0">
+    <div class="table-pagination" *ngIf="!isLoading && totalElements > 0">
         <div class="pagination-info">
-          <span>Showing {{ (currentPage-1)*pageSize + 1 }} to {{ currentPage*pageSize > filteredGroups.length ? filteredGroups.length : currentPage*pageSize }} of {{ filteredGroups.length }} entries</span>
+          <span>Showing {{ totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1 }} to {{ currentPage * pageSize > totalElements ? totalElements : currentPage * pageSize }} of {{ totalElements }} entries</span>
         </div>
         <div class="pagination-controls">
           <button class="pagination-btn" *ngIf="currentPage > 2" (click)="goToPage(1)">
@@ -391,5 +479,40 @@
           </button>
         </div>
       </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showViewGroupModal" (click)="closeViewGroupModal()">
+  <div class="modal-content view-group-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Chit Group Details</h3>
+      <button class="modal-close" (click)="closeViewGroupModal()" aria-label="Close" type="button">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="isLoadingViewGroup">Loading group details...</div>
+    <div class="modal-body view-group-body" *ngIf="!isLoadingViewGroup && viewingGroup">
+      <div class="view-group-grid">
+        <div><strong>Group ID</strong><span>{{ viewingGroup.id }}</span></div>
+        <div><strong>Name</strong><span>{{ viewingGroup.name }}</span></div>
+        <div><strong>Status</strong><span>{{ formatStatusLabel(viewingGroup.status) }}</span></div>
+        <div><strong>Chit Amount</strong><span>₹{{ formatCurrency(viewingGroup.chitAmount) }}</span></div>
+        <div><strong>Tenure</strong><span>{{ viewingGroup.tenure }} months</span></div>
+        <div><strong>Monthly</strong><span>₹{{ formatCurrency(viewingGroup.monthlyAmount) }}</span></div>
+        <div><strong>Commission</strong><span>{{ viewingGroup.commission }}%</span></div>
+        <div><strong>Members</strong><span>{{ viewingGroup.currentMembers }} / {{ viewingGroup.maxMembers }}</span></div>
+        <div><strong>Commencement</strong><span>{{ viewingGroup.commencementDate || '—' }}</span></div>
+        <div><strong>Auction Day</strong><span>{{ viewingGroup.auctionDay || '—' }}</span></div>
+        <div><strong>Company Chit No.</strong><span>{{ viewingGroup.companyChitNumber || '—' }}</span></div>
+        <div><strong>Chit Series</strong><span>{{ viewingGroup.chitSeries || '—' }}</span></div>
+        <div><strong>PSO</strong><span>{{ viewingGroup.psoNumber || '—' }}</span></div>
+        <div><strong>CA Number</strong><span>{{ viewingGroup.caNumber || '—' }}</span></div>
+        <div><strong>Max Ceiling</strong><span>{{ viewingGroup.maxCeiling || '—' }}%</span></div>
+        <div><strong>FDR Number</strong><span>{{ viewingGroup.fdrNumber || '—' }}</span></div>
+        <div><strong>Bank</strong><span>{{ viewingGroup.bankNameBranch || '—' }}</span></div>
+      </div>
+      <div class="view-modal-actions">
+        <button class="btn btn-secondary" (click)="closeViewGroupModal()" type="button">Close</button>
+        <button class="btn btn-primary" (click)="editGroup(viewingGroup.id); closeViewGroupModal()" type="button" *ngIf="canManageChitGroups">Edit Group</button>
+      </div>
+    </div>
   </div>
 </div>

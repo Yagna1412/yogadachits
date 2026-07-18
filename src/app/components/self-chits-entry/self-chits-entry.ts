@@ -1,13 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Component, ChangeDetectorRef, OnDestroy, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, Subject } from 'rxjs';
+import { map, catchError, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import {
   SelfChitsService,
   SelfChitDropdownOption,
   SelfChitEntry,
 } from '../../service/self-chits.service';
+import { SubscriberService } from '../../service/subscriber.service';
 
 @Component({
   selector: 'app-self-chits-entry',
@@ -16,9 +17,7 @@ import {
   templateUrl: './self-chits-entry.html',
   styleUrls: ['./self-chits-entry.scss'],
 })
-export class SelfChitsEntryComponent implements OnInit {
-  private platformId = inject(PLATFORM_ID);
-
+export class SelfChitsEntryComponent implements OnDestroy {
   subscribers: SelfChitDropdownOption[] = [];
   chitGroups: SelfChitDropdownOption[] = [];
   persons: SelfChitDropdownOption[] = [];
@@ -38,17 +37,36 @@ export class SelfChitsEntryComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  private destroy$ = new Subject<void>();
+  private searchTerm$ = new Subject<string>();
+
   constructor(
     private selfChitsService: SelfChitsService,
+    private subscriberService: SubscriberService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    afterNextRender(() => {
+      this.loadEntries();
+      this.loadFormData();
+    });
 
-  ngOnInit(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
+    this.searchTerm$
+      .pipe(debounceTime(350), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(() => this.loadEntries());
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private authErrorMessage(err: unknown): string {
+    const status = (err as { status?: number })?.status;
+    if (status === 401 || status === 403) {
+      return 'Session expired or not logged in. Please log in again.';
     }
-    this.loadEntries();
-    this.loadFormData();
+    const message = (err as { error?: { message?: string } })?.error?.message;
+    return message || 'Unable to load self chit entries. Please ensure the backend is running on port 8080.';
   }
 
   loadEntries() {
@@ -63,7 +81,7 @@ export class SelfChitsEntryComponent implements OnInit {
       error: (err) => {
         this.isLoading = false;
         this.entries = [];
-        this.loadError = err?.error?.message || 'Unable to load self chit entries. Please ensure the backend is running on port 8080.';
+        this.loadError = this.authErrorMessage(err);
         this.cdr.detectChanges();
       },
     });
@@ -71,9 +89,20 @@ export class SelfChitsEntryComponent implements OnInit {
 
   loadFormData() {
     forkJoin({
-      subscribers: this.selfChitsService.getSubscribers(),
-      groups: this.selfChitsService.getChitGroups(),
-      persons: this.selfChitsService.getPersons(),
+      subscribers: this.subscriberService.getSubscribers().pipe(
+        map((subs) =>
+          subs
+            .filter((s) => s.subscriberType?.toLowerCase() === 'internal')
+            .map((s) => ({ id: s.id, name: s.displayName }))
+        ),
+        catchError(() => of([] as SelfChitDropdownOption[]))
+      ),
+      groups: this.selfChitsService.getChitGroups().pipe(
+        catchError(() => of([] as SelfChitDropdownOption[]))
+      ),
+      persons: this.selfChitsService.getPersons().pipe(
+        catchError(() => of([] as SelfChitDropdownOption[]))
+      ),
     }).subscribe({
       next: ({ subscribers, groups, persons }) => {
         this.subscribers = subscribers;
@@ -89,7 +118,7 @@ export class SelfChitsEntryComponent implements OnInit {
   }
 
   filterEntries() {
-    this.loadEntries();
+    this.searchTerm$.next(this.searchTerm);
   }
 
   toggleForm() {

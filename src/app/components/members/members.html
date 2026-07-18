@@ -71,19 +71,20 @@
         <span class="search-icon">
           <img src="assets/images/icons/Search.png" alt="Search" />
         </span>
-        <input type="text" placeholder="Search" [(ngModel)]="searchTerm" (input)="filterMembers()" class="search-input" />
-        <span class="search-shortcut">Ctrl Shift K</span>
+        <input type="text" placeholder="Search" [(ngModel)]="searchTerm" (input)="onSearchChange()" class="search-input" />
       </div>
-      <select class="status-filter" [(ngModel)]="statusFilter" (change)="filterMembers()">
+      <select class="status-filter" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
         <option value="">All Status</option>
-        <option value="Active">Active</option>
-        <option value="Upcoming">Upcoming</option>
-        <option value="Inactive">Inactive</option>
+        <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
       </select>
     </div>
   </div>
 
-  <div class="table-wrapper" *ngIf="!showAddMemberModal">
+  <div class="table-wrapper" *ngIf="!showAddMemberModal" [class.is-loading]="isLoading">
+    <div class="table-loading-overlay" *ngIf="isLoading" aria-live="polite" aria-busy="true">
+      <div class="table-spinner" aria-hidden="true"></div>
+      <p>Loading members...</p>
+    </div>
     <div>
       <table class="table">
         <thead>
@@ -110,18 +111,18 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let member of paginatedMembers" class="table-row">
+          <tr *ngFor="let member of paginatedMembers" class="table-row" [class.is-dimmed]="isLoading">
             <td>
               <input type="checkbox" [checked]="selectedMembers.includes(member.id)" (change)="toggleMemberSelection(member.id)" />
             </td>
             <td class="member-id">{{ member.id }}</td>
             <td class="member-name">{{ member.name }}</td>
             <td class="member-mobile">{{ member.mobileNumber }}</td>
-            <td class="member-chits"></td>
+            <td class="member-chits">{{ member.enrollmentCount ?? 0 }}</td>
             <td class="member-location">{{ member.city }}</td>
             <td class="member-status">
-              <span class="status-badge" [ngClass]="'status-' + (member.status ? member.status.toLowerCase() : '')">
-                {{ member.status }}
+              <span class="status-badge" [ngClass]="getStatusBadgeClass(member.status)">
+                {{ formatStatusLabel(member.status) }}
               </span>
             </td>
             <td class="member-actions">
@@ -145,16 +146,16 @@
         </tbody>
       </table>
 
-      <div *ngIf="filteredMembers.length === 0" class="empty-state">
+      <div *ngIf="!isLoading && totalElements === 0" class="empty-state">
         <div class="empty-icon">👤</div>
         <h3>No Members Found</h3>
         <p>{{ searchTerm ? 'Try adjusting your search criteria' : 'Start by adding your first member' }}</p>
       </div>
 
       <!-- Pagination Section -->
-      <div class="pagination-container" *ngIf="filteredMembers.length > 0">
+      <div class="pagination-container" *ngIf="!isLoading && totalElements > 0">
         <div class="pagination-info">
-          Showing {{ (currentPage-1)*pageSize + 1 }} to {{ currentPage*pageSize > filteredMembers.length ? filteredMembers.length : currentPage*pageSize }} of {{ filteredMembers.length }} results
+          Showing {{ getVisibleStartIndex() }} to {{ getVisibleEndIndex() }} of {{ totalElements }} results
         </div>
         <div class="pagination-controls">
           <button class="page-btn first" *ngIf="currentPage > 2" (click)="goToPage(1)">
@@ -180,8 +181,13 @@
   <div class="add-member-form" *ngIf="showAddMemberModal">
     <div class="form-container">
       <div class="step-sidebar">
-        <div class="step-item" *ngFor="let step of steps" [class.active]="step.number === currentStep" [class.completed]="step.completed">
-          <div class="step-circle" (click)="goToStep(step.number)">
+        <div class="step-item" *ngFor="let step of steps"
+             [class.active]="step.number === currentStep"
+             [class.completed]="step.completed"
+             [class.disabled]="!canGoToStep(step.number)">
+          <div class="step-circle"
+               [class.not-allowed]="!canGoToStep(step.number)"
+               (click)="goToStep(step.number)">
             <span *ngIf="!step.completed">{{ step.number }}</span>
             <span *ngIf="step.completed" class="checkmark">✓</span>
           </div>
@@ -199,7 +205,8 @@
         </div>
 
         <div class="form-body">
-          <div class="step-form" *ngIf="currentStep === 1">
+          <div *ngIf="isLoadingMember" class="form-loading">Loading member details...</div>
+          <div class="step-form" *ngIf="currentStep === 1 && !isLoadingMember">
             <div class="form-row">
               <div class="form-group">
                 <label>Title</label>
@@ -249,16 +256,64 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Email Address</label>
-                <input type="email" placeholder="e.g joshn@gmail.com" [(ngModel)]="newMember.emailAddress" class="form-control">
+                <input type="email"
+                       placeholder="e.g joshn@gmail.com"
+                       [(ngModel)]="newMember.emailAddress"
+                       (input)="onEmailInput()"
+                       class="form-control"
+                       [class.is-invalid]="emailError">
+                <div class="invalid-feedback d-block" *ngIf="emailError">{{ emailError }}</div>
               </div>
               <div class="form-group">
                 <label>Mobile Number <span class="text-danger">*</span></label>
-                <input type="tel" placeholder="e.g 123456789" [(ngModel)]="newMember.mobileNumber" class="form-control">
+                <input type="tel"
+                       maxlength="10"
+                       inputmode="numeric"
+                       placeholder="e.g 9876543210"
+                       [(ngModel)]="newMember.mobileNumber"
+                       (input)="onMobileInput($event)"
+                       class="form-control"
+                       [class.is-invalid]="mobileError">
+                <small class="text-muted">10 digits, starting with 6, 7, 8, or 9.</small>
+                <div class="invalid-feedback d-block" *ngIf="mobileError">{{ mobileError }}</div>
               </div>
             </div>
             <div class="form-group">
               <label>Aadhar Number</label>
-              <input type="text" placeholder="e.g 123456789012" [(ngModel)]="newMember.aadharNumber" class="form-control">
+              <input type="text"
+                     maxlength="12"
+                     inputmode="numeric"
+                     placeholder="12-digit Aadhaar (optional)"
+                     [(ngModel)]="newMember.aadharNumber"
+                     (input)="onAadharInput($event)"
+                     class="form-control"
+                     [class.is-invalid]="aadharError">
+              <small class="text-muted">Optional. Enter 12 digits only; cannot start with 0 or 1.</small>
+              <div class="invalid-feedback d-block" *ngIf="aadharError">{{ aadharError }}</div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>PAN Number</label>
+                <input type="text"
+                       maxlength="10"
+                       placeholder="e.g ABCDE1234F"
+                       [(ngModel)]="newMember.panCardNumber"
+                       (input)="onPanInput($event)"
+                       class="form-control"
+                       [class.is-invalid]="panError">
+                <div class="invalid-feedback d-block" *ngIf="panError">{{ panError }}</div>
+              </div>
+              <div class="form-group">
+                <label>GST Number</label>
+                <input type="text"
+                       maxlength="15"
+                       placeholder="15-character GSTIN (optional)"
+                       [(ngModel)]="newMember.gstNumber"
+                       (input)="onGstInput($event)"
+                       class="form-control"
+                       [class.is-invalid]="gstError">
+                <div class="invalid-feedback d-block" *ngIf="gstError">{{ gstError }}</div>
+              </div>
             </div>
             <div class="form-group">
               <label>Address</label>
@@ -266,7 +321,7 @@
             </div>
           </div>
 
-          <div class="step-form" *ngIf="currentStep === 2">
+          <div class="step-form" *ngIf="currentStep === 2 && !isLoadingMember">
             <div class="form-group">
               <label>Marital Status</label>
               <select [(ngModel)]="newMember.maritalStatus" class="form-control">
@@ -289,22 +344,28 @@
             </div>
           </div>
 
-          <div class="step-form" *ngIf="currentStep === 3">
+          <div class="step-form" *ngIf="currentStep === 3 && !isLoadingMember">
             <div class="form-group">
               <label>Photo</label>
-              <input type="file" (change)="onFileSelected($event, 'photo')" class="form-control">
+              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" (change)="onFileSelected($event, 'photo')" class="form-control">
+              <small class="text-muted" *ngIf="isDocumentUploading('photo')">Uploading photo...</small>
+              <small class="text-success" *ngIf="!isDocumentUploading('photo') && hasDocumentUrl('photo')">Photo uploaded</small>
             </div>
             <div class="form-group">
               <label>Signature</label>
-              <input type="file" (change)="onFileSelected($event, 'signature')" class="form-control">
+              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" (change)="onFileSelected($event, 'signature')" class="form-control">
+              <small class="text-muted" *ngIf="isDocumentUploading('signature')">Uploading signature...</small>
+              <small class="text-success" *ngIf="!isDocumentUploading('signature') && hasDocumentUrl('signature')">Signature uploaded</small>
             </div>
             <div class="form-group">
               <label>Passbook</label>
-              <input type="file" (change)="onFileSelected($event, 'passbook')" class="form-control">
+              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" (change)="onFileSelected($event, 'passbook')" class="form-control">
+              <small class="text-muted" *ngIf="isDocumentUploading('passbook')">Uploading passbook...</small>
+              <small class="text-success" *ngIf="!isDocumentUploading('passbook') && hasDocumentUrl('passbook')">Passbook uploaded</small>
             </div>
           </div>
 
-          <div class="step-form" *ngIf="currentStep === 4">
+          <div class="step-form" *ngIf="currentStep === 4 && !isLoadingMember">
             <div class="form-row">
               <div class="form-group">
                 <label>Account Number</label>
@@ -325,11 +386,19 @@
             </div>
             <div class="form-group">
               <label>IFSC Code</label>
-              <input type="text" placeholder="e.g SBIN0001234" [(ngModel)]="newMember.ifscCode" class="form-control">
+              <input type="text"
+                     maxlength="11"
+                     placeholder="e.g SBIN0001234"
+                     [(ngModel)]="newMember.ifscCode"
+                     (input)="onIfscInput($event)"
+                     class="form-control"
+                     [class.is-invalid]="ifscError">
+              <small class="text-muted">11 characters, e.g. SBIN0001234</small>
+              <div class="invalid-feedback d-block" *ngIf="ifscError">{{ ifscError }}</div>
             </div>
           </div>
 
-          <div class="step-form" *ngIf="currentStep === 5">
+          <div class="step-form" *ngIf="currentStep === 5 && !isLoadingMember">
             <div class="form-row">
               <div class="form-group">
                 <label>Occupation</label>
@@ -356,7 +425,7 @@
             </div>
           </div>
 
-          <div class="step-form" *ngIf="currentStep === 6">
+          <div class="step-form" *ngIf="currentStep === 6 && !isLoadingMember">
             <div class="form-row">
               <div class="form-group">
                 <label>Door No</label>
@@ -373,7 +442,16 @@
             </div>
             <div class="form-group">
               <label>Pincode</label>
-              <input type="text" placeholder="e.g 123456" [(ngModel)]="newMember.pincode" class="form-control">
+              <input type="text"
+                     maxlength="6"
+                     inputmode="numeric"
+                     placeholder="e.g 600001"
+                     [(ngModel)]="newMember.pincode"
+                     (input)="onPincodeInput($event)"
+                     class="form-control"
+                     [class.is-invalid]="pincodeError">
+              <small class="text-muted">6-digit Indian pincode</small>
+              <div class="invalid-feedback d-block" *ngIf="pincodeError">{{ pincodeError }}</div>
             </div>
             <div class="form-group">
               <label>Address</label>
@@ -381,7 +459,7 @@
             </div>
           </div>
 
-          <div class="step-form" *ngIf="currentStep === 7">
+          <div class="step-form" *ngIf="currentStep === 7 && !isLoadingMember">
             <div class="form-row">
               <div class="form-group">
                 <label>Nominee Name</label>
@@ -389,7 +467,15 @@
               </div>
               <div class="form-group">
                 <label>Age</label>
-                <input type="text" placeholder="e.g 25" [(ngModel)]="newMember.nomineeAge" class="form-control">
+                <input type="text"
+                       inputmode="numeric"
+                       maxlength="3"
+                       placeholder="e.g 25"
+                       [(ngModel)]="newMember.nomineeAge"
+                       (input)="onNomineeAgeInput($event)"
+                       class="form-control"
+                       [class.is-invalid]="nomineeAgeError">
+                <div class="invalid-feedback d-block" *ngIf="nomineeAgeError">{{ nomineeAgeError }}</div>
               </div>
             </div>
             <div class="form-group">
@@ -427,24 +513,41 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Pincode</label>
-                <input type="text" placeholder="e.g 123456" [(ngModel)]="newMember.nomineePincode" class="form-control">
+                <input type="text"
+                       maxlength="6"
+                       inputmode="numeric"
+                       placeholder="e.g 600001"
+                       [(ngModel)]="newMember.nomineePincode"
+                       (input)="onNomineePincodeInput($event)"
+                       class="form-control"
+                       [class.is-invalid]="nomineePincodeError">
+                <div class="invalid-feedback d-block" *ngIf="nomineePincodeError">{{ nomineePincodeError }}</div>
               </div>
               <div class="form-group">
                 <label>Mobile Number</label>
-                <input type="text" placeholder="e.g 123456" [(ngModel)]="newMember.nomineeMobileNumber" class="form-control">
+                <input type="tel"
+                       maxlength="10"
+                       inputmode="numeric"
+                       placeholder="e.g 9876543210"
+                       [(ngModel)]="newMember.nomineeMobileNumber"
+                       (input)="onNomineeMobileInput($event)"
+                       class="form-control"
+                       [class.is-invalid]="nomineeMobileError">
+                <div class="invalid-feedback d-block" *ngIf="nomineeMobileError">{{ nomineeMobileError }}</div>
               </div>
             </div>
             <div class="form-group">
               <label>Fill Subscriber Address</label>
-              <select [(ngModel)]="newMember.fillSubscriberAddress" class="form-control">
+              <select [(ngModel)]="newMember.fillSubscriberAddress" (change)="onFillSubscriberAddressChange()" class="form-control">
                 <option value="">Select Option</option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
               </select>
+              <small class="text-muted" *ngIf="newMember.fillSubscriberAddress === 'Yes'">Nominee address copied from member address fields.</small>
             </div>
           </div>
 
-          <div class="step-form" *ngIf="currentStep === 8">
+          <div class="step-form" *ngIf="currentStep === 8 && !isLoadingMember">
             <div class="form-group">
               <label>Route</label>
               <input type="text" placeholder="e.g Chennai" [(ngModel)]="newMember.route" class="form-control">
@@ -453,10 +556,42 @@
         </div>
 
         <div class="form-footer">
-          <button class="btn btn-secondary" (click)="previousStep()" *ngIf="currentStep > 1">Undo</button>
-          <button class="btn btn-primary" (click)="nextStep()" *ngIf="currentStep < totalSteps">Save & Continue</button>
-          <button class="btn btn-success" (click)="submitForm()" *ngIf="currentStep === totalSteps">Save Member</button>
+          <button class="btn btn-secondary" (click)="previousStep()" *ngIf="currentStep > 1 && !isLoadingMember">Previous</button>
+          <button class="btn btn-primary" (click)="nextStep()" *ngIf="currentStep < totalSteps && !isLoadingMember">Save & Continue</button>
+          <button class="btn btn-success" (click)="submitForm()" *ngIf="currentStep === totalSteps && !isLoadingMember">Save Member</button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showViewMemberModal" (click)="closeViewMemberModal()">
+  <div class="modal-content view-member-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Member Details</h3>
+      <button class="modal-close" (click)="closeViewMemberModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="isLoadingViewMember">Loading member details...</div>
+    <div class="modal-body view-member-body" *ngIf="!isLoadingViewMember && viewingMember">
+      <div class="view-member-grid">
+        <div><strong>Member ID</strong><span>{{ viewingMember.id }}</span></div>
+        <div><strong>Name</strong><span>{{ viewingMember.name }}</span></div>
+        <div><strong>Mobile</strong><span>{{ viewingMember.mobileNumber || '—' }}</span></div>
+        <div><strong>Email</strong><span>{{ viewingMember.email || '—' }}</span></div>
+        <div><strong>Status</strong><span>{{ formatStatusLabel(viewingMember.status) }}</span></div>
+        <div><strong>Chits</strong><span>{{ viewingMember.enrollmentCount ?? 0 }}</span></div>
+        <div><strong>Guardian</strong><span>{{ viewingMember.guardianName || '—' }}</span></div>
+        <div><strong>DOB</strong><span>{{ viewingMember.dob || '—' }}</span></div>
+        <div><strong>Aadhaar</strong><span>{{ viewingMember.aadharNumber || '—' }}</span></div>
+        <div><strong>PAN</strong><span>{{ viewingMember.panCardNumber || '—' }}</span></div>
+        <div><strong>GST</strong><span>{{ viewingMember.gstNumber || '—' }}</span></div>
+        <div><strong>City</strong><span>{{ viewingMember.city || '—' }}</span></div>
+        <div><strong>Pincode</strong><span>{{ viewingMember.pincode || '—' }}</span></div>
+        <div class="view-member-full"><strong>Address</strong><span>{{ viewingMember.address || '—' }}</span></div>
+        <div><strong>Bank</strong><span>{{ viewingMember.bankName || '—' }}</span></div>
+        <div><strong>IFSC</strong><span>{{ viewingMember.bankIfsc || '—' }}</span></div>
+        <div><strong>Nominee</strong><span>{{ viewingMember.nomineeName || '—' }}</span></div>
+        <div><strong>Route</strong><span>{{ viewingMember.route || '—' }}</span></div>
       </div>
     </div>
   </div>

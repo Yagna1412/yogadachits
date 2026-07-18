@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MemberReceiptService, MemberReceiptTableResponse, MemberReceiptCreateRequest } from '../../service/member-receipt.service';
+import { MemberReceiptService, MemberReceiptTableResponse, MemberReceiptCreateRequest, MemberReceiptCreatedResponse } from '../../service/member-receipt.service';
 import { EnrollmentsService, EnrollmentResponse } from '../../service/enrollments.service';
 import { ChitGroupsService } from '../../service/chit-groups.service';
 import { MemberService, MemberResponse } from '../../service/member.service';
@@ -285,11 +285,55 @@ export class MemberReceiptsComponent implements OnInit, AfterViewInit {
   }
 
   viewReceipt(receipt: any): void {
-    alert(`Viewing Receipt: ${receipt.receiptNo}`);
+    alert(
+      `Receipt: ${receipt.receiptNo}\n` +
+      `Member: ${receipt.memberName}\n` +
+      `Group: ${receipt.groupName}\n` +
+      `Amount: ₹${receipt.amount}\n` +
+      `Payment Mode: ${receipt.paymentMode}\n` +
+      `Date: ${receipt.entryDate}`
+    );
   }
 
   printReceipt(receipt: any): void {
-    alert(`Printing Receipt: ${receipt.receiptNo}`);
+    const printWindow = window.open('', '_blank', 'width=420,height=600');
+    if (!printWindow) {
+      alert('Please allow pop-ups to print the receipt.');
+      return;
+    }
+
+    printWindow.document.write(this.buildReceiptHtml(receipt));
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.onload = () => printWindow.print();
+  }
+
+  private buildReceiptHtml(receipt: any): string {
+    const date = receipt.entryDate ? new Date(receipt.entryDate).toLocaleString() : new Date().toLocaleString();
+    return `
+      <html>
+        <head>
+          <title>Receipt ${receipt.receiptNo}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #222; }
+            h2 { margin-bottom: 4px; }
+            .row { display: flex; justify-content: space-between; margin: 6px 0; border-bottom: 1px dashed #ccc; padding-bottom: 6px; }
+            .label { color: #666; }
+            .value { font-weight: 600; }
+            .amount { font-size: 20px; margin-top: 12px; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <h2>Payment Receipt</h2>
+          <div class="row"><span class="label">Receipt No</span><span class="value">${receipt.receiptNo ?? ''}</span></div>
+          <div class="row"><span class="label">Member</span><span class="value">${receipt.memberName ?? ''}</span></div>
+          <div class="row"><span class="label">Group</span><span class="value">${receipt.groupName ?? ''}</span></div>
+          <div class="row"><span class="label">Payment Mode</span><span class="value">${receipt.paymentMode ?? ''}</span></div>
+          <div class="row"><span class="label">Date</span><span class="value">${date}</span></div>
+          <div class="amount">Amount: ₹ ${Number(receipt.amount ?? 0).toFixed(2)}</div>
+        </body>
+      </html>
+    `;
   }
 
   deleteReceipt(id: number): void {
@@ -317,6 +361,14 @@ export class MemberReceiptsComponent implements OnInit, AfterViewInit {
   }
 
   saveReceipt(): void {
+    this.submitReceipt(false);
+  }
+
+  saveAndPrintReceipt(): void {
+    this.submitReceipt(true);
+  }
+
+  private submitReceipt(printAfterSave: boolean): void {
     if (!this.newReceipt.enrollmentId) {
       alert('Please select an enrollment / member.');
       return;
@@ -356,8 +408,20 @@ export class MemberReceiptsComponent implements OnInit, AfterViewInit {
     };
 
     this.receiptService.createReceipt(payload).subscribe({
-      next: () => {
-        alert('Success: Receipt Saved');
+      next: (created: MemberReceiptCreatedResponse) => {
+        alert('Success: Receipt Saved' + (created?.receiptNo ? ` (${created.receiptNo})` : ''));
+
+        if (printAfterSave) {
+          this.printReceipt({
+            receiptNo: created?.receiptNo || 'N/A',
+            memberName: created?.memberName || memberName || 'Unknown',
+            groupName: created?.groupName || groupName || 'Unknown',
+            amount: created?.amount ?? payload.amount,
+            paymentMode: created?.paymentMode || payload.paymentMode,
+            entryDate: created?.receiptDate || new Date().toISOString()
+          });
+        }
+
         // Reset specific fields but keep defaults
         this.newReceipt = {
           enrollmentId: 0,
@@ -370,7 +434,7 @@ export class MemberReceiptsComponent implements OnInit, AfterViewInit {
       },
       error: (err: any) => {
         console.error('Failed to save member receipt', err);
-        alert('Failed to save receipt.');
+        alert('Failed to save receipt: ' + (err.error?.message || 'Server error'));
       }
     });
   }

@@ -68,6 +68,24 @@ export interface MemberResponse {
     notes: string;
     createdAt: string;
     status: string;
+    enrollmentCount?: number;
+}
+
+export interface PagedResponse<T> {
+    content: T[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+}
+
+export interface MemberListParams {
+    page?: number;
+    size?: number;
+    search?: string;
+    status?: string;
+    sortBy?: string;
+    sortDir?: 'asc' | 'desc';
 }
 
 // Updated to success boolean as per your implementation plan
@@ -109,6 +127,29 @@ export class MemberService {
     getMembers(): Observable<MemberResponse[]> {
         return this.http.get<ApiResponse<MemberResponse[]>>(this.apiUrl, this.getAuthHeaders())
             .pipe(map(response => response.data));
+    }
+
+    getMembersPaged(params: MemberListParams = {}): Observable<PagedResponse<MemberResponse>> {
+        const query = new URLSearchParams();
+        query.set('page', String(params.page ?? 0));
+        query.set('size', String(params.size ?? 10));
+        if (params.search?.trim()) {
+            query.set('search', params.search.trim());
+        }
+        if (params.status?.trim()) {
+            query.set('status', params.status.trim());
+        }
+        query.set('sortBy', params.sortBy ?? 'id');
+        query.set('sortDir', params.sortDir ?? 'desc');
+
+        return this.http
+            .get<ApiResponse<PagedResponse<MemberResponse>>>(`${this.apiUrl}/paged?${query.toString()}`, this.getAuthHeaders())
+            .pipe(map(response => response.data));
+    }
+
+    getMemberById(id: number): Observable<MemberResponse | null> {
+        return this.http.get<ApiResponse<MemberResponse | null>>(`${this.apiUrl}/${id}`, this.getAuthHeaders())
+            .pipe(map(response => response.data ?? null));
     }
 
     createMember(payload: any): Observable<MemberResponse> {
